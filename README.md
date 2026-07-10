@@ -4,7 +4,7 @@ DFThub example repository for using optimized density-functional parameters in P
 
 ## Contents
 
-- `CF22D_optimized_example.py`: CF22D parameter registration example for PySCF/libxc.
+- `CF22D_optimized_example.py`: CF22D parameter registration example for PySCF/libxc, including `Parameters` loading and CF22D D3 zero-damping dispersion.
 - `dfthub_g16_builder.py`: patches Gaussian 16 source files with values from `Parameters`, builds Gaussian 16, and writes the result as `g16-opt`.
 - `Parameters`: DFThub-style parameter file containing `Cx`, `HF%`, `Cy`, and `Cz` values.
 
@@ -21,13 +21,14 @@ Requirements:
 
 - Python 3
 - NumPy
-- PySCF >= 2.4
+- PySCF >= 2.13.1
+- pyscf-dispersion
 - A libxc/PySCF build that supports CF22D
 
 Install dependencies:
 
 ```bash
-pip install numpy pyscf
+pip install numpy pyscf pyscf-dispersion
 ```
 
 Run the example:
@@ -50,6 +51,12 @@ register_cf22d(mf)
 mf.kernel()
 
 print(mf.e_tot)
+```
+
+By default, `register_cf22d(mf)` reads the repository `Parameters` file and enables D3 zero-damping dispersion with PySCF's official `cf22d` D3 parameter set. To use the embedded CF22D parameters without D3:
+
+```python
+register_cf22d(mf, parameters_path=None, with_d3=False)
 ```
 
 ## Gaussian 16 Builder
