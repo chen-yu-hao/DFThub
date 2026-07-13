@@ -103,4 +103,4 @@ Y. Liu, C. Zhang, Z. Liu, D. G. Truhlar, Y. Wang, X. He, "Supervised Learning of
 
 ## License
 
-This repository does not currently provide an explicit open-source license. Confirm the permitted scope before using, modifying, or distributing it.
+This project is licensed under the MIT License. See `LICENSE` for details.
