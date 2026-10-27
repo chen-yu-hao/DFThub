@@ -125,6 +125,7 @@ def main():
             run('auditwheel', 'repair', '-w', str(repaired), str(original))
         wheel = next(repaired.glob('*.whl'))
     relabel(wheel, output, source)
+    run(sys.executable, str(Path(__file__).with_name('add_native_notices.py')), str(output))
 
 
 if __name__ == '__main__':

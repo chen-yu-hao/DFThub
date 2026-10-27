@@ -49,6 +49,8 @@ jobs:
       - name: Build pinned DFT engine
         if: steps.engine-cache.outputs.cache-hit != 'true'
         run: python tools/ci_run.py python tools/build_engine.py
+      - name: Include native licenses
+        run: python tools/add_native_notices.py dist/engine
       - uses: actions/upload-artifact@v4
         with:
           name: engine-${{ matrix.os }}

@@ -11,7 +11,7 @@ def tasks():
     for process in psutil.process_iter(["pid", "cmdline", "uids", "status"]):
         try:
             info = process.info
-            if info["uids"].real != os.getuid() or info["status"] == psutil.STATUS_ZOMBIE:
+            if info["uids"] is None or info["uids"].real != os.getuid() or info["status"] == psutil.STATUS_ZOMBIE:
                 continue
             argv = info["cmdline"] or []
             script = next((Path(arg) for arg in argv[1:3]

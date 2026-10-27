@@ -7,7 +7,7 @@ data retain their original dataset identifiers and scientific provenance.
 PySCF DFT is a separate wheel, under Apache-2.0; its LICENSE and NOTICE remain
 inside that wheel. It is built from chen-yu-hao/pyscf, DFT commit 72e5b26c.
 The repaired wheel includes native dependencies; LibXC 7.1.2 (MPL-2.0),
-libcint 6.2.0 (BSD-2-Clause), XCFun (MPL-2.0), and BLAS/OpenMP runtime licenses
+libcint 6.2.0 (Apache-2.0), XCFun (MPL-2.0), and BLAS/OpenMP runtime licenses
 apply to their respective components. Their sources/build references are
 recorded in the engine manifest and release source assets.
 

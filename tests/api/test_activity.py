@@ -143,11 +143,11 @@ class ProcessActivityTests(unittest.TestCase):
             output = root / "output with spaces"
             process = subprocess.Popen([sys.executable, str(script), "--output", str(output), "--scope", "input"])
             from dfthub import processes
-            expected = patch.object(processes, "PROGRAM_DIR", script.parent)
+            expected = patch.object(processes, "PROGRAM_DIR", script.parent.resolve())
             expected.start()
             try:
                 deadline = time.monotonic() + 2
-                key = (str(output), "input")
+                key = (str(output.resolve()), "input")
                 while key not in file_api._live_task_activity() and time.monotonic() < deadline:
                     time.sleep(.01)
                 self.assertEqual(file_api._live_task_activity()[key]["status"], "Running")
