@@ -722,15 +722,8 @@ def generate_user_script(xyz_path: Path, basis_preset: str = DEFAULT_BASIS) -> s
 
 def extract_archive(archive: Path, dest: Path) -> Path:
     dest.mkdir(parents=True, exist_ok=True)
-    name = archive.name
-    if name.endswith(".zip"):
-        with zipfile.ZipFile(archive) as zf:
-            zf.extractall(dest)
-    elif name.endswith((".tar.gz", ".tgz")):
-        with tarfile.open(archive, "r:gz") as tf:
-            tf.extractall(dest, filter="data")
-    else:
-        raise ValueError(f"Unsupported archive: {archive}")
+    from dfthub.archives import extract_geometry_archive
+    extract_geometry_archive(archive, dest)
     subdirs = [d for d in dest.iterdir() if d.is_dir()]
     if len(subdirs) == 1 and not list(dest.glob("*.xyz")):
         return subdirs[0]

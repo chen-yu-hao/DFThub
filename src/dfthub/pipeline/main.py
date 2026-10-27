@@ -77,14 +77,8 @@ def uncompress(input_file, output_dir):
     if not os.path.isfile(input_file):
         raise FileNotFoundError(f'Input file "{input_file}" not found.')
     os.makedirs(output_dir, exist_ok=True)
-    if input_file.endswith(".zip"):
-        with zipfile.ZipFile(input_file, "r") as zf:
-            zf.extractall(output_dir)
-    elif input_file.endswith((".tar.gz", ".tgz")):
-        with tarfile.open(input_file, "r:gz") as tf:
-            tf.extractall(output_dir, filter="data")
-    else:
-        raise ValueError(f"Unsupported archive format: {input_file}")
+    from dfthub.archives import extract_geometry_archive
+    extract_geometry_archive(input_file, output_dir)
 
 
 def parse_xyz(path):
@@ -293,7 +287,7 @@ def prepare_optional_test_set(output_dir):
     sizes = {xyz: int(xyz.read_text().splitlines()[0].split()[0]) for xyz in xyz_files}
     basis_sizes = {xyz: basis_size(xyz, BASIS_PRESET) for xyz in xyz_files}
     (work_dir / 'resources.json').write_text(json.dumps({
-        xyz.stem: {'nao': nao, 'threads': threads_for_basis(nao)} for xyz, nao in basis_sizes.items()
+        xyz.stem: {'nao': nao, 'threads': min(TASK_THREADS, threads_for_basis(nao))} for xyz, nao in basis_sizes.items()
     }))
     rows = {}
     failures = []
@@ -450,7 +444,7 @@ if __name__ == "__main__":
     log("The program starts running!")
     log(
         f"engine: pyscf CF22D | preset={BASIS_PRESET} | basis={BASIS} | "
-        f"ecp={ECP or 'none'} | grid level={GRID_LEVEL} | task thread budget={TASK_THREADS} | molecule threads=4/8/16"
+        f"ecp={ECP or 'none'} | grid level={GRID_LEVEL} | task thread budget={TASK_THREADS} | molecule threads follow basis size and task capacity"
     )
 
     # ---- Step 1: uncompress -------------------------------------------------
@@ -502,7 +496,7 @@ if __name__ == "__main__":
     sizes = {xyz: int(xyz.read_text().splitlines()[0].split()[0]) for xyz in xyz_files}
     basis_sizes = {xyz: basis_size(xyz, BASIS_PRESET) for xyz in xyz_files}
     (work_dir / 'resources.json').write_text(json.dumps({
-        xyz.stem: {'nao': nao, 'threads': threads_for_basis(nao)} for xyz, nao in basis_sizes.items()
+        xyz.stem: {'nao': nao, 'threads': min(TASK_THREADS, threads_for_basis(nao))} for xyz, nao in basis_sizes.items()
     }))
     for i, (xyz, result, error) in enumerate(molecular_pool(
             xyz_files, sizes.__getitem__,
