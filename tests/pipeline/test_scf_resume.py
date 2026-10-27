@@ -21,7 +21,7 @@ class StagedScfTests(unittest.TestCase):
     def setUp(self):
         lib.num_threads(1)
         self.temp = tempfile.TemporaryDirectory()
-        self.root = Path(self.temp.name)
+        self.root = Path(self.temp.name).resolve()
         self.checkpoint = self.root / 'H2.chk'
         self.mol = gto.M(atom='H 0 0 0; H 0 0 0.74', basis='sto-3g', verbose=0)
         self.functional = SimpleNamespace()
@@ -97,7 +97,7 @@ class StagedScfTests(unittest.TestCase):
 class SnapshotReuseTests(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
-        self.root = Path(self.temp.name)
+        self.root = Path(self.temp.name).resolve()
         self.output = self.root / 'output/weight_0'
         self.output.mkdir(parents=True)
         for name in ('INPUT', 'INPUT_ref', 'NEW-params.txt', 'weight.csv', 'CF22D_optimized.py'):
@@ -143,7 +143,7 @@ class SnapshotReuseTests(unittest.TestCase):
 class SchedulingTests(unittest.TestCase):
     def test_same_atoms_with_larger_basis_receive_more_resources(self):
         with tempfile.TemporaryDirectory() as temp:
-            xyz = Path(temp) / 'Li4.xyz'
+            xyz = Path(temp).resolve() / 'Li4.xyz'
             xyz.write_text('4\n0 1\nLi 0 0 0\nLi 0 0 3\nLi 0 3 0\nLi 3 0 0\n')
             small = scheduler.basis_size(xyz, 'sto-3g')
             large = scheduler.basis_size(xyz, 'aug-cc-pvtz')
@@ -178,7 +178,7 @@ class SchedulingTests(unittest.TestCase):
 
     def test_molecular_process_has_no_wall_clock_timeout(self):
         with tempfile.TemporaryDirectory() as temp:
-            root = Path(temp)
+            root = Path(temp).resolve()
             xyz = root / 'H2.xyz'
             xyz.write_text('2\n0 1\nH 0 0 0\nH 0 0 .74\n')
             functional = root / 'functional.py'

@@ -54,7 +54,7 @@ from dfthub.pipeline.basis_presets import (
 )
 
 
-from dfthub.paths import optimizer_dir, data_dir
+from dfthub.paths import optimizer_dir, data_dir, input_directory
 AME418_ROOT = Path(os.environ.get("DFTHUB_AME418_ROOT", str(data_dir() / "AME418")))
 REF_ROOT = optimizer_dir() / "Database2/ref"
 HARTREE_TO_KCAL = 627.509
@@ -1259,8 +1259,8 @@ def main() -> None:
             test_reference=Path(args.test_ref).resolve() if args.test_ref else None,
             force=args.fresh,
         )
-        user_xyz_path = stage_root / "input" / user_xyz_path.name
-        user_ref_path = stage_root / "input/INPUT_ref"
+        user_xyz_path = input_directory(stage_root) / user_xyz_path.name
+        user_ref_path = input_directory(stage_root) / "INPUT_ref"
         srp_path = stage_root / "CF22D_optimized.py"
         print(f"  User dataset: {user_dataset_name}", flush=True)
         print(f"  User xyz: {user_xyz_path}", flush=True)
@@ -1288,8 +1288,8 @@ def main() -> None:
             sys.exit(1)
         print(f"  User molecules: {len(user_jobs)}", flush=True)
         if args.test_xyz and args.test_ref:
-            test_xyz_path = stage_root / "input/test_set" / Path(args.test_xyz).name
-            test_ref_path = stage_root / "input/test_set" / Path(args.test_ref).name
+            test_xyz_path = input_directory(stage_root) / "test_set" / Path(args.test_xyz).name
+            test_ref_path = input_directory(stage_root) / "test_set" / Path(args.test_ref).name
             stem = test_xyz_path.name
             for suffix in (".zip", ".tar.gz", ".tgz"):
                 if stem.endswith(suffix):

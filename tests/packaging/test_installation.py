@@ -12,6 +12,24 @@ from unittest.mock import patch
 
 
 class InstalledServiceTests(unittest.TestCase):
+    def test_portable_inputs_do_not_collide_with_descriptors(self):
+        from dfthub.paths import input_directory
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary).resolve()
+            (root/'INPUT').write_text('descriptors')
+            folder = input_directory(root)
+            self.assertEqual(folder.name, 'inputs')
+            folder.mkdir()
+            self.assertEqual((root/'INPUT').read_text(), 'descriptors')
+
+    def test_legacy_input_directory_remains_readable(self):
+        from dfthub.paths import input_directory
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary).resolve()
+            (root/'input').mkdir()
+            (root/'input/basis.txt').write_text('sto-3g')
+            self.assertEqual((input_directory(root)/'basis.txt').read_text(), 'sto-3g')
+
     def test_real_server_and_single_instance_lock(self):
         with tempfile.TemporaryDirectory() as root:
             with socket.socket() as probe:
@@ -100,7 +118,7 @@ assert client.get('/api_dft/download/Work/template').status_code == 200
     def test_optimizer_workspace_is_writable_from_readonly_resources(self):
         from dfthub.pipeline.refinement import optimizer_files
         with tempfile.TemporaryDirectory() as temp:
-            root = Path(temp)
+            root = Path(temp).resolve()
             source, target = root/'source', root/'target'
             (source/'Database_updated/fit').mkdir(parents=True)
             (source/'Database_updated/ref').mkdir()

@@ -7,7 +7,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-TEST_ROOT = Path(tempfile.mkdtemp(prefix="dfthub-cancel-"))
+TEST_ROOT = Path(tempfile.mkdtemp(prefix="dfthub-cancel-")).resolve()
 os.environ["DFTHUB_DATA_DIR"] = str(TEST_ROOT / "data")
 os.environ["JWT_SECRET"] = "cancel-test-secret"
 os.environ["DFTHUB_WORKERS"] = "0"

@@ -37,6 +37,8 @@ DFTHUB_INSTALL_PYTHON=python3.12 bash deploy/install-offline.sh /opt/dfthub/.ven
 
 现有服务器迁移：停服务，复制整个旧 `dft_files` 为新数据目录；把需要恢复的历史 `demo_*` 单独复制到 `DFTHUB_DEMO_ROOT`。旧 Work/common/program 副本不再作为程序入口，发行包使用其自身固定版本。已有输出、test_set 和 input_srp 目录原样保留。不要把工作目录打进公开发布包。
 
+新 fork 和 SCF 快照的几何输入目录名为 `inputs/`，避免 macOS 默认磁盘将旧 `input/` 目录与 `INPUT` 描述符文件视为同名。Linux 上仍可读取旧布局。把旧 Linux 数据搬到 macOS 前，应在 Linux 的停机备份副本上先运行 `python tools/migrate_data_layout.py --data-dir /backup/dft_files` 查看清单，再加 `--apply` 重命名目录，之后传输整个副本。不要先把存在大小写冲突的数据复制到 macOS。
+
 服务默认监听 127.0.0.1:8188。对外服务可用 nginx/Caddy 转发整个站点；API 和前端同源。HTTPS 由反向代理管理，仅在 HTTPS 下设 `DFTHUB_ENABLE_HSTS=1`。用进程管理器启动 `dfthub serve`，不要用多个 WSGI 进程共享一个内存队列。CLI 锁定数据目录以避免双实例。
 
 ## 从固定源代码构建引擎

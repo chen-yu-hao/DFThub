@@ -35,6 +35,16 @@ def optimizer_dir():
     return Path(os.environ.get("DFTHUB_TMB11_DIR", str(RESOURCES / "optimizer"))).expanduser().resolve()
 
 
+def input_directory(container):
+    """Portable run/snapshot inputs; read historical Linux 'input' directories."""
+    container = Path(container)
+    portable = container / "inputs"
+    if portable.is_dir():
+        return portable
+    legacy = container / "input"
+    return legacy if legacy.is_dir() else portable
+
+
 def pipeline_python():
     value = os.environ.get("DFTHUB_PYTHON", sys.executable)
     resolved = shutil.which(value) or str(Path(value).expanduser())

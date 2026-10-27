@@ -16,7 +16,7 @@ from dfthub.pipeline.refinement import write_json, correct_input_energies
 class DescriptorScopeTests(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory(prefix="dfthub-descriptors-")
-        self.root = Path(self.temp.name)
+        self.root = Path(self.temp.name).resolve()
         self.output = self.root / "output"
         self.output.mkdir()
         initial = self.output / "weight_0" / "work"

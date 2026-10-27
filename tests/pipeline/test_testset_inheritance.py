@@ -10,7 +10,7 @@ from dfthub.pipeline.testset_inheritance import inherit_test_set, ensure_fork_te
 class TestSetInheritanceTests(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
-        self.work = Path(self.temp.name) / 'job'
+        self.work = Path(self.temp.name).resolve() / 'job'
         self.parent = self.work / 'output/weight_0'
         self.parent.mkdir(parents=True)
         self.bundle = self.work / 'input/test_set'
@@ -29,8 +29,8 @@ class TestSetInheritanceTests(unittest.TestCase):
 
     def fork(self, name, parent):
         child = self.parent / name
-        (child / 'input').mkdir(parents=True)
-        (child / 'input/basis.txt').write_text('aug-cc-pvtz\n')
+        (child / 'inputs').mkdir(parents=True)
+        (child / 'inputs/basis.txt').write_text('aug-cc-pvtz\n')
         (child / 'run.json').write_text(json.dumps({'parent': parent}))
         for name in ('INPUT', 'INPUT_ref', 'NEW-params.txt', 'Mue', 'SinglePointResults.input.json', 'spe_input.status.json'):
             (child / name).write_text('existing ' + name)
@@ -42,7 +42,7 @@ class TestSetInheritanceTests(unittest.TestCase):
         self.assertEqual(len(changes), 6)
         for name in ('TEST_INPUT', 'TEST_INPUT_ref', 'TestDescriptors.json'):
             self.assertEqual((self.child / name).read_bytes(), (self.parent / name).read_bytes())
-        self.assertEqual(json.loads((self.child / 'input/test_set/manifest.json').read_text()), self.manifest)
+        self.assertEqual(json.loads((self.child / 'inputs/test_set/manifest.json').read_text()), self.manifest)
         for name in ('TestMue', 'TestMue.json', 'TestOriginalMue'):
             self.assertFalse((self.child / name).exists())
         for path, value in before.items():
@@ -56,7 +56,7 @@ class TestSetInheritanceTests(unittest.TestCase):
         self.assertEqual((grandchild / 'TEST_INPUT').read_bytes(), (self.parent / 'TEST_INPUT').read_bytes())
 
     def test_legacy_pair_gets_only_missing_manifest_and_descriptors(self):
-        target = self.child / 'input/test_set'
+        target = self.child / 'inputs/test_set'
         target.mkdir()
         for name in ('test_data.tgz', 'test_data.ref'):
             shutil.copy2(self.bundle / name, target / name)
@@ -66,21 +66,21 @@ class TestSetInheritanceTests(unittest.TestCase):
         changes = inherit_test_set(self.parent, self.child, self.work, dry_run=True)
         self.assertEqual(len(changes), 6)
         self.assertFalse((self.child / 'TEST_INPUT').exists())
-        self.assertFalse((self.child / 'input/test_set').exists())
+        self.assertFalse((self.child / 'inputs/test_set').exists())
 
     def test_existing_conflict_is_never_overwritten_or_partially_repaired(self):
         (self.child / 'TEST_INPUT').write_text('different descriptors')
         with self.assertRaisesRegex(ValueError, 'left unchanged'):
             ensure_fork_test_set(self.child)
         self.assertEqual((self.child / 'TEST_INPUT').read_text(), 'different descriptors')
-        self.assertFalse((self.child / 'input/test_set').exists())
+        self.assertFalse((self.child / 'inputs/test_set').exists())
 
     def test_mismatched_reference_or_basis_is_rejected(self):
         (self.parent / 'TEST_INPUT_ref').write_text('other reference')
         with self.assertRaisesRegex(ValueError, 'reference do not match'):
             ensure_fork_test_set(self.child)
         (self.parent / 'TEST_INPUT_ref').write_bytes((self.bundle / 'test_data.ref').read_bytes())
-        (self.child / 'input/basis.txt').write_text('sto-3g')
+        (self.child / 'inputs/basis.txt').write_text('sto-3g')
         with self.assertRaisesRegex(ValueError, 'basis'):
             ensure_fork_test_set(self.child)
         self.assertFalse((self.child / 'TEST_INPUT').exists())
@@ -114,7 +114,7 @@ class TestSetInheritanceTests(unittest.TestCase):
         args = (self.parent, geometry, self.parent / 'INPUT_ref', self.parent / 'CF22D_optimized.py', 'aug-cc-pvtz', 6)
         kwargs = {'test_geometry': self.bundle / 'test_data.tgz', 'test_reference': self.bundle / 'test_data.ref'}
         snapshot, _ = prepare_input_snapshot(*args, **kwargs)
-        manifest = snapshot / 'input/test_set/manifest.json'
+        manifest = snapshot / 'inputs/test_set/manifest.json'
         self.assertEqual(json.loads(manifest.read_text()), self.manifest)
         manifest.unlink()
         reused, _ = prepare_input_snapshot(*args, **kwargs)

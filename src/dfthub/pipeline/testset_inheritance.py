@@ -7,6 +7,7 @@ import re
 import shutil
 import tempfile
 from pathlib import Path
+from dfthub.paths import input_directory
 
 
 def digest(source):
@@ -111,7 +112,7 @@ def inherit_test_set(parent, child, work, dry_run=False):
     """Inherit fixed evaluation descriptors, not parent MUE or SCF outputs."""
     parent, child, work = Path(parent), Path(child), Path(work)
     ancestors = lineage(parent, work)
-    source_inputs = [path / 'input/test_set' for path in ancestors] + [work / 'input/test_set']
+    source_inputs = [input_directory(path) / 'test_set' for path in ancestors] + [work / 'input/test_set']
     test_root = next((path for path in source_inputs if (path / 'manifest.json').is_file()), None)
     if test_root is None:
         if (any(path.is_dir() and any(path.iterdir()) for path in source_inputs) or
@@ -134,7 +135,7 @@ def inherit_test_set(parent, child, work, dry_run=False):
     metadata = json.loads((source / 'TestDescriptors.json').read_text())
     if not isinstance(metadata, dict):
         raise ValueError('Invalid test descriptor metadata')
-    basis_path = child / 'input/basis.txt'
+    basis_path = input_directory(child) / 'basis.txt'
     if basis_path.is_file() and metadata.get('basis') != basis_path.read_text().strip():
         raise ValueError('Inherited test basis differs from the fork basis')
     if metadata.get('dataset') and manifest.get('dataset') and metadata['dataset'] != manifest['dataset']:
@@ -150,7 +151,7 @@ def inherit_test_set(parent, child, work, dry_run=False):
         names.add(fields[0])
     if not names or metadata.get('count', len(names)) != len(names):
         raise ValueError('Inherited test descriptor count does not match')
-    target_test = child / 'input/test_set'
+    target_test = input_directory(child) / 'test_set'
     plan = [(target_test / geometry.name, geometry), (target_test / reference.name, reference),
             (target_test / 'manifest.json', encoded(manifest))]
     plan += [(child / name, source / name) for name in ('TEST_INPUT', 'TEST_INPUT_ref', 'TestDescriptors.json')]

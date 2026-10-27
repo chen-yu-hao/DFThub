@@ -1,5 +1,5 @@
 import axios from "axios";
-import { displayDate, listRuns, normalizeStatus, readDirectory } from "./data";
+import { displayDate, listRuns, normalizeStatus, readDirectory, readRunInput } from "./data";
 import type { Job } from "./data";
 import { datasetKey, originalMueForRun, parseDatasetMue } from "./mue";
 import { compareDatasets, typeNames } from "./mueAnalysis";
@@ -316,7 +316,7 @@ export async function loadAnalysisJob(username: string, id: string, signal: Abor
   const entries = await mapLimited(listed.filter((run) => run.status === "completed"), async (run) => {
     try {
       const output = await readDirectory(path + "/output/" + run.id, ["Mue", "weight.csv", "OriginalMue", "OriginalMue.meta.json", "TestMue", "TestOriginalMue", "TestOriginalMue.meta.json", "run.json", "InputDescriptors.json", "SinglePointResults.input.json", "spe_input.status.json", "SinglePointResults.json", "OptimizationStatus.json", "initial-params.txt", "NEW-params.txt"], signal);
-      if (run.id.includes("/")) output._input = await readDirectory(path + "/output/" + run.id + "/input", ["basis.txt"], signal);
+      if (run.id.includes("/")) output._input = await readRunInput(path, run.id, signal);
       return [run.id, output] as const;
     } catch (error) {
       if (signal.aborted) throw error;

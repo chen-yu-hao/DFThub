@@ -13,7 +13,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 
-TEST_ROOT = Path(tempfile.mkdtemp(prefix="dfthub-api-security-"))
+TEST_ROOT = Path(tempfile.mkdtemp(prefix="dfthub-api-security-")).resolve()
 DATA_DIR = TEST_ROOT / "data"
 os.environ["DFTHUB_DATA_DIR"] = str(DATA_DIR)
 os.environ["JWT_SECRET"] = ""
@@ -419,7 +419,7 @@ class ApiSecurityTests(unittest.TestCase):
         self.assertEqual(stat.S_IMODE((DATA_DIR / "auth.db").stat().st_mode), 0o600)
 
     def test_auth_initialization_repairs_existing_file_permissions(self):
-        repair_root = Path(tempfile.mkdtemp(prefix="dfthub-auth-mode-"))
+        repair_root = Path(tempfile.mkdtemp(prefix="dfthub-auth-mode-")).resolve()
         try:
             repair_data = repair_root / "data"
             repair_data.mkdir()
@@ -452,7 +452,7 @@ class ApiSecurityTests(unittest.TestCase):
             shutil.rmtree(repair_root)
 
     def test_auth_initialization_rejects_empty_secret_file(self):
-        empty_root = Path(tempfile.mkdtemp(prefix="dfthub-auth-empty-secret-"))
+        empty_root = Path(tempfile.mkdtemp(prefix="dfthub-auth-empty-secret-")).resolve()
         try:
             empty_data = empty_root / "data"
             empty_data.mkdir()
@@ -606,7 +606,7 @@ class ApiSecurityTests(unittest.TestCase):
         (child / "NEW-params.txt").write_text("\n".join(["2"] * 59))
         (child / "CF22D_optimized.py").write_text("# next functional")
         (child / "process.log").write_text("SUCCESS!\n")
-        next_snapshot = self._ready_snapshot(child, child / "input")
+        next_snapshot = self._ready_snapshot(child, child / "inputs")
         response = self._refine(work, next_snapshot, "fork-1")
         self.assertEqual(response.status_code, 200, response.get_json())
         api_module._task_queue.get()
@@ -631,18 +631,18 @@ class ApiSecurityTests(unittest.TestCase):
         self.assertEqual(response.status_code, 200, response.get_json())
         api_module._task_queue.get()
         child = parent / "fork-1"
-        self.assertEqual(json.loads((child / "input/test_set/manifest.json").read_text()), manifest)
+        self.assertEqual(json.loads((child / "inputs/test_set/manifest.json").read_text()), manifest)
         for name in ("TEST_INPUT", "TEST_INPUT_ref", "TestDescriptors.json"):
             self.assertEqual((child / name).read_bytes(), (parent / name).read_bytes())
         self.assertFalse((child / "TestMue").exists())
         (child / "NEW-params.txt").write_text("\n".join(["2"] * 59))
         (child / "CF22D_optimized.py").write_text("# child functional")
-        next_snapshot = self._ready_snapshot(child, child / "input")
+        next_snapshot = self._ready_snapshot(child, child / "inputs")
         response = self._refine(work, next_snapshot, "fork-1")
         self.assertEqual(response.status_code, 200, response.get_json())
         api_module._task_queue.get()
         grandchild = parent / "fork-2"
-        self.assertEqual(json.loads((grandchild / "input/test_set/manifest.json").read_text()), manifest)
+        self.assertEqual(json.loads((grandchild / "inputs/test_set/manifest.json").read_text()), manifest)
         self.assertEqual((grandchild / "TEST_INPUT").read_bytes(), (parent / "TEST_INPUT").read_bytes())
 
     def test_refine_allows_incomplete_test_with_verified_training(self):
@@ -690,8 +690,8 @@ class ApiSecurityTests(unittest.TestCase):
         response = self.client.post("/api_dft/submit", headers=self._auth(self.alice_token), json=payload)
         self.assertEqual(response.status_code, 200, response.get_json())
         job = api_module._task_queue.get()
-        self.assertIn(str(child / "input/Demo.tgz"), job["cmd"])
-        self.assertIn(str(child / "input/INPUT_ref"), job["cmd"])
+        self.assertIn(str(child / "inputs/Demo.tgz"), job["cmd"])
+        self.assertIn(str(child / "inputs/INPUT_ref"), job["cmd"])
         self.assertEqual(job["info_dir"], f"Work/alice/{work.name}/output/weight_0/fork-1")
 
     def test_concurrent_refine_is_idempotent(self):

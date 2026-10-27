@@ -15,7 +15,7 @@ from dfthub.pipeline import run_ame418_srp as runner
 class CheckpointLineageTests(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory(prefix="dfthub-checkpoint-chain-")
-        self.root = Path(self.temp.name)
+        self.root = Path(self.temp.name).resolve()
         self.output_root = self.root / "output"
         self.output_root.mkdir()
         self.metadata = {
@@ -102,7 +102,7 @@ class CheckpointLineageTests(unittest.TestCase):
 class TestCheckpointTests(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory(prefix='dfthub-test-checkpoints-')
-        self.root = Path(self.temp.name)
+        self.root = Path(self.temp.name).resolve()
         self.output = self.root / 'output/weight_0/fork-1'
         self.output.mkdir(parents=True)
         self.parent = self.root / 'output/weight_0/input_srp' / ('a' * 32)

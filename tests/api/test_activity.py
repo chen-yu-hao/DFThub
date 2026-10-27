@@ -11,7 +11,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-TEST_ROOT = Path(tempfile.mkdtemp(prefix="dfthub-activity-"))
+TEST_ROOT = Path(tempfile.mkdtemp(prefix="dfthub-activity-")).resolve()
 os.environ.update(DFTHUB_DATA_DIR=str(TEST_ROOT / "data"), DFTHUB_WORKERS="0",
                   DFTHUB_MAIL_SUPPRESS="1", JWT_SECRET="isolated-activity-test-secret-at-least-32-bytes")
 from dfthub.api import app as api
@@ -136,7 +136,7 @@ class ActivityTests(unittest.TestCase):
 class ProcessActivityTests(unittest.TestCase):
     def test_process_arguments_preserve_spaces_and_identify_scf(self):
         with tempfile.TemporaryDirectory(prefix="dfthub live ") as temporary:
-            root = Path(temporary)
+            root = Path(temporary).resolve()
             script = root / "program/run_ame418_srp.py"
             script.parent.mkdir()
             script.write_text("import time\ntime.sleep(30)\n")

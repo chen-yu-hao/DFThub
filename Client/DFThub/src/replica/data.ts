@@ -145,6 +145,14 @@ export function runFields(id: string) {
   return { weightFile, ...(fork ? { fork } : {}) };
 }
 
+export async function readRunInput(path: string, run: string, signal?: AbortSignal): Promise<Record<string, any>> {
+  if (!run.includes("/")) return readDirectory(`${path}/input`, ["basis.txt"], signal);
+  const root = `${path}/output/${run}`;
+  const folders = await listFiles(root, "folder", signal);
+  const directory = folders.some((item) => item.name === "inputs") ? "inputs" : "input";
+  return readDirectory(`${root}/${directory}`, ["basis.txt"], signal);
+}
+
 export async function listRuns(path: string, signal?: AbortSignal): Promise<Run[]> {
   const weights = await listJobs(path, signal);
   const groups = await Promise.all(weights.map(async (weight) => {
@@ -169,7 +177,7 @@ export async function loadRunFiles(username: string, job: string, run: string, s
     readDirectory(`${path}/output/${run}`, ["process.log", "Mue", "OriginalMue", "OriginalMue.meta.json", "results.json", "Parameters", "weight.csv", "SinglePointResults.json",
       "SinglePointResults.input.json", "SinglePointResults.ame418.json", "SinglePointResults.energy.json", "spe_input.log", "spe_ame418.log", "spe_energy.log", "spe_input.status.json", "spe_ame418.status.json", "spe_energy.status.json", "InputDescriptors.json", "run.json",
       "TestMue", "TestMue.json", "TestOriginalMue", "TestOriginalMue.meta.json"], signal),
-    readDirectory(run.includes("/") ? `${path}/output/${run}/input` : `${path}/input`, ["basis.txt"], signal),
+    readRunInput(path, run, signal),
     readDirectory(path, ["process.log"], signal),
   ]);
   let spe = null;

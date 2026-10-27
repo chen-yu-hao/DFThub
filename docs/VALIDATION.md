@@ -5,7 +5,7 @@ using only the release wheelhouse (`--no-index --require-hashes`). `pip check`
 reported no broken requirements. Package directories were made read-only before
 running an actual train/test fit from a separate writable data directory.
 
-- 88 Python regression checks cover API authentication, cancellation/deletion,
+- 90 Python regression checks cover API authentication, cancellation/deletion,
   status reporting, checkpoint chains, optional-test inheritance, partial-test
   failure, installed pages, process admission, and read-only resources.
 - Four frontend regression suites and the TypeScript/production build pass.

@@ -40,7 +40,7 @@ from dfthub.api.mail import DefaltMailConfig, mail, send_task_notification
 
 from dfthub.api.auth import auth_app, is_valid_email, login_required
 
-from dfthub.paths import PROGRAM_DIR, RESOURCES, pipeline_python
+from dfthub.paths import PROGRAM_DIR, RESOURCES, pipeline_python, input_directory
 from dfthub.pipeline.refinement import ensure_optimizer_snapshot, file_hash, write_json
 from dfthub.pipeline.testset_inheritance import inherit_test_set
 from dfthub.pipeline.compute_scheduler import TASK_THREADS
@@ -540,7 +540,7 @@ def _run_output(data, work_name, username):
 
 
 def _run_inputs(output, full_work_dir):
-    return output / "input" if (output / "input").is_dir() else full_work_dir / "input"
+    return input_directory(output) if input_directory(output).is_dir() else full_work_dir / "input"
 
 
 def _submit_refine(data, full_work_dir, work_name, username, recipient):
@@ -561,6 +561,7 @@ def _submit_refine(data, full_work_dir, work_name, username, recipient):
                 return _error("Complete Calculate Input successfully before refining", 409)
             snapshot = resolve_owned_path(str(parent.relative_to(DATA_DIR) / "input_srp" / snapshot_id), username)
             metadata = json.loads((snapshot / "manifest.json").read_text())
+            saved_input_name = input_directory(snapshot).name
             latest = json.loads((parent / "InputDescriptors.json").read_text())
             result = json.loads((parent / "SinglePointResults.input.json").read_text())
             if (not metadata["complete"] or metadata["grid_level"] != 6 or latest["id"] != snapshot_id
@@ -586,7 +587,7 @@ def _submit_refine(data, full_work_dir, work_name, username, recipient):
             if saved_basis != metadata["basis"]:
                 return _error("Input basis changed; recalculate Input before refining", 409)
             for name, key in (("NEW-params.txt", "parameter_sha256"), ("weight.csv", "weight_sha256"),
-                              ("input/INPUT_ref", "reference_sha256"), ("input/" + metadata["geometry"], "geometry_sha256")):
+                              (saved_input_name + "/INPUT_ref", "reference_sha256"), (saved_input_name + "/" + metadata["geometry"], "geometry_sha256")):
                 if file_hash(snapshot / name) != metadata[key]:
                     return _error("Input descriptor snapshot is inconsistent", 409)
             forks = [p for p in weight_root.iterdir() if re.fullmatch(r"fork-[1-9]\d*", p.name) and p.is_dir()]
@@ -603,8 +604,8 @@ def _submit_refine(data, full_work_dir, work_name, username, recipient):
             child = weight_root / f"fork-{number}"
             child.mkdir()
             shutil.copytree(frozen, child / "optimizer_snapshot")
-            shutil.copytree(snapshot / "input", child / "input")
-            for source, destination in (("INPUT", "INPUT"), ("input/INPUT_ref", "INPUT_ref"),
+            shutil.copytree(input_directory(snapshot), child / "inputs")
+            for source, destination in (("INPUT", "INPUT"), (saved_input_name + "/INPUT_ref", "INPUT_ref"),
                                         ("weight.csv", "weight.csv"), ("NEW-params.txt", "initial-params.txt")):
                 shutil.copy2(snapshot / source, child / destination)
             inherit_test_set(parent, child, full_work_dir)
@@ -998,7 +999,7 @@ def _analysis_signature(folder):
         add(run_dir)
         for name in _ANALYSIS_FILE_NAMES:
             add(run_dir / name)
-        add(run_dir / "input" / "basis.txt")
+        add(input_directory(run_dir) / "basis.txt")
     return tuple(values)
 
 
@@ -1064,8 +1065,8 @@ def _analysis_job_payload(username, job_id, job_dir):
     listed, files = [], {}
     for run_id, output in _analysis_run_dirs(job_dir / "output"):
         run_files = _analysis_read_files(output, _ANALYSIS_FILE_NAMES)
-        if "/" in run_id and (output / "input").is_dir():
-            run_files["_input"] = _analysis_read_files(output / "input", ("basis.txt",))
+        if "/" in run_id and input_directory(output).is_dir():
+            run_files["_input"] = _analysis_read_files(input_directory(output), ("basis.txt",))
         listed.append({
             "id": run_id,
             "date": _analysis_timestamp(output),

@@ -7,6 +7,7 @@ import shutil
 import time
 import uuid
 from pathlib import Path
+from dfthub.paths import input_directory
 from dfthub.pipeline.testset_inheritance import preserve_test_manifest
 
 
@@ -122,7 +123,7 @@ def prepare_input_snapshot(output, geometry, reference, functional, basis, grid,
                 # Older Input snapshots captured the optional test files but
                 # did not hash them. Verify those copies before adopting one.
                 if 'test_geometry_sha256' not in previous and test_geometry:
-                    test_root = manifest.parent / 'input/test_set'
+                    test_root = input_directory(manifest.parent) / 'test_set'
                     previous['test_geometry_sha256'] = source_hash(test_root / test_geometry.name)
                     previous['test_reference_sha256'] = file_hash(test_root / test_reference.name)
                     # Old snapshots did not capture TEST_INPUT; only reuse the
@@ -134,20 +135,20 @@ def prepare_input_snapshot(output, geometry, reference, functional, basis, grid,
                 copies = {'parameter_sha256': saved / 'NEW-params.txt',
                           'functional_sha256': saved / 'CF22D_optimized.py',
                           'source_input_sha256': saved / 'source-INPUT',
-                          'reference_sha256': saved / 'input/INPUT_ref',
-                          'geometry_sha256': saved / 'input' / geometry.name,
+                          'reference_sha256': input_directory(saved) / 'INPUT_ref',
+                          'geometry_sha256': input_directory(saved) / geometry.name,
                           'weight_sha256': saved / 'weight.csv'}
                 if any(source_hash(path) != context[key] for key, path in copies.items()):
                     continue
                 if test_geometry:
                     for source in (test_geometry, test_reference):
-                        if source_hash(saved / 'input/test_set' / source.name) != source_hash(source):
+                        if source_hash(input_directory(saved) / 'test_set' / source.name) != source_hash(source):
                             raise ValueError('Test snapshot changed')
                     if (output / 'TEST_INPUT').is_file() and not (saved / 'source-TEST_INPUT').exists():
                         shutil.copy2(output / 'TEST_INPUT', saved / 'source-TEST_INPUT')
                     if context['test_input_sha256'] is not None and file_hash(saved / 'source-TEST_INPUT') != context['test_input_sha256']:
                         raise ValueError('Test corrections snapshot changed')
-                    preserve_test_manifest(test_geometry, test_reference, saved / 'input/test_set')
+                    preserve_test_manifest(test_geometry, test_reference, input_directory(saved) / 'test_set')
                 print(f'Reusing Input snapshot: {saved.name}', flush=True)
                 previous.update(context)
                 return saved, previous
@@ -155,7 +156,7 @@ def prepare_input_snapshot(output, geometry, reference, functional, basis, grid,
                 continue
     snapshot = output / "input_srp" / uuid.uuid4().hex
     snapshot.mkdir(parents=True)
-    inputs = snapshot / "input"
+    inputs = snapshot / "inputs"
     inputs.mkdir()
     geometry_target = inputs / geometry.name
     if geometry.is_dir():

@@ -45,7 +45,7 @@ class Solver:
 class ConvergenceTests(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory(prefix="dfthub-convergence-test-")
-        self.root = Path(self.temp.name)
+        self.root = Path(self.temp.name).resolve()
         self.previous_cwd = Path.cwd()
         os.chdir(self.root)
         self.environment = patch.dict(os.environ, {"DFTHUB_OPT_STATUS_PATH": str(self.root / "published.json")})
