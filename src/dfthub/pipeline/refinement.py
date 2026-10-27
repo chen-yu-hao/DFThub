@@ -60,6 +60,10 @@ def optimizer_files(source, target):
     shutil.copytree(source / "Database_updated", target / "Database_updated")
     for name in ("opt.py", "dataset.py", "saver.py", "params.txt"):
         shutil.copy2(source / name, target / name)
+    # copytree/copy2 preserve read-only site-packages permissions. The new
+    # workspace must be writable even when all packaged resources are 0444/0555.
+    for path in [target, *target.rglob('*')]:
+        path.chmod(path.stat().st_mode | (0o700 if path.is_dir() else 0o600))
 
 
 def ensure_optimizer_snapshot(output):

@@ -1,0 +1,4 @@
+# Keep original scientific tables and vendored assets byte-for-byte.
+src/dfthub/resources/** -whitespace
+src/dfthub/pipeline/basis_data/** -whitespace
+src/dfthub/static/** -whitespace

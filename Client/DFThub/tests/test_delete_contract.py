@@ -4,7 +4,7 @@ import sys
 import tempfile
 from pathlib import Path
 
-source = Path(os.getenv('DFTHUB_API_SOURCE', '/home/hpc/DFT-hub-v2/Api/api/app/DFT_Hub/src'))
+source = Path(os.getenv('DFTHUB_API_SOURCE', str(Path(__file__).resolve().parents[3] / "src/dfthub/api")))
 with tempfile.TemporaryDirectory(prefix='dfthub-delete-contract-') as temporary:
     root = Path(temporary)
     os.environ.update(DFTHUB_DATA_DIR=str(root), DFTHUB_WORKERS='0', DFTHUB_MAIL_SUPPRESS='1', JWT_SECRET='isolated-delete-test-secret-not-production-123')

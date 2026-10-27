@@ -5,7 +5,7 @@ import sys
 import tempfile
 from pathlib import Path
 
-SOURCE = Path(os.environ.get("DFTHUB_API_SOURCE", "/home/hpc/DFT-hub-v2/Api/api/app/DFT_Hub/src"))
+SOURCE = Path(os.environ.get("DFTHUB_API_SOURCE", str(Path(__file__).resolve().parents[3] / "src/dfthub/api")))
 with tempfile.TemporaryDirectory(prefix="dfthub-replica-api-") as temporary:
     root = Path(temporary)
     os.environ.update(DFTHUB_DATA_DIR=str(root), DFTHUB_WORKERS="0", DFTHUB_MAIL_SUPPRESS="1", JWT_SECRET="replica-test-secret-not-for-production-0000")

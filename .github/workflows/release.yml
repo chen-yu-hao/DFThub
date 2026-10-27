@@ -45,7 +45,7 @@ jobs:
           key: dfthub-dft-72e5b26c-native-v1-${{ matrix.os }}
       - name: Build pinned DFT engine
         if: steps.engine-cache.outputs.cache-hit != 'true'
-        run: python tools/build_engine.py
+        run: python tools/ci_run.py python tools/build_engine.py
       - uses: actions/upload-artifact@v4
         with:
           name: engine-${{ matrix.os }}
@@ -77,7 +77,13 @@ jobs:
       - run: npm install -g pnpm@11.5.3
       - name: Frontend
         working-directory: Client/DFThub
-        run: pnpm install --frozen-lockfile && pnpm run build
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm run build
+          node tests/test_mue_parser.cjs
+          node tests/test_mue_analysis.cjs
+          node tests/test_analysis_v2.cjs
+          node tests/test_multi_job_analysis.cjs
       - name: Build distribution
         run: |
           python tools/sync_frontend.py
@@ -89,9 +95,9 @@ jobs:
           bundle_dir=$(find dist -maxdepth 1 -type d -name 'dfthub-0.1.0-*' | head -1)
           DFTHUB_INSTALL_PYTHON=python bash "$bundle_dir/deploy/install-offline.sh" .venv-verify
           .venv-verify/bin/python -m pip check
-          .venv-verify/bin/python tools/run_tests.py
-          .venv-verify/bin/python tools/scientific_smoke.py --output dist/scientific-smoke.json
-          .venv-verify/bin/python tools/workflow_smoke.py
+          python tools/ci_run.py .venv-verify/bin/python tools/run_tests.py
+          python tools/ci_run.py .venv-verify/bin/python tools/scientific_smoke.py --output dist/scientific-smoke.json
+          python tools/ci_run.py .venv-verify/bin/python tools/workflow_smoke.py
           python tools/audit_release.py
       - uses: actions/upload-artifact@v4
         with:

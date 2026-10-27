@@ -4,11 +4,42 @@ from pathlib import Path
 import subprocess
 import sys
 import tempfile
+import socket
+import time
+import urllib.request
 import unittest
 from unittest.mock import patch
 
 
 class InstalledServiceTests(unittest.TestCase):
+    def test_real_server_and_single_instance_lock(self):
+        with tempfile.TemporaryDirectory() as root:
+            with socket.socket() as probe:
+                probe.bind(('127.0.0.1', 0))
+                port = probe.getsockname()[1]
+            env = dict(os.environ, DFTHUB_DATA_DIR=root, DFTHUB_WORKERS='0', DFTHUB_MAIL_SUPPRESS='1')
+            command = [sys.executable, '-m', 'dfthub.cli', 'serve', '--port', str(port)]
+            with tempfile.TemporaryFile() as log:
+                process = subprocess.Popen(command, env=env, cwd=root, stdout=log, stderr=log)
+                try:
+                    deadline = time.monotonic() + 30
+                    while True:
+                        try:
+                            with urllib.request.urlopen(f'http://127.0.0.1:{port}/workspace/', timeout=1) as response:
+                                self.assertEqual(response.status, 200)
+                            break
+                        except OSError:
+                            if process.poll() is not None or time.monotonic() > deadline:
+                                log.seek(0)
+                                self.fail(log.read().decode())
+                            time.sleep(.1)
+                    second = subprocess.run(command, env=env, cwd=root, capture_output=True, text=True, timeout=30)
+                    self.assertEqual(second.returncode, 1)
+                    self.assertIn('already owns this data directory', second.stderr)
+                finally:
+                    process.terminate()
+                    process.wait(timeout=10)
+
     def test_installed_engine_and_offline_pages(self):
         with tempfile.TemporaryDirectory() as root:
             env = dict(os.environ, DFTHUB_DATA_DIR=root, DFTHUB_WORKERS='0', DFTHUB_MAIL_SUPPRESS='1')
@@ -62,6 +93,25 @@ assert client.get('/api_dft/download/Work/template').status_code == 200
             (Path(root) / 'tasks.json').write_text(json.dumps([dead, live]))
             with scheduler._registry() as records:
                 self.assertEqual(records, [live])
+
+    def test_optimizer_workspace_is_writable_from_readonly_resources(self):
+        from dfthub.pipeline.refinement import optimizer_files
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            source, target = root/'source', root/'target'
+            (source/'Database_updated/fit').mkdir(parents=True)
+            (source/'Database_updated/ref').mkdir()
+            for name in ('opt.py','dataset.py','saver.py','params.txt'):
+                (source/name).write_text('fixture')
+                (source/name).chmod(0o444)
+            (source/'Database_updated/fit').chmod(0o555)
+            target.mkdir()
+            try:
+                optimizer_files(source, target)
+                (target/'Database_updated/fit/INPUT').write_text('new input')
+                (target/'opt.py').write_text('new optimizer')
+            finally:
+                (source/'Database_updated/fit').chmod(0o755)
 
     def test_parallel_tasks_are_serialized_with_a_single_cpu_budget(self):
         with tempfile.TemporaryDirectory() as root:
