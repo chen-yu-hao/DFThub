@@ -67,6 +67,29 @@ def relabel(wheel, output, source):
         run(sys.executable, '-m', 'wheel', 'pack', str(root), '--dest-dir', str(output))
 
 
+def canonical_macos_openmp(wheel):
+    """LLVM and Homebrew can expose two different libomp paths with one basename.
+
+    Select one OpenMP runtime before delocate vendors the dependency closure.
+    Only Mach-O load paths are changed; scientific source stays untouched.
+    """
+    library = Path(os.environ['DFTHUB_MACOS_LIBOMP']).resolve()
+    if not library.is_file():
+        raise RuntimeError('DFTHUB_MACOS_LIBOMP must name the arm64 libomp.dylib')
+    with tempfile.TemporaryDirectory() as temp:
+        root = Path(temp) / 'wheel'
+        with zipfile.ZipFile(wheel) as archive:
+            archive.extractall(root)
+        for path in root.rglob('*'):
+            if path.is_file() and path.suffix in {'.so', '.dylib'}:
+                output = subprocess.check_output(['otool', '-L', str(path)], text=True)
+                for line in output.splitlines()[1:]:
+                    dependency = line.strip().split(' (', 1)[0]
+                    if dependency.endswith('/libomp.dylib') and dependency != str(library):
+                        run('install_name_tool', '-change', dependency, str(library), str(path))
+        run(sys.executable, '-m', 'wheel', 'pack', str(root), '--dest-dir', str(wheel.parent))
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--source', type=Path, default=Path('.build/pyscf'))
@@ -96,6 +119,7 @@ def main():
         original = next(raw.glob('pyscf-*.whl'))
         repaired = source / 'dist-dfthub-repaired'
         if sys.platform == 'darwin':
+            canonical_macos_openmp(original)
             run('delocate-wheel', '--require-archs=arm64', '-w', str(repaired), str(original))
         else:
             run('auditwheel', 'repair', '-w', str(repaired), str(original))

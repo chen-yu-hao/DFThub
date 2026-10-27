@@ -1267,6 +1267,7 @@ appx.config.update({
     "SWAGGER_UI_STANDALONE_PRESET_JS": "/vendor/swagger/swagger-ui-standalone-preset.js",
 })
 mail.init_app(appx)
+appx.config.update(DOCS_FAVICON="/favicon.svg", SWAGGER_UI_CONFIG={"validatorUrl": None})
 
 if __name__ == "__main__":
     run_simple(

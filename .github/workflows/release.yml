@@ -36,6 +36,9 @@ jobs:
           brew install llvm libomp openblas
           echo "CC=$(brew --prefix llvm)/bin/clang" >> "$GITHUB_ENV"
           echo "CXX=$(brew --prefix llvm)/bin/clang++" >> "$GITHUB_ENV"
+          echo "CMAKE_OSX_ARCHITECTURES=arm64" >> "$GITHUB_ENV"
+          echo "_PYTHON_HOST_PLATFORM=macosx-14.0-arm64" >> "$GITHUB_ENV"
+          echo "DFTHUB_MACOS_LIBOMP=$(brew --prefix libomp)/lib/libomp.dylib" >> "$GITHUB_ENV"
           echo "CMAKE_CONFIGURE_ARGS=-DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_OSX_DEPLOYMENT_TARGET=14.0 -DBLAS_LIBRARIES=$(brew --prefix openblas)/lib/libopenblas.dylib -DCMAKE_PREFIX_PATH=$(brew --prefix libomp)" >> "$GITHUB_ENV"
           echo "MACOSX_DEPLOYMENT_TARGET=14.0" >> "$GITHUB_ENV"
       - uses: actions/cache@v4

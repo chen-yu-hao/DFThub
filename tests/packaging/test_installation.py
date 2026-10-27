@@ -58,6 +58,9 @@ for path in ['/', '/workspace/', '/analyze/', '/guide/', '/energy/', '/api_dft/d
     assert response.status_code == 200, (path, response.status_code)
     if path.endswith('/'):
         assert b'fonts.googleapis.com' not in response.data
+    if path == '/api_dft/docs':
+        assert b'https://apiflask.com/_assets' not in response.data
+        assert b'"validatorUrl": null' in response.data
 assert client.get('/api_dft/unknown').status_code == 404
 assert client.get('/not-a-page').status_code == 404
 assert client.get('/workspace?job=abc').headers['Location'] == '/workspace/?job=abc'

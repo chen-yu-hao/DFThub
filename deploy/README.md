@@ -52,4 +52,4 @@ python -m build
 python tools/offline_bundle.py --engine dist/engine/dfthub_pyscf_dft-*.whl --package dist/dfthub-0.1.0-py3-none-any.whl
 ```
 
-macOS 的 LLVM/OpenBLAS flags 与完整构建流程见 `.github/workflows/release.yml`。引擎源码包也作为 Release 资产保存。源码回退构建需要获得 LibXC/libcint/XCFun 源码和工具链；离线安装使用预编译 wheelhouse，无需编译器。不要启用 `-march=native`，以免发行包绑定构建机指令集。
+macOS 的 LLVM/OpenBLAS flags 与完整构建流程见 `.github/workflows/release.yml`；设置 `CMAKE_OSX_ARCHITECTURES=arm64`、`_PYTHON_HOST_PLATFORM=macosx-14.0-arm64` 及 `DFTHUB_MACOS_LIBOMP` 指向 Homebrew libomp.dylib。修复 wheel 时统一 OpenMP 动态库引用，避免不同 Homebrew 前缀的同名库冲突。引擎源码包也作为 Release 资产保存。源码回退构建需要获得 LibXC/libcint/XCFun 源码和工具链；离线安装使用预编译 wheelhouse，无需编译器。不要启用 `-march=native`，以免发行包绑定构建机指令集。
