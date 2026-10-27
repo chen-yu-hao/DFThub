@@ -1,0 +1,17 @@
+__pycache__/
+*.pyc
+*.egg-info/
+.venv*/
+.build/
+build/
+dist/
+wheelhouse/
+.env
+auth.db
+.jwt_secret
+*.log
+*.bak*
+.backups/
+node_modules/
+.astro/
+dist-dfthub/

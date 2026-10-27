@@ -1,0 +1,9 @@
+recursive-include src/dfthub/static *
+recursive-include src/dfthub/resources *
+recursive-include src/dfthub/pipeline/basis_data *
+recursive-include deploy *
+recursive-include tools *.py *.json
+recursive-include tests *.py
+include LICENSE
+include THIRD_PARTY.md
+global-exclude *.pyc *.bak* __pycache__ .DS_Store

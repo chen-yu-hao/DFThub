@@ -1,0 +1,18 @@
+.nav-links a[aria-current="page"] { color: var(--ink); background: var(--b-fill); }
+.page-workspace > .wrap > .ws, .page-analyze > .wrap > .ws { padding-top: clamp(36px, 5vw, 64px); }
+.page-workspace, .page-analyze { min-height: calc(100vh - 260px); }
+@media (max-width: 800px) {
+  html { scroll-padding-top: 126px; }
+  .nav .wrap { height: auto; min-height: 52px; flex-wrap: wrap; gap: 8px; padding: 8px 10px; border-radius: var(--r-lg); }
+  .nav-links { display: flex; order: 3; width: 100%; margin-left: 0; }
+  .nav-links a { flex: 1; justify-content: center; min-height: 44px; height: 44px; padding-inline: 4px; font-size: var(--font-size-sm); }
+  .nav-right { gap: 6px; }
+  .nav .btn-sm { padding-inline: 12px; }
+}
+.menu a[role="menuitem"] { display: flex; width: 100%; gap: 10px; align-items: center; padding: 9px 12px; border-radius: var(--r-sm); color: var(--ink); font-size: var(--font-size-md); }
+.menu a[role="menuitem"]:hover { background: var(--b-fill); text-decoration: none; }
+.hero-cta .link { min-height: 44px; padding-inline: 12px; align-items: center; }
+.icon-btn { min-width: 44px; min-height: 44px; }
+.sheet-foot .link { min-height: 44px; display: inline-flex; align-items: center; }
+.menu #copyContact { color: var(--accent-ink); }
+.cite-actions .btn, .cite-actions a { min-height: 44px; height: 44px; }

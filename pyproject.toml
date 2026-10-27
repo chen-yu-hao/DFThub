@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=70", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "dfthub"
+version = "0.1.0"
+description = "Portable CF22D fitting, evaluation and analysis service"
+readme = "README.md"
+requires-python = ">=3.10,<3.13"
+license = {text = "MIT"}
+authors = [{name = "Yuhao Chen"}]
+dependencies = [
+  "apiflask>=3.1,<4", "flask-mail>=0.10,<1", "waitress>=3.0.2,<4",
+  "PyJWT>=2.13,<3", "pandas==2.3.3", "numpy==2.2.6",
+  "scipy==1.15.3", "h5py>=3.11,<4", "psutil>=6,<8",
+  "dftd3>=1.2,<2", "dfthub-pyscf-dft==2.14.0+dfthub.72e5b26c",
+]
+
+[project.scripts]
+dfthub = "dfthub.cli:main"
+
+[project.urls]
+Repository = "https://github.com/chen-yu-hao/DFThub"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["dfthub*", "xclib*"]
+namespaces = false
+
+[tool.setuptools.package-data]
+dfthub = ["static/**/*", "static/*", "resources/**/*", "pipeline/basis_data/*"]

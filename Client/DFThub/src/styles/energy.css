@@ -1,0 +1,792 @@
+/* ==========================================================================
+   DFThub · DFT energy page
+   Load after the main stylesheet and liquid-glass.css.
+
+   Styles both:
+   - the class names the current Energy component already renders
+     (.energy-run-picker, .energy-task-form, .energy-task-fields,
+     .energy-task-list, .energy-task-row, .energy-upload, .file-picker,
+     .file-name), so the live page improves with no markup change, and
+   - the fuller template markup in energy.html (drop zone, task statuses,
+     results summary, log).
+   ========================================================================== */
+
+.energy-page {
+  padding-block: clamp(48px, 7vw, 88px) 32px;
+}
+
+/* The component uses h1/h2 where the shared styles target h2/h3 */
+.energy-page .ws-head h1 {
+  font-size: clamp(32px, 4vw, 44px);
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+}
+
+.energy-page .ws-head p {
+  max-width: 60ch;
+}
+
+.energy-page .d-title h2 {
+  font-size: 28px;
+  letter-spacing: -0.025em;
+  line-height: 1.1;
+  overflow-wrap: anywhere;
+}
+
+.energy-page .sidebar .side-top > strong {
+  font-size: 15px;
+  font-weight: 600;
+  padding: 2px 4px 0;
+}
+
+.energy-page .job[aria-selected="true"] {
+  background: var(--accent-tint);
+}
+
+.energy-page .job-sub {
+  text-transform: capitalize;
+}
+
+.energy-sample {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 8px;
+  padding: 2px 9px;
+  border-radius: 999px;
+  background: var(--b-fill);
+  color: var(--ink-2);
+  font-size: 12px;
+  font-weight: 500;
+  vertical-align: 2px;
+}
+
+/* --------------------------------------------------------------------------
+   Run picker: one calm row under the job title
+   -------------------------------------------------------------------------- */
+.energy-run-picker {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 14px;
+  margin: 0 32px;
+  padding: 14px 16px;
+  border-radius: var(--r-md);
+  background: var(--fill-2);
+}
+
+.energy-run-picker .field {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0;
+  border: 0;
+  flex: 1 1 320px;
+  min-width: 0;
+}
+
+.energy-run-picker .field > span,
+.energy-run-picker .field > label {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.energy-run-picker select {
+  -webkit-appearance: none;
+  appearance: none;
+  flex: 1 1 auto;
+  max-width: 340px;
+  height: 36px;
+  padding: 0 34px 0 14px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--surface)
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%2386868b' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")
+    no-repeat right 14px center;
+  box-shadow: inset 0 0 0 1px var(--sep-2);
+  color: var(--ink);
+  font: 500 13.5px var(--font-mono);
+  cursor: pointer;
+}
+
+.energy-run-picker select:focus-visible {
+  outline: 2px solid var(--seg-focus);
+  outline-offset: 2px;
+}
+
+.energy-run-picker select:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.energy-run-picker .muted {
+  font-size: 13px;
+}
+
+.energy-run-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  font-size: 13px;
+  color: var(--ink-2);
+}
+
+.energy-run-meta > span {
+  display: inline-flex;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.energy-run-meta > span > svg {
+  flex: none;
+  width: 14px;
+  height: 14px;
+  margin-top: 2px;
+}
+
+/* --------------------------------------------------------------------------
+   Cards inside the detail panel
+   -------------------------------------------------------------------------- */
+/* The current component renders the cards straight inside .detail */
+.energy-page .detail > .box {
+  margin: 24px 32px 0;
+}
+
+.energy-page .detail > .box:last-child {
+  margin-bottom: 32px;
+}
+
+@media (max-width: 640px) {
+  .energy-page .detail > .box {
+    margin-inline: 20px;
+  }
+}
+
+.energy-page .detail > .panel {
+  gap: 24px;
+}
+
+.energy-page .box {
+  border-radius: var(--r-md);
+}
+
+.energy-page .box-head {
+  gap: 10px;
+  padding: 14px 18px;
+}
+
+.energy-page .box-head strong {
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.energy-page .box-head .muted {
+  margin-left: 0;
+  font-size: 12.5px;
+}
+
+/* Current markup: push the Refresh button and the run name to the right */
+.energy-page .box-head > .btn:last-child,
+.energy-task-form .box-head > .muted:last-child {
+  margin-left: auto;
+}
+
+.energy-head-actions {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.energy-page .box-head .sp {
+  flex: 1;
+}
+
+.energy-step {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--seg-indicator);
+  color: var(--seg-ink-selected);
+  font: 600 11.5px/1 var(--font-text);
+}
+
+/* --------------------------------------------------------------------------
+   New task form
+   -------------------------------------------------------------------------- */
+.energy-task-form > p.muted,
+.energy-task-note {
+  margin: 0;
+  padding: 0 18px 16px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.energy-task-fields {
+  display: grid;
+  gap: 0;
+  padding: 4px 0;
+}
+
+.energy-task-fields .field {
+  grid-template-columns: 150px minmax(0, 1fr);
+  padding: 14px 18px;
+}
+
+.energy-task-fields .field:first-child {
+  border-top: 0;
+}
+
+.energy-task-fields .field > span:first-child {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+/* Plain inputs rendered by the current component */
+.energy-task-fields input:not([type="file"]) {
+  width: 100%;
+  max-width: 360px;
+  height: 36px;
+  padding: 0 12px;
+  border: 1px solid var(--sep-2);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  color: var(--ink);
+  font: 14px var(--font-text);
+  outline: none;
+}
+
+.energy-task-fields input:not([type="file"]):focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-ring);
+}
+
+.energy-task-fields input[type="file"],
+.file-picker input[type="file"] {
+  font: 13px var(--font-text);
+  color: var(--ink-2);
+}
+
+.energy-task-fields input[type="file"]::file-selector-button,
+.file-picker input[type="file"]::file-selector-button {
+  height: 32px;
+  margin-right: 12px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--b-fill);
+  color: var(--accent-ink);
+  font: 500 13px var(--font-text);
+  cursor: pointer;
+}
+
+.energy-task-fields input[type="file"]::file-selector-button:hover,
+.file-picker input[type="file"]::file-selector-button:hover {
+  background: var(--b-fill-hover);
+}
+
+/* The current component puts the submit button inside the fields grid */
+.energy-task-fields > .btn {
+  justify-self: end;
+  margin: 4px 18px 14px;
+}
+
+/* Template: archive drop zone (same look as the New job dialog) */
+.energy-drop {
+  max-width: 560px;
+}
+
+.energy-drop .meta {
+  display: block;
+  margin-top: 2px;
+}
+
+.energy-task-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 14px;
+  padding: 14px 18px;
+  border-top: 1px solid var(--sep);
+}
+
+.energy-task-foot .hint {
+  flex: 1 1 220px;
+  font-size: 13px;
+  color: var(--ink-2);
+}
+
+.energy-task-foot .hint.ok {
+  color: var(--good);
+}
+
+.energy-task-foot .hint.err {
+  color: var(--bad);
+}
+
+.energy-task-fields .inp[aria-invalid="true"] {
+  border-color: var(--bad-dot);
+  box-shadow: 0 0 0 3px var(--bad-tint);
+}
+
+.energy-info {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 10px;
+  margin: 0 18px 16px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: var(--accent-tint);
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--ink);
+}
+
+.energy-info svg {
+  width: 16px;
+  height: 16px;
+  margin-top: 1px;
+  color: var(--accent-ink);
+}
+
+/* --------------------------------------------------------------------------
+   Task list
+   -------------------------------------------------------------------------- */
+.energy-task-list {
+  display: grid;
+  gap: 2px;
+  padding: 6px;
+}
+
+.energy-task-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 4px 16px;
+  width: 100%;
+  padding: 11px 12px;
+  border: 0;
+  border-radius: 12px;
+  background: none;
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.16s ease-out;
+}
+
+.energy-task-row:hover {
+  background: var(--fill-2);
+}
+
+.energy-task-row.selected,
+.energy-task-row[aria-pressed="true"] {
+  background: var(--accent-tint);
+}
+
+.energy-task-row:focus-visible {
+  outline: 2px solid var(--seg-focus);
+  outline-offset: 1px;
+}
+
+/* Current markup: <span><strong/><small/></span><span>n molecules</span> */
+.energy-task-row > span:first-child {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.energy-task-row strong {
+  overflow: hidden;
+  font-size: 14px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.energy-task-row small {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  color: var(--ink-2);
+  text-transform: capitalize;
+}
+
+.energy-task-row > span:last-child {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--ink-2);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.energy-task-row > span:last-child svg {
+  width: 14px;
+  height: 14px;
+  color: var(--ink-3);
+}
+
+.energy-page .box > p.muted {
+  padding: 18px;
+  font-size: 13.5px;
+}
+
+/* --------------------------------------------------------------------------
+   Results
+   -------------------------------------------------------------------------- */
+.energy-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  padding: 16px 18px 6px;
+}
+
+.energy-summary div {
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: var(--fill-2);
+}
+
+.energy-summary span {
+  display: block;
+  font-size: 12px;
+  color: var(--ink-2);
+}
+
+.energy-summary b {
+  display: block;
+  margin-top: 2px;
+  font: 600 22px/1.2 var(--font-display);
+  letter-spacing: -0.02em;
+}
+
+.energy-summary .bad {
+  background: var(--bad-tint);
+}
+
+.energy-summary .bad b {
+  color: var(--bad);
+}
+
+.energy-results-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 14px;
+  padding: 12px 18px;
+}
+
+.energy-results-tools .search {
+  flex: 1 1 200px;
+  max-width: 280px;
+}
+
+.energy-results-tools .search input {
+  height: 34px;
+  border-radius: 999px;
+  padding: 0 14px 0 34px;
+  background: var(--b-fill);
+}
+
+.energy-results-tools .sp {
+  flex: 1;
+}
+
+.energy-page .tbl-wrap {
+  max-height: 460px;
+  margin: 0 18px 18px;
+  overflow: auto;
+  border-radius: 12px;
+  box-shadow: none;
+}
+
+.energy-page .tbl-wrap table {
+  font-size: 13.5px;
+}
+
+.energy-page .tbl-wrap th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--surface-2);
+}
+
+.energy-page .tbl-wrap td {
+  padding: 9px 14px;
+}
+
+.energy-page .tbl-wrap td.r {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+.energy-page .tbl-wrap .idx {
+  width: 44px;
+  color: var(--ink-3);
+}
+
+.energy-page .tbl-wrap td.mol {
+  overflow-wrap: anywhere;
+}
+
+.energy-page .tbl-wrap tr.failed td {
+  background: var(--bad-tint);
+}
+
+.energy-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  color: var(--ink-2);
+  text-transform: capitalize;
+}
+
+.energy-status.failed {
+  color: var(--bad);
+  font-weight: 500;
+}
+
+.energy-progress {
+  display: grid;
+  gap: 8px;
+  padding: 16px 18px;
+}
+
+.energy-progress .progress-top {
+  font-size: 13.5px;
+}
+
+.energy-progress progress {
+  display: block;
+  width: 100%;
+  height: 6px;
+  border: 0;
+  border-radius: 999px;
+  overflow: hidden;
+  appearance: none;
+  background: var(--fill);
+}
+
+.energy-progress progress::-webkit-progress-bar {
+  background: var(--fill);
+  border-radius: 999px;
+}
+
+.energy-progress progress::-webkit-progress-value {
+  background: var(--accent);
+  border-radius: 999px;
+}
+
+.energy-progress progress::-moz-progress-bar {
+  background: var(--accent);
+  border-radius: 999px;
+}
+
+.energy-log {
+  margin: 0 18px 18px;
+  border-radius: 12px;
+  box-shadow: none;
+}
+
+.energy-log summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 14px;
+  font-size: 13.5px;
+  font-weight: 500;
+  list-style: none;
+  cursor: pointer;
+}
+
+.energy-log summary::-webkit-details-marker {
+  display: none;
+}
+
+.energy-log summary svg {
+  width: 14px;
+  height: 14px;
+  color: var(--ink-3);
+  transition: transform 0.2s ease-out;
+}
+
+.energy-log[open] summary svg {
+  transform: rotate(90deg);
+}
+
+.energy-log summary:focus-visible {
+  outline: 2px solid var(--seg-focus);
+  outline-offset: 2px;
+  border-radius: 12px;
+}
+
+.energy-log pre {
+  margin: 0;
+  max-height: 240px;
+  overflow: auto;
+  padding: 12px 14px;
+  border-top: 1px solid var(--sep);
+  border-radius: 0 0 12px 12px;
+  background: var(--code-bg);
+  color: var(--code-ink);
+  font: 12px/1.6 var(--font-mono);
+  white-space: pre-wrap;
+}
+
+/* --------------------------------------------------------------------------
+   Workspace › Calculation dataset › DFT energy (current .energy-upload box)
+   -------------------------------------------------------------------------- */
+.energy-upload {
+  display: grid;
+  gap: 10px;
+  padding: 16px;
+  border-radius: var(--r-md);
+}
+
+.file-picker {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 14px;
+  padding: 14px 16px;
+  border: 1.5px dashed var(--sep-2);
+  border-radius: 14px;
+  background: var(--surface-2);
+  cursor: pointer;
+  transition: border-color 0.15s, background-color 0.15s;
+}
+
+.file-picker:hover,
+.file-picker:focus-within {
+  border-color: var(--accent);
+  background: var(--accent-tint);
+}
+
+.file-picker input[type="file"] {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.file-picker .file-name {
+  font: 13px var(--font-mono);
+  color: var(--ink-2);
+  overflow-wrap: anywhere;
+}
+
+/* --------------------------------------------------------------------------
+   Empty state and responsive
+   -------------------------------------------------------------------------- */
+.energy-page .detail > .panel > .empty > svg {
+  width: 26px;
+  height: 26px;
+  color: var(--ink-2);
+}
+
+@media (max-width: 1000px) {
+  .energy-page .sidebar .job-list {
+    max-height: 260px;
+  }
+}
+
+@media (max-width: 640px) {
+  .energy-run-picker {
+    margin: 0 20px;
+  }
+
+  .energy-run-picker .field {
+    flex-wrap: wrap;
+  }
+
+  .energy-run-picker select {
+    max-width: none;
+    width: 100%;
+  }
+
+  .energy-task-fields .field {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .energy-page .box-head {
+    flex-wrap: wrap;
+    padding: 12px 14px;
+  }
+
+  /* Results head: title on the first row, actions on the second; the task
+     row above already shows the status, so the pill steps aside */
+  .energy-results .box-head strong {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+
+  .energy-results .box-head .pill {
+    display: none;
+  }
+
+  .energy-results .box-head .sp {
+    display: none;
+  }
+
+  .energy-head-actions {
+    flex-basis: 100%;
+  }
+
+  .energy-summary {
+    gap: 8px;
+    padding: 14px 14px 4px;
+  }
+
+  .energy-summary div {
+    padding: 10px 12px;
+  }
+
+  .energy-summary b {
+    font-size: 20px;
+  }
+
+  .energy-results-tools {
+    padding: 10px 14px;
+  }
+
+  .energy-page .tbl-wrap,
+  .energy-log {
+    margin-inline: 14px;
+  }
+
+  /* Phones: drop the index column and keep the status as its icon */
+  .energy-page .tbl-wrap .idx {
+    display: none;
+  }
+
+  .energy-page .tbl-wrap th,
+  .energy-page .tbl-wrap td {
+    padding-inline: 10px;
+  }
+
+  .energy-page .tbl-wrap .lbl {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+
+  .energy-page .tbl-wrap th.st {
+    width: 34px;
+  }
+
+  .energy-task-foot .btn {
+    flex: 1;
+  }
+}

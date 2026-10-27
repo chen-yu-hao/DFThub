@@ -1,0 +1,12 @@
+1	Ti	1	Cl	-1	TiCl					101.70	1
+1	V_3dmrbe6	5	F	-1	VF5					564.15	5
+1	Cr_3dmrbe6	1	Cl	-1	CrCl					90.15	1
+1	Cr_3dmrbe6	1	O	1	F	-1	CrOF			247.58	2
+2	Fe_3dmrbe6	4	Br	-1	p_FeBr2_2					366.80	6
+1	Co	4	C	4	O	1	H	-1	Co_CO_4H	1230.13	9
+-1	NiCH2+	1	Ni+	1	CH2					76.30	1
+-1	FeCO5	1	Fe_mrbe5	5	CO					147.40	5
+-1	VS	1	V_mrbe5	1	s					106.90	1
+1	Cu-nr	1	Cl-nr	-1	CuCl-nr					90.2	1
+1	V-nr	1	O-nr	-1	VO-nr					151	1
+1	Cl-nr	1	Ni-nr	-1	NiCl-nr					88.7	1

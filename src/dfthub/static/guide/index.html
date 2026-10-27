@@ -1,0 +1,331 @@
+<!DOCTYPE html><html lang="en"> <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="description" content="Learn how to prepare data, submit jobs, read results and compare DFThub runs."><meta property="og:title" content="Guide · DFThub"><meta property="og:description" content="Learn how to prepare data, submit jobs, read results and compare DFThub runs."><meta property="og:type" content="website"><meta property="og:url" content="https://dfthub.ecnu.space/guide/"><meta name="twitter:card" content="summary"><meta name="twitter:title" content="Guide · DFThub"><meta name="twitter:description" content="Learn how to prepare data, submit jobs, read results and compare DFThub runs."><link rel="icon" href="/favicon.svg" type="image/svg+xml"><title>Guide · DFThub</title><script src="/_astro/seg-indicator.DyJmbaE5.js" defer></script><link rel="stylesheet" href="/_astro/guide.YxIIlvbx.css">
+<link rel="stylesheet" href="/_astro/analyze.H2441cYm.css">
+<link rel="stylesheet" href="/_astro/analyze.6xmDCWSC.css"></head> <body data-page="guide"> <style>astro-island,astro-slot,astro-static-slot{display:contents}</style><script>(()=>{var e=async t=>{await(await t())()};(self.Astro||(self.Astro={})).load=e;window.dispatchEvent(new Event("astro:load"));})();</script><script>(()=>{var A=Object.defineProperty;var g=(i,o,a)=>o in i?A(i,o,{enumerable:!0,configurable:!0,writable:!0,value:a}):i[o]=a;var d=(i,o,a)=>g(i,typeof o!="symbol"?o+"":o,a);{let i={0:t=>m(t),1:t=>a(t),2:t=>new RegExp(t),3:t=>new Date(t),4:t=>new Map(a(t)),5:t=>new Set(a(t)),6:t=>BigInt(t),7:t=>new URL(t),8:t=>new Uint8Array(t),9:t=>new Uint16Array(t),10:t=>new Uint32Array(t),11:t=>1/0*t},o=t=>{let[l,e]=t;return l in i?i[l](e):void 0},a=t=>t.map(o),m=t=>typeof t!="object"||t===null?t:Object.fromEntries(Object.entries(t).map(([l,e])=>[l,o(e)]));class y extends HTMLElement{constructor(){super(...arguments);d(this,"Component");d(this,"hydrator");d(this,"hydrate",async()=>{var b;if(!this.hydrator||!this.isConnected)return;let e=(b=this.parentElement)==null?void 0:b.closest("astro-island[ssr]");if(e){e.addEventListener("astro:hydrate",this.hydrate,{once:!0});return}let c=this.querySelectorAll("astro-slot"),n={},h=this.querySelectorAll("template[data-astro-template]");for(let r of h){let s=r.closest(this.tagName);s!=null&&s.isSameNode(this)&&(n[r.getAttribute("data-astro-template")||"default"]=r.innerHTML,r.remove())}for(let r of c){let s=r.closest(this.tagName);s!=null&&s.isSameNode(this)&&(n[r.getAttribute("name")||"default"]=r.innerHTML)}let p;try{p=this.hasAttribute("props")?m(JSON.parse(this.getAttribute("props"))):{}}catch(r){let s=this.getAttribute("component-url")||"<unknown>",v=this.getAttribute("component-export");throw v&&(s+=` (export ${v})`),console.error(`[hydrate] Error parsing props for component ${s}`,this.getAttribute("props"),r),r}let u;await this.hydrator(this)(this.Component,p,n,{client:this.getAttribute("client")}),this.removeAttribute("ssr"),this.dispatchEvent(new CustomEvent("astro:hydrate"))});d(this,"unmount",()=>{this.isConnected||this.dispatchEvent(new CustomEvent("astro:unmount"))})}disconnectedCallback(){document.removeEventListener("astro:after-swap",this.unmount),document.addEventListener("astro:after-swap",this.unmount,{once:!0})}connectedCallback(){if(!this.hasAttribute("await-children")||document.readyState==="interactive"||document.readyState==="complete")this.childrenConnectedCallback();else{let e=()=>{document.removeEventListener("DOMContentLoaded",e),c.disconnect(),this.childrenConnectedCallback()},c=new MutationObserver(()=>{var n;((n=this.lastChild)==null?void 0:n.nodeType)===Node.COMMENT_NODE&&this.lastChild.nodeValue==="astro:end"&&(this.lastChild.remove(),e())});c.observe(this,{childList:!0}),document.addEventListener("DOMContentLoaded",e)}}async childrenConnectedCallback(){let e=this.getAttribute("before-hydration-url");e&&await import(e),this.start()}async start(){let e=JSON.parse(this.getAttribute("opts")),c=this.getAttribute("client");if(Astro[c]===void 0){window.addEventListener(`astro:${c}`,()=>this.start(),{once:!0});return}try{await Astro[c](async()=>{let n=this.getAttribute("renderer-url"),[h,{default:p}]=await Promise.all([import(this.getAttribute("component-url")),n?import(n):()=>()=>{}]),u=this.getAttribute("component-export")||"default";if(!u.includes("."))this.Component=h[u];else{this.Component=h;for(let f of u.split("."))this.Component=this.Component[f]}return this.hydrator=p,this.hydrate},e,this)}catch(n){console.error(`[astro-island] Error hydrating ${this.getAttribute("component-url")}`,n)}}attributeChangedCallback(){this.hydrate()}}d(y,"observedAttributes",["props"]),customElements.get("astro-island")||customElements.define("astro-island",y)}})();</script><astro-island uid="1jScuV" prefix="r1" component-url="/_astro/App.BDjj561A.js" component-export="default" renderer-url="/_astro/client.CLka3vFz.js" props="{&quot;page&quot;:[0,&quot;guide&quot;]}" ssr client="load" opts="{&quot;name&quot;:&quot;App&quot;,&quot;value&quot;:true}" await-children><svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.2-4.2"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7.5v5.5M12 16.5v.01"/></symbol>
+  <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5.5M12 7.5v.01"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+  <symbol id="i-doc" viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></symbol>
+  <symbol id="i-archive" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="5" rx="1.5"/><path d="M5 9v9a2 2 0 002 2h10a2 2 0 002-2V9M10 13h4"/></symbol>
+  <symbol id="i-chev" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></symbol>
+  <symbol id="i-ext" viewBox="0 0 24 24"><path d="M14 4h6v6M20 4l-9 9M18 14v4a2 2 0 01-2 2H6a2 2 0 01-2-2V8a2 2 0 012-2h4"/></symbol>
+  <symbol id="i-copy" viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="12" rx="2.5"/><path d="M16 8V6a2 2 0 00-2-2H6a2 2 0 00-2 2v8a2 2 0 002 2h2"/></symbol>
+  <symbol id="i-mail" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M4 7l8 6 8-6"/></symbol>
+  <symbol id="i-down" viewBox="0 0 24 24"><path d="M12 4v11M7 10.5l5 5 5-5M5 20h14"/></symbol>
+  <symbol id="i-undo" viewBox="0 0 24 24"><path d="M4 10h11a5 5 0 010 10H9"/><path d="M8 6l-4 4 4 4"/></symbol>
+  <symbol id="i-play" viewBox="0 0 24 24"><path d="M7 5l12 7-12 7z"/></symbol>
+  <symbol id="i-stop" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2"/></symbol>
+  <symbol id="i-atom" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1.6"/><ellipse cx="12" cy="12" rx="9.5" ry="3.8"/><ellipse cx="12" cy="12" rx="9.5" ry="3.8" transform="rotate(60 12 12)"/><ellipse cx="12" cy="12" rx="9.5" ry="3.8" transform="rotate(120 12 12)"/></symbol>
+  <symbol id="i-dup" viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="12" rx="2.5"/><path d="M14 11v6M11 14h6M16 8V6a2 2 0 00-2-2H6a2 2 0 00-2 2v8a2 2 0 002 2h2"/></symbol>
+  <symbol id="i-slider" viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></symbol>
+  <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M20 11a8 8 0 10-2.3 5.7"/><path d="M20 4v7h-7"/></symbol>
+  <symbol id="i-bolt" viewBox="0 0 24 24"><path d="M13 3L5 13.5h6L10 21l8-10.5h-6z"/></symbol>
+<symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v5M14 11v5"/></symbol><symbol id="i-chart" viewBox="0 0 24 24"><path d="M4 20h16M7 16v-5M12 16V6M17 16v-8"/></symbol><symbol id="i-table" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="14" rx="2.5"/><path d="M3.5 10h17M3.5 14.5h17M9.5 10v9"/></symbol><symbol id="i-image" viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="15" rx="2.5"/><circle cx="9" cy="10" r="1.6"/><path d="M20.5 16l-5-5-8.5 8.5"/></symbol><symbol id="i-arrow-up" viewBox="0 0 24 24"><path d="M12 19V5M6.5 10.5L12 5l5.5 5.5"/></symbol><symbol id="i-arrow-down" viewBox="0 0 24 24"><path d="M12 5v14M6.5 13.5L12 19l5.5-5.5"/></symbol><symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.5"/><path d="M4.5 20c.9-3.4 3.4-5.2 7.5-5.2s6.6 1.8 7.5 5.2"/></symbol><symbol id="i-hydrogen" viewBox="0 0 32 32"><circle cx="16" cy="16" r="3.2" fill="currentColor" stroke="none"/><ellipse cx="16" cy="16" rx="13" ry="5.2"/><ellipse cx="16" cy="16" rx="13" ry="5.2" transform="rotate(60 16 16)"/><ellipse cx="16" cy="16" rx="13" ry="5.2" transform="rotate(120 16 16)"/><circle cx="27" cy="16" r="1.6" fill="currentColor" stroke="none"/></symbol><symbol id="i-grid" viewBox="0 0 24 24"><rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><rect x="14" y="14" width="6" height="6" rx="1"/></symbol></svg><header class="nav"><div class="wrap"><a class="brand" href="/" aria-label="DFThub home"><span class="logo hydrogen-logo"><img src="/favicon.svg" alt="" aria-hidden="true"/></span>DFThub</a><nav class="nav-links" aria-label="Sections"><a href="/workspace/"><svg class="i" aria-hidden="true"><use href="#i-grid"></use></svg>Workspace</a><a href="/analyze/" class="nav-analyze"><svg class="i" aria-hidden="true"><use href="#i-chart"></use></svg>Analyze</a><a href="/energy/"><svg class="i" aria-hidden="true"><use href="#i-atom"></use></svg>DFT energy</a><a href="/guide/" aria-current="page">Guide</a></nav><div class="nav-right" style="position:relative"><button type="button" class="btn btn-primary btn-sm js-new" title="New job (N)"><svg class="i" aria-hidden="true"><use href="#i-plus"></use></svg>New job</button><button type="button" class="btn btn-secondary btn-sm" id="signIn"><svg class="i" aria-hidden="true"><use href="#i-user"></use></svg>Sign in</button><div class="menu" id="acctMenu" role="menu" hidden=""><div class="menu-head"><b>Your workspace</b><span>Sign in to manage your jobs</span></div><button type="button" role="menuitem" class="js-docs"><svg class="i" aria-hidden="true"><use href="#i-doc"></use></svg>API docs</button><a type="button" role="menuitem" id="contactBtn" href="mailto:ECNU_DFThub@163.com"><svg class="i" aria-hidden="true"><use href="#i-mail"></use></svg>Contact the team</a><button type="button" role="menuitem" id="copyContact"><svg class="i" aria-hidden="true"><use href="#i-copy"></use></svg>Copy email</button><button type="button" role="menuitem" id="themeBtn"><svg class="i" aria-hidden="true"><use href="#i-bolt"></use></svg>Appearance:<!-- --> <span id="themeLbl">System</span></button><button type="button" role="menuitem" id="sessionAction"><svg class="i" aria-hidden="true"><use href="#i-user"></use></svg>Sign in</button></div></div></div></header><main id="top" class="page-guide"><div class="wrap"><div class="guide-host">
+<section class="gd" aria-labelledby="gdTitle">
+  <header class="gd-head">
+    <div class="eyebrow">Guide</div>
+    <h1 id="gdTitle">How to use DFThub</h1>
+    <p class="lead">Fit a density functional to your own reactions, check how it behaves, and export the results. This guide walks through each step.</p>
+    <div class="gd-meta">
+      <span><svg class="i" aria-hidden="true"><use href="#i-clock"></use></svg>About 8 minutes</span>
+      <span><svg class="i" aria-hidden="true"><use href="#i-doc"></use></svg>Covers Workspace, Analyze and figure export</span>
+    </div>
+  </header>
+
+  <ol class="gd-quick" aria-label="Quick start">
+    <li><a href="#prepare"><b>Prepare your data</b><span>Geometries as .xyz files in one .tgz, plus a .ref file of reference energies.</span></a></li>
+    <li><a href="#submit"><b>Submit a job</b><span>Upload both files, pick an inverse weight and a basis set.</span></a></li>
+    <li><a href="#progress"><b>Follow progress</b><span>Four stages, with submission and completion notifications.</span></a></li>
+    <li><a href="#tune"><b>Tune and resubmit</b><span>Adjust database weights until the balance suits you.</span></a></li>
+    <li><a href="#analyze"><b>Analyze and export</b><span>Compare runs and save Nature-style figures.</span></a></li>
+  </ol>
+
+  <div class="gd-layout">
+    <nav class="gd-toc" aria-label="Guide contents">
+      <div class="gd-toc-title">Contents</div>
+      <ol>
+        <li><a href="#start">Before you start</a></li>
+        <li><a href="#prepare">Prepare your data</a></li>
+        <li><a href="#submit">Submit a job</a></li>
+        <li><a href="#progress">Follow progress</a></li>
+        <li><a href="#results">Read the results</a></li>
+        <li><a href="#tune">Tune and resubmit</a></li>
+        <li><a href="#analyze">Analyze runs</a></li>
+        <li><a href="#export">Export figures</a></li>
+        <li><a href="#shortcuts">Keyboard shortcuts</a></li>
+        <li><a href="#help">Questions and help</a></li>
+      </ol>
+    </nav>
+
+    <div class="gd-content">
+
+      <!-- Before you start -->
+      <section class="gd-sec" id="start" aria-labelledby="h-start">
+        <h2 id="h-start">Before you start</h2>
+        <p>Sign in or register so your jobs stay in one place. You need two files for each data set (next section). These terms appear throughout the site:</p>
+        <dl class="gd-terms">
+          <dt>Job</dt><dd>One data set and everything computed from it, identified by its Job ID, such as <span class="mono">dft_dvvini</span>.</dd>
+          <dt>Run</dt><dd>One fit inside a job. New fits are numbered <span class="mono">weight_0</span>, <span class="mono">weight_1</span>, and so on.</dd>
+          <dt>Fork</dt><dd>A run made by tuning the database weights of an existing run, such as <span class="mono">weight_2/fork-1</span>. It is evaluated on its parent's densities, so it is quick.</dd>
+          <dt>Inverse weight</dt><dd>How much a data set counts in the fit. <b>Lower means it counts more.</b></dd>
+          <dt>MUE</dt><dd>Mean unsigned error against the reference energies, in kcal/mol. Lower is better.</dd>
+          <dt>Input MUE</dt><dd>MUE on your own data set. <b>Non-SCF</b> reuses the parent run's densities; <b>SCF</b> recomputes them self-consistently.</dd>
+          <dt>CF22D original</dt><dd>The published CF22D parameters. Every change is measured against them.</dd>
+          <dt>Reference datasets</dt><dd>The built-in training databases (91 of them) that keep the functional general.</dd>
+        </dl>
+      </section>
+
+      <!-- Prepare -->
+      <section class="gd-sec" id="prepare" aria-labelledby="h-prepare">
+        <div class="gd-step"><span class="gd-step-num" aria-hidden="true">01</span><span>Step 1</span></div>
+        <h2 id="h-prepare">Prepare your data</h2>
+        <p>A data set is two files: your structures and the reference energies the functional should reproduce.</p>
+        <div class="gd-files">
+          <div class="gd-file">
+            <div class="gd-file-head"><span class="ico"><svg class="i" aria-hidden="true"><use href="#i-archive"></use></svg></span><div><b>Geometries</b><small>One .tgz archive of .xyz files</small></div></div>
+            <p>One .xyz file per molecule or transition state. Line 2 holds the charge and spin multiplicity.</p>
+            <div class="gd-code">
+              <pre aria-label="Example .xyz file">3
+0 1
+O    0.000000    0.000000    0.117300
+H    0.000000    0.757200   -0.469200
+H    0.000000   -0.757200   -0.469200</pre>
+              <button type="button" class="icon-btn" aria-label="Copy"><svg class="i" aria-hidden="true"><use href="#i-copy"></use></svg></button>
+            </div>
+            <ul class="gd-code-note">
+              <li><span>3</span> number of atoms</li>
+              <li><span>0 1</span> charge, spin multiplicity</li>
+              <li><span>O x y z</span> element and Cartesian coordinates, one atom per line</li>
+            </ul>
+            <p>Pack the files into one archive:</p>
+            <div class="gd-code">
+              <pre aria-label="Command to create the archive">tar -czf YourDatabaseName.tgz *.xyz</pre>
+              <button type="button" class="icon-btn" aria-label="Copy"><svg class="i" aria-hidden="true"><use href="#i-copy"></use></svg></button>
+            </div>
+          </div>
+          <div class="gd-file">
+            <div class="gd-file-head"><span class="ico"><svg class="i" aria-hidden="true"><use href="#i-check"></use></svg></span><div><b>Optional test set</b><small>A second .tgz and .ref pair</small></div></div>
+            <p>Upload a separate test archive and reference file when you want an independent evaluation. The test set is excluded from optimization and is reported separately after the training calculation.</p>
+          </div>
+          <div class="gd-file">
+            <div class="gd-file-head"><span class="ico"><svg class="i" aria-hidden="true"><use href="#i-doc"></use></svg></span><div><b>Reference energies</b><small>One .ref file</small></div></div>
+            <p>Lists each reaction as a formula of your molecule names, with its reference energy from experiment or high-level calculations such as CCSD(T)/CBS.</p>
+            <p>The template shows the exact layout. Start from it rather than writing the file from scratch.</p>
+            <a class="btn btn-secondary btn-sm js-template" href="/api_dft/download/Work/template" style="justify-self:start"><svg class="i" aria-hidden="true"><use href="#i-down"></use></svg>Download template</a>
+          </div>
+        </div>
+        <h3>Check before you upload</h3>
+        <ul class="gd-check">
+          <li><svg class="i" aria-hidden="true"><use href="#i-check"></use></svg><span>Each .xyz file holds one molecule or transition state, with its charge and spin multiplicity on line 2.</span></li>
+          <li><svg class="i" aria-hidden="true"><use href="#i-check"></use></svg><span>Every file in the archive has a unique name.</span></li>
+          <li><svg class="i" aria-hidden="true"><use href="#i-check"></use></svg><span>Molecule names in the .ref file match the .xyz file names exactly.</span></li>
+          <li><svg class="i" aria-hidden="true"><use href="#i-check"></use></svg><span>Reference energies come from experiment or high-level theory, such as CCSD(T)/CBS.</span></li>
+        </ul>
+      </section>
+
+      <!-- Submit -->
+      <section class="gd-sec" id="submit" aria-labelledby="h-submit">
+        <div class="gd-step"><span class="gd-step-num" aria-hidden="true">02</span><span>Step 2</span></div>
+        <h2 id="h-submit">Submit a job</h2>
+        <p>Click <span class="ui primary"><svg class="i" aria-hidden="true"><use href="#i-plus"></use></svg>New job</span> in the top bar, or press <kbd>N</kbd>. Fill in the form; <span class="ui">Submit job</span> becomes available once both files are added.</p>
+        <div class="gd-table">
+          <table>
+            <thead><tr><th>Field</th><th>What to enter</th></tr></thead>
+            <tbody>
+              <tr><td>Job ID</td><td>Letters, numbers, - and _. A random ID is suggested; regenerate it or type a name you will recognise.</td></tr>
+              <tr><td>Email</td><td>Where DFThub writes when each step finishes.</td></tr>
+              <tr><td>Geometries (.tgz)</td><td>Drop your archive on the box, or click to choose it.</td></tr>
+              <tr><td>Reference energies (.ref)</td><td>Your training .ref file, the same way.</td></tr>
+              <tr><td>Optional test set</td><td>A paired test .tgz/.ref upload in Advanced settings; it is excluded from optimization.</td></tr>
+              <tr><td>Initial inverse weight</td><td>0.001–10, default 0.02. Type a value or use the slider (see below).</td></tr>
+              <tr><td>Zeta level</td><td>Basis-set size, from Minimal to Quintuple.</td></tr>
+              <tr><td>Core electrons</td><td>All-electron, or ECP to replace core electrons with an effective core potential.</td></tr>
+              <tr><td>Final basis</td><td>Suggested from the two choices above, for example def2-QZVP. Change it if you need another.</td></tr>
+              <tr><td>Notes</td><td>Optional, up to 500 characters, for anything the team should know.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <h3>Choosing the inverse weight</h3>
+        <p class="gd-p">It sets how strongly your data set pulls on the fit compared with the built-in training databases. A lower value fits your reactions more closely, but the reference databases may get worse. Start with the default; you can change it later and every run stays available for comparison.</p>
+        <div class="gd-scale" role="img" aria-label="Inverse weight scale from 0.001 to 10, default 0.02. Lower values give your data set more influence.">
+          <div class="gd-scale-title"><span>Initial inverse weight</span><span class="muted" style="font-weight:400">log scale</span></div>
+          <div class="gd-scale-track"><span class="gd-scale-mark" style="left:32.5%"><span>0.02 default</span></span></div>
+          <div class="gd-scale-ticks"><span style="left:0">0.001</span><span style="left:25%">0.01</span><span style="left:50%">0.1</span><span style="left:75%">1</span><span style="left:100%">10</span></div>
+          <div class="gd-scale-ends"><span>← Your data set counts more</span><span>Training databases count more →</span></div>
+        </div>
+      </section>
+
+      <!-- Progress -->
+      <section class="gd-sec" id="progress" aria-labelledby="h-progress">
+        <div class="gd-step"><span class="gd-step-num" aria-hidden="true">03</span><span>Step 3</span></div>
+        <h2 id="h-progress">Follow progress</h2>
+        <p>Open the job in the <a href="/workspace/">Workspace</a>. Each run moves through four stages. DFThub sends submission and completion notifications; use the tracker and Log tab for live progress.</p>
+        <div class="gd-tracker">
+          <ol class="tracker" aria-label="Example job progress">
+            <li class="done"><span class="t-ico" aria-hidden="true"><svg class="i"><use href="#i-check"></use></svg></span><div class="t-label">Data checked</div><div class="t-sub">Your files pass validation</div></li>
+            <li class="done"><span class="t-ico" aria-hidden="true"><svg class="i"><use href="#i-check"></use></svg></span><div class="t-label">Initial densities</div><div class="t-sub">Starting densities are computed</div></li>
+            <li class="active"><span class="t-ico" aria-hidden="true"><svg class="i"><use href="#i-refresh"></use></svg></span><div class="t-label">Weight tuning</div><div class="t-sub">The functional is fitted</div></li>
+            <li class="pending"><span class="t-ico" aria-hidden="true"></span><div class="t-label">Single-point energies</div><div class="t-sub">Converged self-consistent energies</div></li>
+          </ol>
+          <div class="gd-pills" aria-label="Run statuses">
+            <span class="pill queued"><span class="dot queued" aria-hidden="true"></span>Queued</span>
+            <span class="pill running"><span class="dot running" aria-hidden="true"></span>Running</span>
+            <span class="pill completed"><span class="dot completed" aria-hidden="true"></span>Completed</span>
+            <span class="pill failed"><span class="dot failed" aria-hidden="true"></span>Failed</span>
+          </div>
+        </div>
+        <p>The sidebar lists your jobs and their runs; filter by <span class="ui">Active</span>, <span class="ui">Done</span> or <span class="ui">Failed</span>. If a run fails, the <span class="ui">Log</span> tab shows the calculation log with the error lines highlighted.</p>
+      </section>
+
+      <!-- Results -->
+      <section class="gd-sec" id="results" aria-labelledby="h-results">
+        <div class="gd-step"><span class="gd-step-num" aria-hidden="true">04</span><span>Step 4</span></div>
+        <h2 id="h-results">Read the results</h2>
+        <p>Select a finished run. The <span class="ui">Overview</span> tab sums it up in three numbers, all in kcal/mol:</p>
+        <div class="gd-result">
+          <div class="mue-summary" aria-label="Example result summary">
+            <section class="input-summary"><h4>Your data set · MUE</h4><p class="summary-value num">1.22<small>kcal/mol</small></p><p>from <strong class="num">4.22</strong> with original CF22D parameters · <strong class="change-good">71% lower</strong></p></section>
+            <section><h4>Reference databases</h4><p class="summary-value num">43 of 91</p><p>improved · <strong class="change-bad">48 got worse</strong></p></section>
+            <section><h4>Within chemical accuracy</h4><p class="summary-value num">42 → 42</p><p>datasets with MUE under 1 kcal/mol</p></section>
+          </div>
+          <div class="gd-qa">
+            <div><b>How good is the fit?</b>Your data set's MUE, next to what the original CF22D parameters give on the same densities.</div>
+            <div><b>What did it cost?</b>How many reference datasets improved or got worse, with the biggest changes listed below.</div>
+            <div><b>Still accurate?</b>How many datasets stay under 1 kcal/mol, before and after.</div>
+          </div>
+        </div>
+        <p><span class="ui">Optimized parameters<svg class="i" aria-hidden="true"><use href="#i-chev"></use></svg></span> lists the fitted coefficients (Cx, Cy, Cz and HF%). Use <span class="ui">Export parameters</span> to download the named parameter text, raw parameter text, or PySCF functional file when available. Switch the MUE panel to <span class="ui">Overall MUE by type</span> or <span class="ui">MUE by dataset</span> for detail, and open <span class="ui">Self-consistent results</span> once single-point energies are done.</p>
+      </section>
+
+      <!-- Tune -->
+      <section class="gd-sec" id="tune" aria-labelledby="h-tune">
+        <div class="gd-step"><span class="gd-step-num" aria-hidden="true">05</span><span>Step 5</span></div>
+        <h2 id="h-tune">Tune and resubmit</h2>
+        <p>Rarely is the first fit the right balance. Tuning lets you try new weights quickly, then commit to a full fit.</p>
+        <div class="gd-lineage" aria-label="Example run history">
+          <span class="gd-node fit">weight_0</span><span class="gd-arrow" aria-hidden="true"><svg class="i"><use href="#i-chev"></use></svg></span>
+          <span class="gd-node fit">weight_1</span><span class="gd-arrow" aria-hidden="true"><svg class="i"><use href="#i-chev"></use></svg></span>
+          <span class="gd-node fit">weight_2</span><span class="gd-arrow" aria-hidden="true"><svg class="i"><use href="#i-chev"></use></svg></span>
+          <span class="gd-node fork">fork-1</span><span class="gd-arrow" aria-hidden="true"><svg class="i"><use href="#i-chev"></use></svg></span>
+          <span class="gd-node fork">fork-2</span><span class="gd-arrow" aria-hidden="true"><svg class="i"><use href="#i-chev"></use></svg></span>
+          <span class="gd-node fork">fork-3</span><span class="gd-arrow" aria-hidden="true"><svg class="i"><use href="#i-chev"></use></svg></span>
+          <span class="gd-node next">weight_3</span>
+        </div>
+        <div class="gd-legend">
+          <span><i class="fit"></i>New fit, self-consistent</span>
+          <span><i class="fork"></i>Fork: tuned weights on the parent's densities</span>
+          <span><i class="next"></i>Next resubmission</span>
+        </div>
+        <ol class="gd-steps">
+          <li><div><b>Tune weights</b>In a completed run, click <span class="ui"><svg class="i" aria-hidden="true"><use href="#i-slider"></use></svg>Tune weights</span> and change the inverse weight of any database. Lower values make it count more.</div></li>
+          <li><div><b>Compare forks</b>Each set of tuned weights is saved as a fork of the run. Compare their MUE in the Workspace, or side by side on Analyze.</div></li>
+          <li><div><b>Resubmit</b>When the balance suits you, resubmit with the new weights. This runs a full fit as the next run (for example <span class="mono">weight_3</span>); your current run stays available.</div></li>
+          <li><div><b>Calculate Input</b>Click <span class="ui"><svg class="i" aria-hidden="true"><use href="#i-play"></use></svg>Calculate Input</span> for the self-consistent Input MUE. Open <span class="ui">Self-consistent results</span> and select <span class="ui">AME418</span> for the benchmark or <span class="ui">DFT energy</span> to evaluate an uploaded archive molecule by molecule without a reference file.</div></li>
+        </ol>
+        <div class="gd-note warn"><svg class="i" aria-hidden="true"><use href="#i-alert"></use></svg><div>Forks are quick estimates on stored densities. Check the SCF Input MUE before you report a result.</div></div>
+      </section>
+
+      <!-- Analyze -->
+      <section class="gd-sec" id="analyze" aria-labelledby="h-analyze">
+        <div class="gd-step"><span class="gd-step-num" aria-hidden="true">06</span><span>Step 6</span></div>
+        <h2 id="h-analyze">Analyze runs</h2>
+        <p>Click <span class="ui"><svg class="i" aria-hidden="true"><use href="#i-chart"></use></svg>Analyze</span> in the top bar to compare every run of a job on one page.</p>
+        <div class="gd-map" aria-hidden="true">
+          <div><span class="gd-badge">1</span><b>Runs</b>Tick to include, click to focus</div>
+          <div class="gd-map-main">
+            <div><span class="gd-badge">2</span><b>Trends · Input vs SCF · All changes</b>Three views of the same runs</div>
+            <div><span class="gd-badge">3</span><b>CF22D baseline</b>The baseline for every difference</div>
+            <div><span class="gd-badge">4</span><b>Charts</b>Hover for values · Table · Export</div>
+          </div>
+        </div>
+        <ol class="gd-map-list">
+          <li><span class="gd-badge">1</span><b>Pick the runs.</b> In the sidebar, tick the runs to include and click one to focus it; the focus run is highlighted in every chart.</li>
+          <li><span class="gd-badge">2</span><b>Choose a view.</b> <span class="ui">Trends</span> shows MUE across runs and the trade-off between your data set and the reference databases (lower-left is better). <span class="ui">Input vs SCF</span> shows how much each run changes when evaluated self-consistently. <span class="ui">All changes</span> shows every reference dataset in every run; click a row for detail.</li>
+          <li><span class="gd-badge">3</span><b>Check the baseline.</b> Every change is compared with the original CF22D parameters.</li>
+          <li><span class="gd-badge">4</span><b>Explore the charts.</b> On <span class="ui">MUE across runs</span>, open <span class="ui">Series</span> and click <span class="ui"><svg class="i" aria-hidden="true"><use href="#i-plus"></use></svg>Add reference datasets</span> to plot up to four datasets, and switch to <span class="ui">Log</span> when their values differ a lot. <span class="ui"><svg class="i" aria-hidden="true"><use href="#i-table"></use></svg>Table</span> shows the numbers; <span class="ui">Export CSV</span> saves everything. Curve names appear at the right edge; line patterns distinguish basis sets and colors distinguish non-SCF and SCF series. Open <span class="ui">Series</span> to show or hide individual curves.</li>
+        </ol>
+        <div class="gd-note"><svg class="i" aria-hidden="true"><use href="#i-info"></use></svg><div>Which run to keep? On <b>Trends</b>, look for points near the lower-left of the trade-off chart. The faint blue line joins the runs that no other run beats on both your data set and the reference databases.</div></div>
+      </section>
+
+      <!-- Export -->
+      <section class="gd-sec" id="export" aria-labelledby="h-export">
+        <h2 id="h-export">Export figures</h2>
+        <p>Every chart on Analyze has <span class="ui"><svg class="i" aria-hidden="true"><use href="#i-image"></use></svg>Export</span>. It redraws the chart in Nature's figure style (Arial 5–7 pt, black text, thin axes, no gridlines) and shows a preview before you download.</p>
+        <div class="gd-export">
+          <div><b>Format</b>SVG keeps text editable and is the one to submit. PNG suits drafts and slides.</div>
+          <div><b>Width</b>89 mm (single column), 120 or 136 mm, or 183 mm (double column).</div>
+          <div><b>Resolution</b>PNG at 300 or 600 dpi, stored in the file.</div>
+          <div><b>Panel label</b>Optional letter, such as a, set in 8 pt bold.</div>
+        </div>
+        <p>The figure shows exactly what the chart shows: the runs you included, datasets you added, the log scale, and for the heatmap, the rows left after searching and filtering. For a journal that wants PDF or EPS, open the SVG in Illustrator or Inkscape and save it in that format.</p>
+      </section>
+
+      <!-- Shortcuts -->
+      <section class="gd-sec" id="shortcuts" aria-labelledby="h-shortcuts">
+        <h2 id="h-shortcuts">Keyboard shortcuts</h2>
+        <div class="gd-keys">
+          <div><span>Search jobs or runs</span><span><kbd>/</kbd></span></div>
+          <div><span>Start a new job</span><span><kbd>N</kbd></span></div>
+          <div><span>Move between runs</span><span><kbd>↑</kbd><kbd>↓</kbd></span></div>
+          <div><span>Switch Analyze views (tabs focused)</span><span><kbd>←</kbd><kbd>→</kbd></span></div>
+          <div><span>Close a dialog or list</span><span><kbd>Esc</kbd></span></div>
+          <div><span>Activate a button or chart point</span><span><kbd>Enter</kbd></span></div>
+        </div>
+      </section>
+
+      <!-- Help -->
+      <section class="gd-sec" id="help" aria-labelledby="h-help">
+        <h2 id="h-help">Questions and help</h2>
+        <div class="gd-faq">
+          <details>
+            <summary>My upload is rejected. What should I check?<svg class="i" aria-hidden="true"><use href="#i-chev"></use></svg></summary>
+            <p>Most problems are names: every .xyz file needs a unique name, and the names in the .ref file must match them exactly. Also check that line 2 of each .xyz file holds the charge and spin multiplicity. The template shows a working example.</p>
+          </details>
+          <details>
+            <summary>The reference databases got worse. What now?<svg class="i" aria-hidden="true"><use href="#i-chev"></use></svg></summary>
+            <p>That is the trade-off of a strong pull from your data. Raise the inverse weight of your data set in the next resubmission, or use Tune weights to lower the inverse weight of the databases you care about most. Compare the results on Analyze.</p>
+          </details>
+          <details>
+            <summary>Why is the SCF Input MUE higher than the non-SCF one?<svg class="i" aria-hidden="true"><use href="#i-chev"></use></svg></summary>
+            <p>The non-SCF value reuses densities from the parent run. The SCF value lets the density relax with the new parameters, which usually shifts the error a little. The Input vs SCF view on Analyze shows the gap for every run.</p>
+          </details>
+          <details>
+            <summary>Can I delete a job?<svg class="i" aria-hidden="true"><use href="#i-chev"></use></svg></summary>
+            <p>Yes, from the job list in the Workspace. Deleting removes the uploaded files, all runs and all results, and cannot be undone. An active queued or running calculation must finish or be stopped before its job can be deleted.</p>
+          </details>
+          <details>
+            <summary>Can I script DFThub?<svg class="i" aria-hidden="true"><use href="#i-chev"></use></svg></summary>
+            <p>Yes. The API docs describe the endpoints for uploading files, submitting jobs and downloading results.</p>
+          </details>
+        </div>
+        <div class="gd-help">
+          <div>
+            <b>Cite DFThub</b>
+            <span>Please cite DFThub when you publish or report results:</span>
+            <ol class="gd-cite"><li>DFThub (this paper)</li><li id="gdCiteText">Yiwei Liu, Cheng Zhang, Zhonghua Liu, Donald G. Truhlar*, Ying Wang*, and Xiao He*, Supervised Learning of a Chemistry Functional with Damped Dispersion, <i>Nat. Comput. Sci.</i>, 2023, 3, 48–58.</li></ol>
+            <button type="button" class="btn btn-secondary btn-sm" id="gdCopyCite"><svg class="i" aria-hidden="true"><use href="#i-copy"></use></svg><span>Copy citation</span></button>
+          </div>
+          <div>
+            <b>API docs</b>
+            <span>Endpoints for files, jobs and results.</span>
+            <a class="btn btn-secondary btn-sm" href="/api_dft/docs"><svg class="i" aria-hidden="true"><use href="#i-doc"></use></svg>Read the API docs</a>
+          </div>
+          <div>
+            <b>Contact the team</b>
+            <span>Questions about your data or results.</span>
+            <a class="btn btn-secondary btn-sm" href="mailto:ECNU_DFThub@163.com"><svg class="i" aria-hidden="true"><use href="#i-mail"></use></svg>ECNU_DFThub@163.com</a>
+          </div>
+        </div>
+        <div class="gd-cta">
+          <a class="btn btn-primary" href="/workspace/"><svg class="i" aria-hidden="true"><use href="#i-plus"></use></svg>Start a new job</a>
+          <a class="btn btn-secondary" href="/analyze/"><svg class="i" aria-hidden="true"><use href="#i-chart"></use></svg>Open Analyze</a>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</section>
+</div></div></main><footer><div class="wrap"><a class="brand" href="/" style="font-size:15px"><span class="logo hydrogen-logo" style="width:22px;height:22px;border-radius:6px"><img src="/favicon.svg" alt="" aria-hidden="true"/></span>DFThub</a><span class="sp"></span><span style="display:inline-flex;align-items:center;gap:6px"><svg class="i" aria-hidden="true"><use href="#i-mail"></use></svg><span id="contactAddr">ECNU_DFThub@163.com</span><button type="button" class="icon-btn" id="copyMail" aria-label="Copy email address" style="width:24px;height:24px"><svg class="i" aria-hidden="true"><use href="#i-copy"></use></svg></button></span></div></footer><dialog class="sheet" aria-labelledby="authTitle" style="width:min(540px, calc(100vw - 24px))"><form style="display:contents" aria-busy="false"><div class="sheet-head"><div><h3 id="authTitle">Sign in to DFThub</h3><p>Access your research workspace.</p></div><button type="button" class="icon-btn" aria-label="Close"><svg class="i" aria-hidden="true"><use href="#i-x"></use></svg></button></div><div class="sheet-body"><fieldset style="display:contents"><div class="seg full" role="group" aria-label="Account access"><button type="button" aria-pressed="true">Sign in</button><button type="button" aria-pressed="false">Create account</button></div><div class="group"><div class="field"><label for="authEmail">Email</label><input class="inp" id="authEmail" type="email" autoComplete="email" required="" placeholder="you@example.com" value=""/></div><div class="field"><label for="authPassword">Password</label><input class="inp" id="authPassword" type="password" autoComplete="current-password" required="" placeholder="Your password" aria-invalid="false" value=""/></div></div></fieldset></div><div class="sheet-foot"><span class="hint" role="status">Your account keeps your research in one place.</span><a class="link" href="mailto:ECNU_DFThub@163.com?subject=DFThub%20password%20reset">Contact admin to reset password</a><button type="button" class="btn btn-secondary">Cancel</button><button type="submit" class="btn btn-primary">Continue</button></div></form></dialog><div class="toasts" aria-live="polite"></div><!--astro:end--></astro-island> </body></html>

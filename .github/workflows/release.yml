@@ -1,0 +1,122 @@
+name: Build and validate portable DFThub
+on:
+  push:
+    branches: ['release/**']
+    tags: ['v0.1.0']
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  engine:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04, macos-14]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Build tools
+        run: python -m pip install build wheel 'setuptools>=70' 'cmake<4'
+      - name: Linux wheel tools
+        if: runner.os == 'Linux'
+        run: python -m pip install auditwheel patchelf
+      - name: macOS wheel tools
+        if: runner.os == 'macOS'
+        run: python -m pip install delocate
+      - name: Linux native dependencies
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y libopenblas-dev
+      - name: macOS native dependencies
+        if: runner.os == 'macOS'
+        run: |
+          brew install llvm libomp openblas
+          echo "CC=$(brew --prefix llvm)/bin/clang" >> "$GITHUB_ENV"
+          echo "CXX=$(brew --prefix llvm)/bin/clang++" >> "$GITHUB_ENV"
+          echo "CMAKE_CONFIGURE_ARGS=-DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_OSX_DEPLOYMENT_TARGET=14.0 -DBLAS_LIBRARIES=$(brew --prefix openblas)/lib/libopenblas.dylib -DCMAKE_PREFIX_PATH=$(brew --prefix libomp)" >> "$GITHUB_ENV"
+          echo "MACOSX_DEPLOYMENT_TARGET=14.0" >> "$GITHUB_ENV"
+      - uses: actions/cache@v4
+        id: engine-cache
+        with:
+          path: dist/engine
+          key: dfthub-dft-72e5b26c-native-v1-${{ matrix.os }}
+      - name: Build pinned DFT engine
+        if: steps.engine-cache.outputs.cache-hit != 'true'
+        run: python tools/build_engine.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: engine-${{ matrix.os }}
+          path: dist/engine/*
+  validate:
+    needs: engine
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04, macos-14]
+        python: ['3.10', '3.11', '3.12']
+    runs-on: ${{ matrix.os }}
+    env:
+      OMP_NUM_THREADS: '1'
+      OPENBLAS_NUM_THREADS: '1'
+      MKL_NUM_THREADS: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - uses: actions/download-artifact@v4
+        with:
+          name: engine-${{ matrix.os }}
+          path: dist/engine
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install -g pnpm@11.5.3
+      - name: Frontend
+        working-directory: Client/DFThub
+        run: pnpm install --frozen-lockfile && pnpm run build
+      - name: Build distribution
+        run: |
+          python tools/sync_frontend.py
+          python -m pip install build
+          python -m build
+          python tools/offline_bundle.py --engine dist/engine/dfthub_pyscf_dft-*.whl --package dist/dfthub-0.1.0-py3-none-any.whl
+      - name: Fresh offline environment and regression tests
+        run: |
+          bundle_dir=$(find dist -maxdepth 1 -type d -name 'dfthub-0.1.0-*' | head -1)
+          DFTHUB_INSTALL_PYTHON=python bash "$bundle_dir/deploy/install-offline.sh" .venv-verify
+          .venv-verify/bin/python -m pip check
+          .venv-verify/bin/python tools/run_tests.py
+          .venv-verify/bin/python tools/scientific_smoke.py --output dist/scientific-smoke.json
+          .venv-verify/bin/python tools/workflow_smoke.py
+          python tools/audit_release.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: bundle-${{ matrix.os }}-${{ matrix.python }}
+          path: |
+            dist/dfthub-0.1.0-*.tar.gz
+            dist/dfthub-0.1.0-py3-none-any.whl
+            dist/dfthub-0.1.0.tar.gz
+            dist/scientific-smoke.json
+  publish:
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: [engine, validate]
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+      - name: Publish verified release assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir release-assets
+          find artifacts -type f \( -name '*.whl' -o -name '*.tar.gz' \) -exec cp -n {} release-assets/ \;
+          cd release-assets
+          sha256sum * > SHA256SUMS
+          gh release create "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --title "DFThub $GITHUB_REF_NAME" --notes "Portable DFThub with pinned PySCF DFT 72e5b26c. All Linux x86_64/macOS arm64, Python 3.10–3.12 installation and scientific checks passed." --target "$GITHUB_SHA" ./*

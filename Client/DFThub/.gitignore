@@ -1,0 +1,8 @@
+/node_modules/
+/.astro/
+/dist-dfthub/
+/tests/qa/
+__pycache__/
+# Local backup copies
+*.bak
+*.bak-*
