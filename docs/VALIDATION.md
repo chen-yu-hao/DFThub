@@ -28,11 +28,11 @@ the `threadpoolctl` dependency in `pyscf/dfthub-provenance.json`.
   includes the Conda environment recipe, and passes `dfthub doctor --strict` with
   the latest DFT commit and new `pyscf.dft.numa` / `pyscf.scf.eri_cache` modules.
 
-The published release is additionally gated on all six GitHub Actions targets:
-Linux x86_64 and macOS arm64, each with Python 3.10, 3.11 and 3.12. Each target
-runs offline installation, actual engine provenance checks, API/pipeline tests,
-RKS/UKS science checks, and the complete train/test fit before assets publish.
-See the workflow run linked from the release commit for per-platform evidence.
+The published Linux release is gated on GitHub Actions targets for Python 3.10,
+3.11 and 3.12. Each target runs offline installation, actual engine provenance
+checks, API/pipeline tests, RKS/UKS science checks, and the complete train/test
+fit before assets publish. macOS arm64 uses the documented source-build path;
+its hosted runner was unavailable during this release window.
 
 User uploads, existing job results, credentials, and old-server working trees
 are not included. The original GitHub main branch remains unchanged.

@@ -18,7 +18,7 @@ dfthub doctor --strict
 dfthub serve --data-dir ./dfthub-data
 ```
 
-`conda/install-release.sh` 使用 release wheelhouse 和 `requirements.lock`，不访问 PyPI。`DFTHUB_CONDA_ENV` 可改环境名。目标机器必须使用与离线包匹配的操作系统、架构和 CPython 小版本；Linux x86_64 使用 Linux 包，Apple Silicon 使用 macOS arm64 包。
+`conda/install-release.sh` 使用 release wheelhouse 和 `requirements.lock`，不访问 PyPI。`DFTHUB_CONDA_ENV` 可改环境名。v0.1.1 预编译离线包是 Linux x86_64；Apple Silicon 请使用 Conda 环境后按部署文档从最新 DFT 源码构建引擎。
 
 如果只使用联网 Conda 环境，也可以先执行 `conda env create -f conda/environment.yml`，再从 Release 下载并解压 wheelhouse，执行：
 

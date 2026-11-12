@@ -5,10 +5,10 @@
 推荐独立 CPython 3.12 venv；也支持 3.10/3.11 的当前补丁版。Conda 用户可以使用 `conda/environment.yml` 后执行 `conda/install-release.sh`。不要把旧服务器绝对路径或 site-packages 复制到新机器。
 
 - Ubuntu 22.04+ x86_64：安装所选版本 Python、对应 venv 支持和系统 C 运行库。离线机器需提前通过发行版包管理器准备安装介质。
-- macOS 14+ Apple Silicon：安装 arm64 Python 3.10–3.12，避免 Rosetta x86_64 解释器。
+- macOS Apple Silicon：安装 arm64 Python 3.10–3.12，避免 Rosetta x86_64 解释器；v0.1.1 需按源码构建步骤编译最新 DFT 引擎。
 - Conda：联网机先创建 `conda create -n dfthub python=3.12 pip`，或提前准备同架构离线 conda 包；DFThub wheelhouse 不携带 Python。
 
-Release 离线包命名包含操作系统、架构和 `cp310/cp311/cp312`。解压后运行：
+Linux Release 离线包命名包含架构和 `cp310/cp311/cp312`。解压后运行：
 
 ```bash
 DFTHUB_INSTALL_PYTHON=python3.12 bash deploy/install-offline.sh /opt/dfthub/.venv
@@ -16,7 +16,7 @@ DFTHUB_INSTALL_PYTHON=python3.12 bash deploy/install-offline.sh /opt/dfthub/.ven
 /opt/dfthub/.venv/bin/dfthub serve --data-dir /var/lib/dfthub/data
 ```
 
-安装器先验证平台和 SHA256SUMS，再用 `--no-index --require-hashes` 安装所有依赖。无匹配 wheel 时明确失败，不在断网机器上尝试编译或获取上游 PySCF。所有科学库、静态页面和 Swagger UI 资源都包含在发行包中。Conda 安装路径同样使用这个 wheelhouse，不从 Conda/PyPI 安装上游 `pyscf`。
+安装器先验证平台和 SHA256SUMS，再用 `--no-index --require-hashes` 安装所有依赖。无匹配 wheel 时明确失败，不在断网机器上尝试编译或获取上游 PySCF。所有科学库、静态页面和 Swagger UI 资源都包含在发行包中。Conda 安装路径同样使用这个 wheelhouse，不从 Conda/PyPI 安装上游 `pyscf`；macOS 使用源码构建路径。
 
 ## 配置、路径和迁移
 

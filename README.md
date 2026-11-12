@@ -4,7 +4,7 @@ DFThub 将 CF22D 参数拟合、训练/测试集评估、SCF 迭代和结果分�
 
 ## 安装
 
-使用 **CPython 3.10–3.12**，推荐 3.12；支持 **Linux x86_64（glibc 2.35+，例如 Ubuntu 22.04+）** 和 **macOS Apple Silicon arm64（macOS 14+）**。Windows 可使用符合上述 Linux 要求的 WSL2。
+使用 **CPython 3.10–3.12**，推荐 3.12；v0.1.1 提供 **Linux x86_64（glibc 2.35+，例如 Ubuntu 22.04+）** 预编译包。macOS Apple Silicon 使用 Conda 环境和最新 DFT 源码编译路径；Windows 可使用符合 Linux 要求的 WSL2。
 
 从 [GitHub Releases](https://github.com/chen-yu-hao/DFThub/releases/tag/v0.1.1) 下载与你的操作系统、CPU 和 Python 小版本匹配的离线包，解压后：
 
@@ -51,7 +51,7 @@ bash conda/install-release.sh /path/to/dfthub-0.1.1-linux-x86_64-cp312
 dfthub doctor --strict
 ```
 
-Apple Silicon 使用 `darwin-arm64` 包。详细说明见 [Conda 安装文档](conda/README.md)。
+macOS arm64 当前没有随 v0.1.1 上传预编译引擎 wheel；使用 `conda/environment.yml` 后按部署文档从 DFT 源码构建。详细说明见 [Conda 安装文档](conda/README.md)。
 
 ## 数据和部署
 
@@ -84,6 +84,6 @@ python tools/run_tests.py
 python tools/scientific_smoke.py
 ```
 
-回归覆盖认证、删除/取消、运行状态、测试集继承、训练集成功而测试集失败、检查点复用。CI 对 Linux x86_64 和 macOS arm64 的 Python 3.10/3.11/3.12 分别验证安装、页面和真实 RKS/UKS 科学 smoke，全部成功才发布资产。
+回归覆盖认证、删除/取消、运行状态、测试集继承、训练集成功而测试集失败、检查点复用。CI 对 Linux x86_64 的 Python 3.10/3.11/3.12 验证安装、页面和真实 RKS/UKS 科学 smoke；macOS 的源码编译路径保留在部署文档中。
 
 原仓库 Gaussian 参数导出工具与说明保留于 [Gaussian 文档](docs/GAUSSIAN.md)。
