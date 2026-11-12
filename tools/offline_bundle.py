@@ -16,7 +16,7 @@ parser.add_argument('--engine', type=Path, required=True)
 parser.add_argument('--package', type=Path, required=True)
 parser.add_argument('--output', type=Path, default=Path('dist'))
 args = parser.parse_args()
-label = f'dfthub-0.1.0-{platform.system().lower()}-{platform.machine()}-cp{sys.version_info.major}{sys.version_info.minor}'
+label = f'dfthub-0.1.1-{platform.system().lower()}-{platform.machine()}-cp{sys.version_info.major}{sys.version_info.minor}'
 root = args.output.resolve() / label
 wheels = root / 'wheelhouse'
 wheels.mkdir(parents=True, exist_ok=False)
@@ -32,6 +32,7 @@ for path in sorted(wheels.glob('*.whl')):
 (root / 'requirements.lock').write_text('\n'.join(lock) + '\n')
 repo = Path(__file__).resolve().parents[1]
 shutil.copytree(repo / 'deploy', root / 'deploy')
+shutil.copytree(repo / 'conda', root / 'conda')
 shutil.copy2(repo / 'README.md', root / 'README.md')
 (root / 'platform.json').write_text(json.dumps({'python':platform.python_version(), 'system':platform.system(), 'machine':platform.machine()},indent=2)+'\n')
 sums = [f'{hashlib.sha256(p.read_bytes()).hexdigest()}  {p.relative_to(root)}' for p in sorted(root.rglob('*')) if p.is_file()]

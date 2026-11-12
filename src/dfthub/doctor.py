@@ -8,8 +8,8 @@ import subprocess
 import sys
 from .paths import PACKAGE, pipeline_python
 
-COMMIT = "72e5b26c91964acbf3186c5348f77a0f7faf44dd"
-ENGINE_VERSION = "2.14.0+dfthub.72e5b26c"
+COMMIT = "e7cb735789293acf461f8ebbb4ac6a08b68ba5d6"
+ENGINE_VERSION = "2.14.0+dfthub.e7cb7357"
 
 
 def engine_check():
@@ -41,8 +41,12 @@ def engine_check():
         gto.M(atom="H 0 0 0; H 0 0 .74", basis="sto-3g", verbose=0).intor("int1e_ovlp")
         from dftd3.interface import DispersionModel, ZeroDampingParam
         from xclib.CFXXD import CF22D_nxc, CF22D_nxc_rks
+        import threadpoolctl
+        from pyscf.dft import numa
+        from pyscf.scf import eri_cache
         info = {"branch": manifest["branch"], "commit": manifest["commit"],
-                "pyscf": pyscf.__version__, "libxc": libxc.libxc_version(), "python": sys.executable}
+                "pyscf": pyscf.__version__, "libxc": libxc.libxc_version(),
+                "threadpoolctl": threadpoolctl.__version__, "python": sys.executable}
     except Exception as exc:
         errors.append(f"Engine unavailable: {exc}")
     return {"engine": info, "errors": errors}

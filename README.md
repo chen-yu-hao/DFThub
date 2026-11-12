@@ -6,7 +6,7 @@ DFThub 将 CF22D 参数拟合、训练/测试集评估、SCF 迭代和结果分�
 
 使用 **CPython 3.10–3.12**，推荐 3.12；支持 **Linux x86_64（glibc 2.35+，例如 Ubuntu 22.04+）** 和 **macOS Apple Silicon arm64（macOS 14+）**。Windows 可使用符合上述 Linux 要求的 WSL2。
 
-从 [GitHub Releases](https://github.com/chen-yu-hao/DFThub/releases/tag/v0.1.0) 下载与你的操作系统、CPU 和 Python 小版本匹配的离线包，解压后：
+从 [GitHub Releases](https://github.com/chen-yu-hao/DFThub/releases/tag/v0.1.1) 下载与你的操作系统、CPU 和 Python 小版本匹配的离线包，解压后：
 
 ```bash
 python3.12 -m venv .venv
@@ -24,7 +24,7 @@ dfthub serve --data-dir ./dfthub-data
 本次发布位置是 GitHub Release，不是 PyPI。普通 `pip install dfthub` 只有在指定本发布的 wheelhouse 后才是本项目。不要从未知同名索引包安装。源码安装也需先准备匹配的引擎 wheel：
 
 ```bash
-git clone --branch release/0.1.0 https://github.com/chen-yu-hao/DFThub.git
+git clone --branch release/0.1.1 https://github.com/chen-yu-hao/DFThub.git
 cd DFThub
 python -m pip install --find-links /path/to/wheelhouse .
 ```
@@ -32,13 +32,26 @@ python -m pip install --find-links /path/to/wheelhouse .
 ## PySCF DFT 引擎
 
 必须使用 `chen-yu-hao/pyscf` 的 **DFT** 分支固定提交
-`72e5b26c91964acbf3186c5348f77a0f7faf44dd`，不是 DFT-combined，也不是上游 PyPI `pyscf`。
+`e7cb735789293acf461f8ebbb4ac6a08b68ba5d6`，不是 DFT-combined，也不是上游 PyPI `pyscf`。
 
-数值依赖固定为 NumPy 2.2.6、SciPy 1.15.3、pandas 2.3.3，并用完整训练/测试拟合验证。
+数值依赖固定为 NumPy 2.2.6、SciPy 1.15.3、pandas 2.3.3 和 threadpoolctl 3.x，并用完整训练/测试拟合验证。
 
-分发名为 `dfthub-pyscf-dft==2.14.0+dfthub.72e5b26c`，Python 导入名仍为 `pyscf`。它包含 PySCF 2.14.0、LibXC 7.1.2、libcint 6.2.0 和固定 XCFun。`dfthub doctor --strict` 核对提交、代码/动态库 SHA256、LibXC 和 CF22D 可用性；服务启动前也进行此检查。不要在同一环境安装上游 `pyscf`，pip 不会识别两个分发包共享模块的冲突。
+分发名为 `dfthub-pyscf-dft==2.14.0+dfthub.e7cb7357`，Python 导入名仍为 `pyscf`。它包含 PySCF 2.14.0、LibXC 7.1.2、libcint 6.2.0 和固定 XCFun。`dfthub doctor --strict` 核对提交、代码/动态库 SHA256、LibXC 和 CF22D 可用性；服务启动前也进行此检查。不要在同一环境安装上游 `pyscf`，pip 不会识别两个分发包共享模块的冲突。
 
 已有独立计算环境可用 `DFTHUB_PYTHON=/path/to/python`，该环境也必须安装本 DFThub wheel 和配套引擎。无需复制整个 conda 环境。
+
+### Conda
+
+Conda 用于准备 Python、BLAS 和数值库，DFThub 与固定 PySCF DFT 引擎继续通过 release wheelhouse 安装：
+
+```bash
+conda env create -f conda/environment.yml
+conda activate dfthub-0.1.1
+bash conda/install-release.sh /path/to/dfthub-0.1.1-linux-x86_64-cp312
+dfthub doctor --strict
+```
+
+Apple Silicon 使用 `darwin-arm64` 包。详细说明见 [Conda 安装文档](conda/README.md)。
 
 ## 数据和部署
 

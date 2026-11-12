@@ -2,7 +2,7 @@
 
 ## Python 准备
 
-推荐独立 CPython 3.12 venv；也支持 3.10/3.11 的当前补丁版。不要把旧服务器绝对路径或 site-packages 复制到新机器。
+推荐独立 CPython 3.12 venv；也支持 3.10/3.11 的当前补丁版。Conda 用户可以使用 `conda/environment.yml` 后执行 `conda/install-release.sh`。不要把旧服务器绝对路径或 site-packages 复制到新机器。
 
 - Ubuntu 22.04+ x86_64：安装所选版本 Python、对应 venv 支持和系统 C 运行库。离线机器需提前通过发行版包管理器准备安装介质。
 - macOS 14+ Apple Silicon：安装 arm64 Python 3.10–3.12，避免 Rosetta x86_64 解释器。
@@ -16,7 +16,7 @@ DFTHUB_INSTALL_PYTHON=python3.12 bash deploy/install-offline.sh /opt/dfthub/.ven
 /opt/dfthub/.venv/bin/dfthub serve --data-dir /var/lib/dfthub/data
 ```
 
-安装器先验证平台和 SHA256SUMS，再用 `--no-index --require-hashes` 安装所有依赖。无匹配 wheel 时明确失败，不在断网机器上尝试编译或获取上游 PySCF。所有科学库、静态页面和 Swagger UI 资源都包含在发行包中。
+安装器先验证平台和 SHA256SUMS，再用 `--no-index --require-hashes` 安装所有依赖。无匹配 wheel 时明确失败，不在断网机器上尝试编译或获取上游 PySCF。所有科学库、静态页面和 Swagger UI 资源都包含在发行包中。Conda 安装路径同样使用这个 wheelhouse，不从 Conda/PyPI 安装上游 `pyscf`。
 
 ## 配置、路径和迁移
 
@@ -48,10 +48,11 @@ DFTHUB_INSTALL_PYTHON=python3.12 bash deploy/install-offline.sh /opt/dfthub/.ven
 ```bash
 git clone --branch DFT https://github.com/chen-yu-hao/pyscf.git .build/pyscf
 # 也可使用 git@github.com:chen-yu-hao/pyscf.git
-git -C .build/pyscf checkout 72e5b26c91964acbf3186c5348f77a0f7faf44dd
+git -C .build/pyscf checkout e7cb735789293acf461f8ebbb4ac6a08b68ba5d6
 python tools/build_engine.py --source .build/pyscf --output dist/engine
 python -m build
-python tools/offline_bundle.py --engine dist/engine/dfthub_pyscf_dft-*.whl --package dist/dfthub-0.1.0-py3-none-any.whl
+python tools/offline_bundle.py --engine dist/engine/dfthub_pyscf_dft-*.whl --package dist/dfthub-0.1.1-py3-none-any.whl
 ```
 
 macOS 的 LLVM/OpenBLAS flags 与完整构建流程见 `.github/workflows/release.yml`；设置 `CMAKE_OSX_ARCHITECTURES=arm64`、`_PYTHON_HOST_PLATFORM=macosx-14.0-arm64` 及 `DFTHUB_MACOS_LIBOMP` 指向 Homebrew libomp.dylib。修复 wheel 时统一 OpenMP 动态库引用，避免不同 Homebrew 前缀的同名库冲突。引擎源码包也作为 Release 资产保存。源码回退构建需要获得 LibXC/libcint/XCFun 源码和工具链；离线安装使用预编译 wheelhouse，无需编译器。不要启用 `-march=native`，以免发行包绑定构建机指令集。
+构建脚本会写入最新 DFT 提交 `e7cb735789293acf461f8ebbb4ac6a08b68ba5d6` 的源码归档和 provenance；不要使用旧版 `v0.1.0` wheel 代替本次构建。

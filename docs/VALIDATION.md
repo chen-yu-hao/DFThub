@@ -5,6 +5,11 @@ using only the release wheelhouse (`--no-index --require-hashes`). `pip check`
 reported no broken requirements. Package directories were made read-only before
 running an actual train/test fit from a separate writable data directory.
 
+Release `v0.1.1` uses the latest `chen-yu-hao/pyscf` `DFT` commit
+`e7cb735789293acf461f8ebbb4ac6a08b68ba5d6`, including the reviewed DFT/ERI/NUMA
+changes. The engine wheel records this commit, its native library hashes, and
+the `threadpoolctl` dependency in `pyscf/dfthub-provenance.json`.
+
 - 93 Python regression checks cover API authentication, cancellation/deletion,
   status reporting, checkpoint chains, optional-test inheritance, partial-test
   failure, installed pages, process admission, and read-only resources.
@@ -19,6 +24,9 @@ running an actual train/test fit from a separate writable data directory.
   The same release fixture failed with newer NumPy/SciPy combinations; those
   failed runs were retained in the local validation logs and are not accepted
   deployment configurations. No production optimizer algorithm was changed.
+- The fresh v0.1.1 offline wheelhouse installs `dfthub-pyscf-dft==2.14.0+dfthub.e7cb7357`,
+  includes the Conda environment recipe, and passes `dfthub doctor --strict` with
+  the latest DFT commit and new `pyscf.dft.numa` / `pyscf.scf.eri_cache` modules.
 
 The published release is additionally gated on all six GitHub Actions targets:
 Linux x86_64 and macOS arm64, each with Python 3.10, 3.11 and 3.12. Each target

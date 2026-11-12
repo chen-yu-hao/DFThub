@@ -1,7 +1,8 @@
 """Build the pinned DFT source, repair native dependencies, and label its wheel.
 
-The optional input wheel is restricted to the previously validated Linux build.
-No PySCF scientific source is changed by this packaging operation.
+Every release wheel is rebuilt from the exact DFT commit declared below. No
+previous release wheel is accepted as a substitute, and no PySCF scientific
+source is changed by this packaging operation.
 """
 import argparse
 import csv
@@ -17,10 +18,9 @@ import sys
 import tempfile
 import zipfile
 
-COMMIT = "72e5b26c91964acbf3186c5348f77a0f7faf44dd"
-VERSION = "2.14.0+dfthub.72e5b26c"
+COMMIT = "e7cb735789293acf461f8ebbb4ac6a08b68ba5d6"
+VERSION = "2.14.0+dfthub.e7cb7357"
 REMOTE = "https://github.com/chen-yu-hao/pyscf.git"
-VALIDATED_WHEEL_SHA256 = "cafe2b6304c63f8a90608b8e843b4ba7f4caf01e076e22e6caf9a691dfbe55e1"
 
 
 def run(*args, **kwargs):
@@ -105,24 +105,72 @@ def main():
         raise RuntimeError('Use a clean checkout of the pinned DFT commit')
     output.mkdir(parents=True, exist_ok=True)
     run('git', 'archive', '--format=tar.gz', '--prefix=pyscf-dft/',
-        f'--output={output / "pyscf-dft-72e5b26c-source.tar.gz"}', COMMIT, cwd=source)
+        f'--output={output / "pyscf-dft-e7cb7357-source.tar.gz"}', COMMIT, cwd=source)
     if args.input_wheel:
-        wheel = args.input_wheel.resolve()
-        if hashlib.sha256(wheel.read_bytes()).hexdigest() != VALIDATED_WHEEL_SHA256:
-            raise RuntimeError('Input wheel is not the recorded validated DFT build')
+        raise RuntimeError('The v0.1.1 engine must be rebuilt from the latest DFT source; input wheels are disabled')
     else:
         raw = source / 'dist-dfthub-raw'
         env = dict(os.environ)
+        # setup.py invokes the `cmake` executable by name. Prefer the CMake
+        # installed in the active build environment over an older system copy
+        # (the latter may not understand -S/-B).
+        active_bin = Path(sys.prefix).resolve() / 'bin'
+        # distutils may resolve `cmake` before applying the child environment
+        # on older Python/setuptools combinations. A tiny absolute-path shim
+        # makes the active build CMake unambiguous in that case.
+        cmake = active_bin / 'cmake'
+        if cmake.is_file():
+            wrapper_dir = Path(tempfile.mkdtemp(prefix='dfthub-cmake-'))
+            wrapper = wrapper_dir / 'cmake'
+            wrapper.write_text(f'#!/usr/bin/env bash\nexec {cmake} "$@"\n')
+            wrapper.chmod(0o755)
+            env['PATH'] = str(wrapper_dir) + os.pathsep + str(active_bin) + os.pathsep + env.get('PATH', '')
+        else:
+            env['PATH'] = str(active_bin) + os.pathsep + env.get('PATH', '')
         env.setdefault('CMAKE_BUILD_PARALLEL_LEVEL', '2')
-        env['CMAKE_CONFIGURE_ARGS'] = env.get('CMAKE_CONFIGURE_ARGS', '') + ' -DBUILD_MARCH_NATIVE=OFF -DLIBCINT_VERSION=v6.2.0'
-        run(sys.executable, '-m', 'pip', 'wheel', '.', '--no-deps', '--no-build-isolation', '-w', str(raw), cwd=source, env=env)
+        configure = (env.get('CMAKE_CONFIGURE_ARGS', '') +
+                     ' -DBUILD_MARCH_NATIVE=OFF -DLIBCINT_VERSION=v6.2.0').strip()
+        # The validated HPC build has BLAS in the shared Mambaforge prefix,
+        # which CMake cannot discover from an isolated build environment.
+        local_blas = Path('/home/share/mambaforge/lib/libblas.so')
+        if local_blas.is_file() and 'BLAS_LIBRARIES' not in configure:
+            configure += f' -DBLAS_LIBRARIES={local_blas}'
+        local_deps = source / 'pyscf/lib/deps/lib'
+        if (local_deps / 'libcint.so').is_file() and 'BUILD_LIBCINT' not in configure:
+            configure += ' -DBUILD_LIBCINT=OFF -DBUILD_LIBXC=OFF -DBUILD_XCFUN=OFF'
+        env['CMAKE_CONFIGURE_ARGS'] = configure
+        env['LD_LIBRARY_PATH'] = os.pathsep.join([
+            str(local_deps), '/home/share/mambaforge/lib',
+            '/home/share/mambaforge/envs/pyscf/lib/python3.12/site-packages/pyscf.libs',
+            env.get('LD_LIBRARY_PATH', ''),
+        ])
+        # Some legacy distutils launchers mishandle the joined `-S/path`
+        # spelling even when the right CMake is on PATH. Patch only the local
+        # build checkout's setup.py to pass split arguments and an absolute
+        # executable; restore the source file immediately afterward.
+        setup_file = source / 'setup.py'
+        original_setup = setup_file.read_text()
+        cmake_executable = str((active_bin / 'cmake').resolve()) if (active_bin / 'cmake').is_file() else 'cmake'
+        patched_setup = original_setup.replace(
+            "cmd = ['cmake', f'-S{src_dir}', f'-B{self.build_temp}']",
+            f"cmd = [{cmake_executable!r}, '-S', src_dir, '-B', self.build_temp]",
+        )
+        if patched_setup == original_setup:
+            raise RuntimeError('Unable to patch PySCF setup.py CMake invocation')
+        setup_file.write_text(patched_setup)
+        try:
+            run(sys.executable, '-m', 'pip', 'wheel', '.', '--no-deps', '--no-build-isolation', '-w', str(raw), cwd=source, env=env)
+        finally:
+            setup_file.write_text(original_setup)
         original = next(raw.glob('pyscf-*.whl'))
         repaired = source / 'dist-dfthub-repaired'
         if sys.platform == 'darwin':
             canonical_macos_openmp(original)
             run('delocate-wheel', '--require-archs=arm64', '-w', str(repaired), str(original))
         else:
-            run('auditwheel', 'repair', '-w', str(repaired), str(original))
+            auditwheel = Path(sys.prefix).resolve() / 'bin' / 'auditwheel'
+            run(str(auditwheel) if auditwheel.is_file() else 'auditwheel',
+                'repair', '-w', str(repaired), str(original), env=env)
         wheel = next(repaired.glob('*.whl'))
     relabel(wheel, output, source)
     run(sys.executable, str(Path(__file__).with_name('add_native_notices.py')), str(output))

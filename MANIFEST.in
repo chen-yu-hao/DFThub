@@ -2,6 +2,7 @@ recursive-include src/dfthub/static *
 recursive-include src/dfthub/resources *
 recursive-include src/dfthub/pipeline/basis_data *
 recursive-include deploy *
+recursive-include conda *
 recursive-include tools *.py *.json
 recursive-include tools/native-licenses *
 recursive-include tests *.py
