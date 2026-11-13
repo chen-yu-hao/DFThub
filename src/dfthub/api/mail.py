@@ -1,26 +1,71 @@
 # python
 import os
 from html import escape
-from pathlib import Path
 
 # modules
 from flask_mail import Mail, Message
 
-# Secrets must be injected by the process supervisor or an explicitly named
-# environment file. Never load a .env file from the source tree implicitly.
-_ENV_FILE_NAME = os.environ.get("DFTHUB_ENV_FILE", "").strip()
-_ENV_FILE = Path(_ENV_FILE_NAME).expanduser() if _ENV_FILE_NAME else None
-if _ENV_FILE is not None and _ENV_FILE.is_file():
-    for _line in _ENV_FILE.read_text(encoding="utf-8").splitlines():
-        _s = _line.strip()
-        if not _s or _s.startswith("#") or "=" not in _s:
-            continue
-        _key, _, _val = _s.partition("=")
-        _key, _val = _key.strip(), _val.strip().strip('"').strip("'")
-        if _key and _val:
-            os.environ.setdefault(_key, _val)
+from dfthub.paths import env_flag, load_environment
+
+# Settings come from the process environment or the file named by
+# DFTHUB_ENV_FILE (see dfthub.paths.load_environment); nothing else is read.
+load_environment()
 
 mail = Mail()
+
+DEFAULT_PUBLIC_URL = "http://127.0.0.1:8188"
+_SMTP_VARIABLES = ("DFTHUB_MAIL_SERVER", "DFTHUB_MAIL_USERNAME", "DFTHUB_MAIL_PASSWORD")
+
+
+def mail_settings():
+    """Flask-Mail configuration from DFTHUB_MAIL_*.
+
+    Mail stays off unless DFTHUB_MAIL_SUPPRESS is explicitly 0; an unrecognized
+    value is an error rather than a silent "on".
+    """
+    port_text = os.environ.get("DFTHUB_MAIL_PORT", "").strip() or "25"
+    try:
+        port = int(port_text)
+    except ValueError:
+        port = 0
+    if not 1 <= port <= 65535:
+        raise ValueError(f"DFTHUB_MAIL_PORT must be a port number from 1 to 65535 (got {port_text!r})")
+    use_tls = env_flag("DFTHUB_MAIL_USE_TLS", False)
+    use_ssl = env_flag("DFTHUB_MAIL_USE_SSL", False)
+    if use_tls and use_ssl:
+        raise ValueError("Set only one of DFTHUB_MAIL_USE_TLS (STARTTLS, usually port 587) "
+                         "and DFTHUB_MAIL_USE_SSL (implicit TLS, usually port 465)")
+    return {
+        "MAIL_SERVER": os.environ.get("DFTHUB_MAIL_SERVER", "").strip() or "localhost",
+        "MAIL_PORT": port,
+        "MAIL_USE_TLS": use_tls,
+        "MAIL_USE_SSL": use_ssl,
+        "MAIL_DEBUG": False,
+        "MAIL_USERNAME": os.environ.get("DFTHUB_MAIL_USERNAME", ""),
+        "MAIL_PASSWORD": os.environ.get("DFTHUB_MAIL_PASSWORD", ""),
+        "MAIL_DEFAULT_SENDER": os.environ.get("DFTHUB_MAIL_SENDER", "").strip() or "DFThub <noreply@localhost>",
+        "MAIL_SUPPRESS_SEND": env_flag("DFTHUB_MAIL_SUPPRESS", True),
+        "MAIL_ASCII_ATTACHMENTS": False,
+    }
+
+
+def describe_mail(config):
+    """Startup lines that say whether task notifications are sent; never shows credentials."""
+    if config["MAIL_SUPPRESS_SEND"]:
+        if any(os.environ.get(name, "").strip() for name in _SMTP_VARIABLES):
+            return ["Mail: off. SMTP settings are present, but DFTHUB_MAIL_SUPPRESS is not 0; "
+                    "set DFTHUB_MAIL_SUPPRESS=0 to send task notifications"]
+        return ["Mail: off (no e-mail is sent)"]
+    security = "SSL" if config["MAIL_USE_SSL"] else "STARTTLS" if config["MAIL_USE_TLS"] else "unencrypted"
+    login = "with SMTP login" if config["MAIL_USERNAME"] else "without SMTP login"
+    lines = [f"Mail: on via {config['MAIL_SERVER']}:{config['MAIL_PORT']} ({security}, {login}), "
+             f"sender {config['MAIL_DEFAULT_SENDER']}"]
+    if config["MAIL_USERNAME"] and security == "unencrypted":
+        lines.append("Mail warning: the SMTP password is sent unencrypted; "
+                     "set DFTHUB_MAIL_USE_TLS=1 or DFTHUB_MAIL_USE_SSL=1")
+    if not os.environ.get("DFTHUB_PUBLIC_URL", "").strip():
+        lines.append(f"Mail warning: DFTHUB_PUBLIC_URL is not set; links in e-mails point to {DEFAULT_PUBLIC_URL}")
+    return lines
 
 
 def send_task_notification(recipient, username, mode, work_name, weight_name, event, success=None):
@@ -44,7 +89,7 @@ def send_task_notification(recipient, username, mode, work_name, weight_name, ev
     message = Message(
         f"[DFThub] {mode_label} '{work_name}' {status}", recipients=[recipient]
     )
-    result_url = os.environ.get("DFTHUB_PUBLIC_URL", "http://127.0.0.1:8188")
+    result_url = os.environ.get("DFTHUB_PUBLIC_URL", "").strip() or DEFAULT_PUBLIC_URL
     message.html = (
         f"Hi, {escape(username)}:<br/><br/>"
         f"{escape(summary)}<br/>"
@@ -54,18 +99,3 @@ def send_task_notification(recipient, username, mode, work_name, weight_name, ev
         "<hr/>DFThub"
     )
     mail.send(message)
-
-# 然后用appx实现蓝图
-class DefaltMailConfig(object):
-    MAIL_SERVER = os.environ.get("DFTHUB_MAIL_SERVER", "localhost")
-    MAIL_PORT = int(os.environ.get("DFTHUB_MAIL_PORT", "25"))
-    MAIL_USE_TLS = os.environ.get("DFTHUB_MAIL_USE_TLS", "0") == "1"
-    MAIL_USE_SSL = os.environ.get("DFTHUB_MAIL_USE_SSL", "0") == "1"
-    MAIL_DEBUG = False
-    MAIL_USERNAME = os.environ.get("DFTHUB_MAIL_USERNAME", "")
-    MAIL_PASSWORD = os.environ.get("DFTHUB_MAIL_PASSWORD", "")
-    MAIL_DEFAULT_SENDER = os.environ.get(
-        "DFTHUB_MAIL_SENDER", "DFThub <noreply@localhost>"
-    )
-    MAIL_SUPPRESS_SEND = os.environ.get("DFTHUB_MAIL_SUPPRESS", "1") == "1"
-    MAIL_ASCII_ATTACHMENTS = False

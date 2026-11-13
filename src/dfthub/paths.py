@@ -9,21 +9,50 @@ PROGRAM_DIR = PACKAGE / "pipeline"
 RESOURCES = PACKAGE / "resources"
 
 
+_TRUE = {"1", "true", "yes", "on"}
+_FALSE = {"0", "false", "no", "off"}
+
+
 def load_environment():
-    name = os.environ.get("DFTHUB_ENV_FILE")
+    """Load the file named by DFTHUB_ENV_FILE into os.environ.
+
+    This is the only place DFThub reads an environment file; nothing is loaded
+    from the source tree implicitly. Variables already present in the process
+    environment win, and an empty value (``KEY=``) is ignored, so a blank entry
+    behaves exactly like an absent one. Calling it again is harmless.
+    """
+    name = os.environ.get("DFTHUB_ENV_FILE", "").strip()
     if not name:
         return
     path = Path(name).expanduser()
+    if not path.is_file():
+        raise ValueError(f"DFTHUB_ENV_FILE={name} does not exist or is not a file")
     if path.stat().st_mode & 0o077:
-        raise ValueError("DFTHUB_ENV_FILE must have mode 0600 or 0400")
-    for line in path.read_text().splitlines():
+        raise ValueError(f"{path} must have mode 0600 or 0400 (run: chmod 600 {path})")
+    for number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
         line = line.strip()
         if not line or line.startswith("#"):
             continue
         key, sep, value = line.partition("=")
-        if not sep or not key.strip().replace("_", "").isalnum():
-            raise ValueError("Invalid environment file entry")
-        os.environ.setdefault(key.strip(), value.strip().strip('\"').strip("'"))
+        key = key.strip()
+        if not sep or not key.replace("_", "").isalnum():
+            raise ValueError(f"{path}:{number}: expected KEY=value")
+        value = value.strip().strip('"').strip("'")
+        if value:
+            os.environ.setdefault(key, value)
+
+
+def env_flag(name, default):
+    """Read an on/off environment variable; refuse values that are neither."""
+    raw = os.environ.get(name, "")
+    value = raw.strip().lower()
+    if not value:
+        return default
+    if value in _TRUE:
+        return True
+    if value in _FALSE:
+        return False
+    raise ValueError(f"{name} must be 1 or 0 (got {raw!r})")
 
 
 def data_dir():

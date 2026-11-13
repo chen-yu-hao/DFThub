@@ -36,11 +36,11 @@ from dfthub.api.config import DATA_DIR
 from dfthub.api.file_api import resolve_owned_path, valid_path_component
 from dfthub.api.file_api import app as file_api_app
 
-from dfthub.api.mail import DefaltMailConfig, mail, send_task_notification
+from dfthub.api.mail import mail, mail_settings, send_task_notification
 
 from dfthub.api.auth import auth_app, is_valid_email, login_required
 
-from dfthub.paths import PROGRAM_DIR, RESOURCES, pipeline_python, input_directory
+from dfthub.paths import PROGRAM_DIR, RESOURCES, env_flag, pipeline_python, input_directory
 from dfthub.pipeline.refinement import ensure_optimizer_snapshot, file_hash, write_json
 from dfthub.pipeline.testset_inheritance import inherit_test_set
 from dfthub.pipeline.compute_scheduler import TASK_THREADS
@@ -1235,9 +1235,12 @@ appx.config.update({
     "SWAGGER_UI_STANDALONE_PRESET_JS": "/vendor/swagger/swagger-ui-standalone-preset.js",
 })
 
+_ENABLE_HSTS = env_flag("DFTHUB_ENABLE_HSTS", False)
+
+
 @appx.after_request
 def _security_headers(response):
-    if os.environ.get("DFTHUB_ENABLE_HSTS") == "1":
+    if _ENABLE_HSTS:
         response.headers.setdefault("Strict-Transport-Security", "max-age=31536000; includeSubDomains")
     response.headers.setdefault("X-Content-Type-Options", "nosniff")
     response.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
@@ -1259,7 +1262,7 @@ appx.register_blueprint(app,url_prefix='/api_dft')
 appx.register_blueprint(file_api_app,url_prefix='/api_dft')
 appx.register_blueprint(auth_app,url_prefix='/api_dft')
 
-appx.config.from_object(DefaltMailConfig)
+appx.config.update(mail_settings())
 appx.config.update({
     "SERVERS": [{"url": "/", "description": "This DFThub server"}],
     "SECURITY_SCHEMES": {"bearerAuth": {"type": "http", "scheme": "bearer", "bearerFormat": "JWT"}},
