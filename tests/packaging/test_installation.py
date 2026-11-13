@@ -6,6 +6,7 @@ import sys
 import tempfile
 import socket
 import time
+import urllib.error
 import urllib.request
 import unittest
 from unittest.mock import patch
@@ -56,6 +57,49 @@ class InstalledServiceTests(unittest.TestCase):
                     second = subprocess.run(command, env=env, cwd=root, capture_output=True, text=True, timeout=30)
                     self.assertEqual(second.returncode, 1)
                     self.assertIn('already owns this data directory', second.stderr)
+                finally:
+                    process.terminate()
+                    process.wait(timeout=10)
+
+    def test_local_mode_real_server(self):
+        with tempfile.TemporaryDirectory() as root:
+            with socket.socket() as probe:
+                probe.bind(('127.0.0.1', 0))
+                port = probe.getsockname()[1]
+            env = dict(os.environ, DFTHUB_DATA_DIR=root, DFTHUB_WORKERS='0', DFTHUB_MAIL_SUPPRESS='1')
+            command = [sys.executable, '-m', 'dfthub.cli', 'serve', '--local', '--port', str(port)]
+            base = f'http://127.0.0.1:{port}/api_dft'
+
+            def call(path, method='GET', headers=None):
+                request = urllib.request.Request(base + path, method=method, headers=headers or {})
+                try:
+                    with urllib.request.urlopen(request, timeout=5) as response:
+                        return response.status, json.loads(response.read())
+                except urllib.error.HTTPError as error:
+                    return error.code, json.loads(error.read())
+
+            with tempfile.TemporaryFile() as log:
+                process = subprocess.Popen(command, env=env, cwd=root, stdout=log, stderr=log)
+                try:
+                    deadline = time.monotonic() + 30
+                    while True:
+                        try:
+                            features = call('/features')
+                            break
+                        except OSError:
+                            if process.poll() is not None or time.monotonic() > deadline:
+                                log.seek(0)
+                                self.fail(log.read().decode())
+                            time.sleep(.1)
+                    self.assertEqual(features, (200, {'mail': False, 'local': True}))
+                    status, body = call('/local-session', 'POST')
+                    self.assertEqual(status, 200, body)
+                    self.assertEqual(body['user']['username'], 'local')
+                    self.assertEqual(call('/me', headers={'Authorization': 'Bearer ' + body['token']})[1]['user']['username'], 'local')
+                    self.assertEqual(call('/local-session', 'POST', {'Host': 'dfthub.example.org'})[0], 403)
+                    self.assertEqual(call('/local-session', 'POST', {'X-Forwarded-For': '203.0.113.9'})[0], 403)
+                    log.seek(0)
+                    self.assertIn("Local mode: no sign-in; anyone using this computer works as 'local'", log.read().decode())
                 finally:
                     process.terminate()
                     process.wait(timeout=10)

@@ -42,9 +42,9 @@ class OptionalEmailTests(unittest.TestCase):
         return self.client.post("/api_dft/login", json={"password": "secret1", **body})
 
     def test_features_report_mail_status(self):
-        self.assertEqual(self.client.get("/api_dft/features").get_json(), {"mail": False})
+        self.assertFalse(self.client.get("/api_dft/features").get_json()["mail"])
         with patch.object(api_module, "_mail_enabled", return_value=True):
-            self.assertEqual(self.client.get("/api_dft/features").get_json(), {"mail": True})
+            self.assertTrue(self.client.get("/api_dft/features").get_json()["mail"])
 
     def test_register_without_email_and_sign_in_by_username(self):
         for name in ("noaddr1", "noaddr2"):  # several accounts may lack an address

@@ -38,7 +38,7 @@ from dfthub.api.file_api import app as file_api_app
 
 from dfthub.api.mail import mail, mail_settings, send_task_notification
 
-from dfthub.api.auth import auth_app, is_valid_email, login_required
+from dfthub.api.auth import auth_app, is_valid_email, local_mode_user, login_required
 
 from dfthub.paths import PROGRAM_DIR, RESOURCES, env_flag, pipeline_python, input_directory
 from dfthub.pipeline.refinement import ensure_optimizer_snapshot, file_hash, write_json
@@ -106,9 +106,9 @@ def api_index():
 
 
 @app.get("/features")
-@app.doc(summary="Server features", description="Public settings the web pages adapt to: `mail` is true when this server sends job notifications.")
+@app.doc(summary="Server features", description="Public settings the web pages adapt to: `mail` is true when this server sends job notifications; `local` is true in local single-user mode (`dfthub serve --local`), where pages start a session through /api_dft/local-session instead of asking to sign in.")
 def server_features():
-    return {"mail": _mail_enabled()}
+    return {"mail": _mail_enabled(), "local": bool(local_mode_user())}
 
 class DFT_IN(Schema):
     mode = String(required=True, validate=OneOf(["new", "optim", "spe", "refine"]), metadata={"description": "Operation: new, optim, spe or refine."})

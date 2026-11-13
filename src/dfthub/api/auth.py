@@ -1,3 +1,4 @@
+import ipaddress
 import os
 import re
 import sqlite3
@@ -8,7 +9,7 @@ from pathlib import Path
 
 import jwt as pyjwt
 from apiflask import APIBlueprint
-from flask import request, g
+from flask import current_app, request, g
 from werkzeug.security import generate_password_hash, check_password_hash
 
 from dfthub.api.config import DATA_DIR
@@ -164,6 +165,7 @@ def login_required(f):
 
 
 _EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+USERNAME_RE = re.compile(r"[A-Za-z0-9_-]{2,32}")
 
 
 def is_valid_email(value):
@@ -176,10 +178,111 @@ def is_valid_email(value):
 
 auth_app = APIBlueprint("Auth", __name__, url_prefix="/auth")
 
+# ---------------------------------------------------------------------------
+# Local single-user mode (dfthub serve --local)
+# ---------------------------------------------------------------------------
+# The command line enables it, only for a loopback address. The browser then
+# asks /local-session for an ordinary Bearer token, so every other endpoint
+# keeps its normal token check. This module never reads it from the
+# environment, so a stray variable cannot turn sign-in off.
+LOCAL_USER_KEY = "DFTHUB_LOCAL_USER"
+_FORWARDING_HEADERS = ("Forwarded", "X-Forwarded-For", "X-Forwarded-Host", "X-Real-IP")
+
+
+def ensure_local_user(username):
+    """Return the account used by local mode, creating it without e-mail if needed.
+
+    A new account gets a random password nobody knows; an existing account
+    (for example one registered earlier) is used as it is.
+    """
+    if not USERNAME_RE.fullmatch(username):
+        raise ValueError("The local account name must be 2-32 letters, digits, _ or -")
+    db = get_db()
+    try:
+        user = db.execute("SELECT * FROM users WHERE username = ?", (username,)).fetchone()
+        if user is None:
+            db.execute(
+                "INSERT INTO users (username, email, password_hash) VALUES (?, NULL, ?)",
+                (username, generate_password_hash(secrets.token_urlsafe(32))),
+            )
+            db.commit()
+            user = db.execute("SELECT * FROM users WHERE username = ?", (username,)).fetchone()
+    finally:
+        db.close()
+    (Path(DATA_DIR) / "Work" / username).mkdir(parents=True, exist_ok=True)
+    return _user_dict(user)
+
+
+def enable_local_mode(app, username):
+    user = ensure_local_user(username)
+    app.config[LOCAL_USER_KEY] = user["username"]
+    return user
+
+
+def local_mode_user():
+    return current_app.config.get(LOCAL_USER_KEY)
+
+
+def _is_loopback_name(host):
+    """True for localhost, 127.x.x.x and [::1], with or without a port."""
+    host = (host or "").strip().lower()
+    if host.startswith("["):
+        host = host[1:].split("]", 1)[0]
+    elif host.count(":") == 1:
+        host = host.split(":", 1)[0]
+    if host == "localhost":
+        return True
+    try:
+        return ipaddress.ip_address(host).is_loopback
+    except ValueError:
+        return False
+
+
+def is_direct_local_request():
+    """Whether this request comes straight from a browser on this computer.
+
+    Rejects requests relayed by a reverse proxy, and pages served under another
+    host name (DNS rebinding) or another origin.
+    """
+    if not _is_loopback_name(request.remote_addr):
+        return False
+    if any(request.headers.get(name) for name in _FORWARDING_HEADERS):
+        return False
+    if not _is_loopback_name(request.host):
+        return False
+    origin = request.headers.get("Origin")
+    if origin and not _is_loopback_name(origin.split("://", 1)[-1].split("/", 1)[0]):
+        return False
+    return True
+
+
+def _accounts_disabled():
+    return {"success": False, "msg": "Sign-in is turned off: this server runs in local single-user mode"}, 403
+
+
+@auth_app.post("/local-session")
+@auth_app.doc(summary="Start a local session", description="Only in local single-user mode (`dfthub serve --local`): return a Bearer JWT token for the local account. Accepted only from a browser on the same computer, not through a proxy.")
+def local_session():
+    username = local_mode_user()
+    if not username:
+        return {"success": False, "msg": "Local single-user mode is not enabled"}, 404
+    if not is_direct_local_request():
+        return {"success": False, "msg": "Local sessions are only available from this computer, e.g. http://127.0.0.1"}, 403
+    db = get_db()
+    try:
+        user = db.execute("SELECT * FROM users WHERE username = ?", (username,)).fetchone()
+    finally:
+        db.close()
+    if user is None:
+        return {"success": False, "msg": "The local account no longer exists; restart dfthub serve --local"}, 500
+    return {"success": True, "token": _make_token(user), "user": _user_dict(user)}
+
 
 @auth_app.post("/register")
 @auth_app.doc(summary="Register an account", description="Create a DFThub account and return a Bearer JWT token. The e-mail address is optional; it is used for sign-in and job notifications.")
 def register():
+    if local_mode_user():
+        return _accounts_disabled()
     data = request.get_json(silent=True) or {}
     username = (data.get("username") or "").strip()
     email = (data.get("email") or "").strip().lower() or None
@@ -227,6 +330,8 @@ def register():
 @auth_app.post("/login")
 @auth_app.doc(summary="Sign in", description="Authenticate with a username or e-mail address (field `login`; `email` and `username` are accepted too) and a password, and return a Bearer JWT token.")
 def login():
+    if local_mode_user():
+        return _accounts_disabled()
     data = request.get_json(silent=True) or {}
     identifier = (data.get("login") or data.get("email") or data.get("username") or "").strip()
     password = data.get("password") or ""
