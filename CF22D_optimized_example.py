@@ -22,6 +22,13 @@ Usage
     register_cf22d(mf)
     mf.kernel()
 
+Command line (H2 demo)::
+
+    python CF22D_optimized_example.py              # optimized Parameters + D3
+    python CF22D_optimized_example.py --no-d3      # without D3 dispersion
+    python CF22D_optimized_example.py --original   # embedded published parameters
+    python CF22D_optimized_example.py --parameters path/to/Parameters
+
 References
 ----------
 [1] Y. Liu, C. Zhang, Z. Liu, D. G. Truhlar, Y. Wang, X. He,
@@ -29,6 +36,7 @@ References
     Nat. Comput. Sci., 2023, 3, 48-58.
 """
 
+import re
 from pathlib import Path
 
 import numpy as np
@@ -36,6 +44,7 @@ from pyscf.dft import libxc
 
 DEFAULT_PARAMETERS_PATH = Path(__file__).with_name("Parameters")
 CF22D_D3_DISPERSION = "d3zero:cf22d"
+MIN_PYSCF_VERSION = (2, 13, 1)
 
 CX_DIMS = [
     (0, 0, 6), (0, 1, 5), (0, 2, 4), (0, 3, 3),
@@ -120,6 +129,43 @@ def read_cf22d_parameters(path=DEFAULT_PARAMETERS_PATH):
     return cx, cy, cz, hf_coeff
 
 
+def _version_tuple(version):
+    match = re.match(r"(\d+)\.(\d+)(?:\.(\d+))?", version)
+    if match is None:
+        return None
+    return tuple(int(part or 0) for part in match.groups())
+
+
+def check_requirements(with_d3=True):
+    """Fail early, with an actionable message, if the environment cannot run CF22D.
+
+    Without this check an old PySCF fails with an obscure AttributeError or
+    NotImplementedError, and a missing pyscf-dispersion is only reported after
+    the SCF has already converged.
+    """
+    import pyscf
+
+    found = _version_tuple(pyscf.__version__)
+    if found is not None and found < MIN_PYSCF_VERSION:
+        required = ".".join(map(str, MIN_PYSCF_VERSION))
+        raise RuntimeError(
+            f"CF22D requires PySCF >= {required} (found {pyscf.__version__}). "
+            f'Upgrade with: python -m pip install --upgrade "pyscf>={required}"'
+        )
+
+    if with_d3:
+        try:
+            from pyscf.dispersion import dftd3  # noqa: F401
+        except ImportError as err:
+            raise RuntimeError(
+                "D3 dispersion (with_d3=True) requires the pyscf-dispersion package, "
+                "but it is not installed. Install it with "
+                "'python -m pip install pyscf-dispersion' (PyPI provides Linux wheels "
+                "only), or disable dispersion with with_d3=False "
+                "(command line: --no-d3)."
+            ) from err
+
+
 def _get_parameters(parameters_path):
     if parameters_path is None:
         return CX, CY, CZ, HF_COEFF
@@ -144,6 +190,7 @@ def register_cf22d(mf, name="cf22d_custom", parameters_path=DEFAULT_PARAMETERS_P
     -------
     mf : the same mean-field object with xc set to the CF22D functional.
     """
+    check_requirements(with_d3)
     cx, cy, cz, hf_coeff = _get_parameters(parameters_path)
 
     x_params = np.zeros(41)
@@ -165,12 +212,45 @@ def register_cf22d(mf, name="cf22d_custom", parameters_path=DEFAULT_PARAMETERS_P
     return mf
 
 
-if __name__ == "__main__":
+def main(argv=None):
+    """Run the bundled H2 demo (RKS, def2-QZVP, grid level 6, R = 0.74 Angstrom)."""
+    import argparse
+    import sys
+
     from pyscf import gto, dft
+
+    parser = argparse.ArgumentParser(
+        description="Run the CF22D H2 demo (RKS/def2-QZVP, grid level 6, R = 0.74 Angstrom).",
+    )
+    source = parser.add_mutually_exclusive_group()
+    source.add_argument(
+        "--parameters", metavar="PATH", default=DEFAULT_PARAMETERS_PATH,
+        help="DFThub Parameters file (default: the Parameters file next to this script)",
+    )
+    source.add_argument(
+        "--original", action="store_true",
+        help="use the original published CF22D parameters embedded in this script",
+    )
+    parser.add_argument(
+        "--no-d3", action="store_true",
+        help="disable D3 zero-damping dispersion (needed where pyscf-dispersion is unavailable, e.g. macOS)",
+    )
+    args = parser.parse_args(argv)
 
     mol = gto.M(atom="H 0 0 0; H 0 0 0.74", basis="def2-qzvp", verbose=4)
     mf = dft.RKS(mol)
     mf.grids.level = 6
-    register_cf22d(mf)
+    try:
+        register_cf22d(
+            mf,
+            parameters_path=None if args.original else args.parameters,
+            with_d3=not args.no_d3,
+        )
+    except (OSError, RuntimeError, ValueError) as err:
+        sys.exit(f"Error: {err}")
     mf.kernel()
     print(f"Total energy: {mf.e_tot:.10f} Hartree")
+
+
+if __name__ == "__main__":
+    main()
