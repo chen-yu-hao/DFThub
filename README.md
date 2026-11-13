@@ -86,4 +86,4 @@ python tools/scientific_smoke.py
 
 Regression tests cover authentication, deletion/cancellation, run status, test set inheritance, the case where the training set succeeds but the test set fails, and checkpoint reuse. CI validates installation, the web pages, and real RKS/UKS scientific smoke tests on Linux x86_64 with Python 3.10/3.11/3.12; the macOS build-from-source path is documented in the deployment guide.
 
-The Gaussian parameter export tool and instructions from the original repository are preserved in the [Gaussian documentation](docs/GAUSSIAN.md).
+The CF22D PySCF example and its instructions from the original repository are preserved in the [CF22D PySCF example documentation](docs/CF22D_PYSCF_EXAMPLE.md).
