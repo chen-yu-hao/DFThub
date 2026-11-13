@@ -134,10 +134,9 @@ By default `dfthub serve` listens on **127.0.0.1:8188**, so only the machine its
    ```text
    DFTHUB_DATA_DIR=/var/lib/dfthub/data
    DFTHUB_PUBLIC_URL=https://dfthub.example.org
-   DFTHUB_ENABLE_HSTS=1
    ```
 
-   Set `DFTHUB_ENABLE_HSTS=1` only when the site is served over HTTPS. `DFTHUB_PUBLIC_URL` is the address used in e-mails.
+   `DFTHUB_PUBLIC_URL` is the address used in e-mails. After HTTPS works (step 3), add `DFTHUB_ENABLE_HSTS=1` and restart the service (`sudo systemctl restart dfthub`); never enable HSTS while the site is HTTP only.
 
 2. Run DFThub on 127.0.0.1 under a process manager. With systemd (any process manager works; DFThub does not require systemd), create `/etc/systemd/system/dfthub.service`, adjusting the virtual-environment path:
 
