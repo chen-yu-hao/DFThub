@@ -8,28 +8,50 @@ DFThub also includes command-line tools that read a DFThub `Parameters` file and
 
 Use **CPython 3.10–3.12**; 3.12 is recommended. v0.1.1 provides prebuilt packages for **Linux x86_64 (glibc 2.35+, e.g. Ubuntu 22.04+)**. On macOS Apple Silicon, use the Conda environment and build the latest DFT engine from source; on Windows, use WSL2 with a distribution that meets the Linux requirements.
 
-Download the offline bundle that matches your operating system, CPU and Python minor version from [GitHub Releases](https://github.com/chen-yu-hao/DFThub/releases/tag/v0.1.1), unpack it, then:
+Download the offline bundle that matches your operating system, CPU and Python minor version from [GitHub Releases](https://github.com/chen-yu-hao/DFThub/releases/tag/v0.1.1) (`cp310`, `cp311` or `cp312` for Python 3.10, 3.11 or 3.12). The `wheelhouse/` directory is inside the unpacked bundle, not in this Git repository, so run the install commands from the bundle directory. The complete sequence for Python 3.12:
 
 ```bash
+# 1. Check the Python version (must be 3.10–3.12 and match the bundle)
+python3.12 --version
+
+# 2. Download and unpack the bundle
+cd ~
+curl -LO https://github.com/chen-yu-hao/DFThub/releases/download/v0.1.1/dfthub-0.1.1-linux-x86_64-cp312.tar.gz
+tar xzf dfthub-0.1.1-linux-x86_64-cp312.tar.gz
+
+# 3. Enter the bundle directory (it contains wheelhouse/, deploy/, conda/, requirements.lock)
+cd dfthub-0.1.1-linux-x86_64-cp312
+
+# 4. Create a clean virtual environment and install
 python3.12 -m venv .venv
 source .venv/bin/activate
 python -m pip install --no-index --find-links ./wheelhouse dfthub
 # or verify the platform and every SHA256, then install from the lock file:
-DFTHUB_INSTALL_PYTHON=python3.12 bash deploy/install-offline.sh .venv
+#   DFTHUB_INSTALL_PYTHON=python3.12 bash deploy/install-offline.sh .venv
 
+# 5. Verify and start
 dfthub doctor --strict
 dfthub serve --data-dir ./dfthub-data
 ```
 
+For Python 3.10 or 3.11, replace `cp312` and `python3.12` accordingly. If pip reports `Location './wheelhouse' is ignored` or `No matching distribution found for dfthub`, the current directory is not the unpacked bundle; `cd` into it first.
+
 Open **http://127.0.0.1:8188**. Workspace, Analyze, Guide, Energy and the API documentation are all served from there, and the pages make no CDN requests. The offline bundle does not contain a Python interpreter: prepare Python and venv on the target machine first. On Ubuntu use the system python3/venv; on macOS use the Python.org universal2 installer and run it as arm64. Conda users can run `conda create -n dfthub python=3.12 pip` and then the same pip commands inside that environment; for an isolated machine, download the bundle in advance on a connected one.
 
-This release is published on GitHub Releases, not PyPI. A plain `pip install dfthub` refers to this project only when it points at this release's wheelhouse; do not install a same-named package from an unknown index. A source install also needs the matching engine wheel:
+This release is published on GitHub Releases, not PyPI. A plain `pip install dfthub` refers to this project only when it points at this release's wheelhouse; do not install a same-named package from an unknown index.
+
+A source install (needed for features newer than the published bundle, such as the [command-line tools](#command-line-tools)) uses the bundle's wheelhouse for the pinned engine. With the bundle unpacked in `~` as above:
 
 ```bash
 git clone https://github.com/chen-yu-hao/DFThub.git
 cd DFThub
-python -m pip install --find-links /path/to/wheelhouse .
+python3.12 -m venv .venv
+source .venv/bin/activate
+python -m pip install --find-links ~/dfthub-0.1.1-linux-x86_64-cp312/wheelhouse .
+dfthub doctor --strict
 ```
+
+Install into a clean environment: if `python -m pip show pyscf` finds upstream `pyscf`, it conflicts with the DFThub engine and `dfthub doctor --strict` reports an error.
 
 ## PySCF DFT engine
 
@@ -49,7 +71,7 @@ Conda provides Python, BLAS and the numerical libraries; DFThub and the pinned P
 ```bash
 conda env create -f conda/environment.yml
 conda activate dfthub-0.1.1
-bash conda/install-release.sh /path/to/dfthub-0.1.1-linux-x86_64-cp312
+bash conda/install-release.sh ~/dfthub-0.1.1-linux-x86_64-cp312   # the unpacked bundle directory
 dfthub doctor --strict
 ```
 
