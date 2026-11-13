@@ -12,6 +12,7 @@ from dfthub.pipeline.compute_scheduler import OPTIMIZER_THREADS, enter_task, lim
 
 os.environ.update(thread_environment(OPTIMIZER_THREADS))
 from dfthub.pipeline.cf22d_baseline import native_cf22d_parameters
+from dfthub.functional.parameters import ParametersError, read_vector, write_parameters
 from dfthub.pipeline.refinement import optimizer_files, write_json
 from dfthub.pipeline.testset_inheritance import ensure_fork_test_set
 from dfthub.pipeline.optimization_runtime import OPTIMIZATION_FTOL
@@ -21,40 +22,15 @@ TMB11_DIR = optimizer_dir()
 DEMO_ROOT = Path(os.environ.get("DFTHUB_DEMO_ROOT", str(data_dir() / "optimizer")))
 DEMO_ROOT.mkdir(parents=True, exist_ok=True)
 
-_CX_GROUPS = [
-    (0, 0, 6), (0, 1, 5), (0, 2, 4), (0, 3, 3),
-    (1, 0, 5), (1, 1, 4), (1, 2, 3),
-    (2, 0, 4), (2, 1, 3),
-    (3, 0, 3),
-]
-_HF_PERCENT = "5.2172460196608100e+01"
-
 
 def generate_parameters(params_path, output_path):
-    with open(params_path) as f:
-        values = [line.strip() for line in f if line.strip()]
-    if len(values) != 59:
-        print(f"[warn] expected 59 params, got {len(values)}; skipping Parameters generation")
+    """Write the canonical DFThub Parameters file from the 59 optimized coefficients."""
+    try:
+        params = read_vector(params_path)
+    except ParametersError as exc:
+        print(f"[warn] {exc}; skipping Parameters generation")
         return
-
-    lines = ["Parameters"]
-    idx = 0
-    for n, j, count in _CX_GROUPS:
-        for k in range(count):
-            lines.append(f"Cx({n},{j},{k}) = {float(values[idx]):.16e}")
-            idx += 1
-
-    # HF exact-exchange mixing is now the optimized 59th parameter.
-    lines.append(f"HF% = {float(values[58]) * 100:.16e}")
-
-    for i in range(9):
-        lines.append(f"Cy({i}) = {float(values[40 + i]):.16e}")
-
-    for i in range(9):
-        lines.append(f"Cz({i}) = {float(values[49 + i]):.16e}")
-
-    with open(output_path, "w") as f:
-        f.write("\n".join(lines) + "\n")
+    write_parameters(params, output_path)
     print(f"generated Parameters -> {output_path}")
 
 
