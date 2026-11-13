@@ -104,6 +104,12 @@ def api_index():
     req = "See <a href='docs'>DOCS</a>"
     return req
 
+
+@app.get("/features")
+@app.doc(summary="Server features", description="Public settings the web pages adapt to: `mail` is true when this server sends job notifications.")
+def server_features():
+    return {"mail": _mail_enabled()}
+
 class DFT_IN(Schema):
     mode = String(required=True, validate=OneOf(["new", "optim", "spe", "refine"]), metadata={"description": "Operation: new, optim, spe or refine."})
     work_dir = String(required=True, metadata={"description": "Owned path in the form Work/<username>/<job>."})
@@ -113,7 +119,7 @@ class DFT_IN(Schema):
     energy_task = String(required=False, metadata={"description": "Named DFT energy task folder for the selected Run."})
     fork = String(required=False, metadata={"description": "Fork directory such as fork-1 for SPE/refinement."})
     descriptor_snapshot_id = String(required=False, metadata={"description": "Grid-6 Input descriptor snapshot identifier for refinement."})
-    email = Email(required=False, metadata={"description": "Notification email; defaults to the authenticated user's email."})
+    email = Email(required=False, metadata={"description": "Notification email; defaults to the authenticated user's email. Ignored when the server does not send mail."})
     reMark = String(required=False, metadata={"description": "Optional user note stored with the submission."})
 
 
@@ -323,7 +329,13 @@ def _spe_result_complete(job):
         return False
 
 
+def _mail_enabled():
+    return not appx.config["MAIL_SUPPRESS_SEND"]
+
+
 def _send_completion_email(job, success: bool):
+    if not job.get("email"):
+        return
     try:
         with appx.app_context():
             send_task_notification(
@@ -340,6 +352,8 @@ def _send_completion_email(job, success: bool):
 
 
 def _send_submission_email(job):
+    if not job.get("email"):
+        return
     try:
         send_task_notification(
             job["email"],
@@ -776,10 +790,14 @@ def dft_submit(json_data):
     if not full_work_dir.exists():
         return _error("Work directory not found", 404)
 
-    alternate_email = (data.get("email") or "").strip().lower()
-    recipient = alternate_email or (g.current_user.get("email") or "").strip().lower()
-    if not is_valid_email(recipient):
-        return _error("A valid notification email is required")
+    # Keep a notification address only when mail is on; with mail off nothing
+    # is sent, so no address is required or held with the job.
+    recipient = None
+    if _mail_enabled():
+        alternate_email = (data.get("email") or "").strip().lower()
+        recipient = alternate_email or (g.current_user.get("email") or "").strip().lower()
+        if not is_valid_email(recipient):
+            return _error("A valid notification email is required")
     data["email"] = recipient
 
     weight_path = full_work_dir / "output" / weightFile / "weight.csv"
