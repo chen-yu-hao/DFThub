@@ -14,8 +14,7 @@ Download the offline bundle that matches your operating system, CPU and Python m
 # 1. Check the Python version (must be 3.10–3.12 and match the bundle)
 python3.12 --version
 
-# 2. Download and unpack the bundle
-cd ~
+# 2. Download and unpack the bundle in a directory of your choice (not inside the Git checkout)
 curl -LO https://github.com/chen-yu-hao/DFThub/releases/download/v0.1.1/dfthub-0.1.1-linux-x86_64-cp312.tar.gz
 tar xzf dfthub-0.1.1-linux-x86_64-cp312.tar.gz
 
@@ -40,14 +39,14 @@ Open **http://127.0.0.1:8188**. Workspace, Analyze, Guide, Energy and the API do
 
 This release is published on GitHub Releases, not PyPI. A plain `pip install dfthub` refers to this project only when it points at this release's wheelhouse; do not install a same-named package from an unknown index.
 
-A source install (needed for features newer than the published bundle, such as the [command-line tools](#command-line-tools)) uses the bundle's wheelhouse for the pinned engine. With the bundle unpacked in `~` as above:
+A source install (needed for features newer than the published bundle, such as the [command-line tools](#command-line-tools)) uses the bundle's wheelhouse for the pinned engine. Replace `/path/to/dfthub-0.1.1-linux-x86_64-cp312` with the bundle directory unpacked in step 2:
 
 ```bash
 git clone https://github.com/chen-yu-hao/DFThub.git
 cd DFThub
 python3.12 -m venv .venv
 source .venv/bin/activate
-python -m pip install --find-links ~/dfthub-0.1.1-linux-x86_64-cp312/wheelhouse .
+python -m pip install --find-links /path/to/dfthub-0.1.1-linux-x86_64-cp312/wheelhouse .
 dfthub doctor --strict
 ```
 
@@ -71,7 +70,7 @@ Conda provides Python, BLAS and the numerical libraries; DFThub and the pinned P
 ```bash
 conda env create -f conda/environment.yml
 conda activate dfthub-0.1.1
-bash conda/install-release.sh ~/dfthub-0.1.1-linux-x86_64-cp312   # the unpacked bundle directory
+bash conda/install-release.sh /path/to/dfthub-0.1.1-linux-x86_64-cp312   # the unpacked bundle directory
 dfthub doctor --strict
 ```
 
