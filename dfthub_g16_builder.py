@@ -13,18 +13,22 @@ dfthub_g16_builder.py
         └─ dfthub_g16_builder.py
 
 运行：
-    python3 dfthub_g16_builder.py
+    python3 dfthub_g16_builder.py                 # 补丁并编译
+    python3 dfthub_g16_builder.py --dry-run       # 只检查，不修改文件、不编译
+    python3 dfthub_g16_builder.py --parameters other/Parameters
 
 改进：
   - 自动探测源码根目录（兼容 g16/ 与 g16/g16 两种布局）
   - 构建环境变量随实际路径调整
   - 按目标 block 搜索 utilnz.F / utilam.F 参数位置
+  - 按参数名（而非文件顺序）读取 Parameters，规则与 CF22D_optimized_example.py 一致
+  - --dry-run 可在修改源码前检查参数文件与源码 block
   - 类型标注兼容 Python 3.9+
 """
 
-import sys, tarfile, shutil, subprocess, time
+import argparse, sys, tarfile, shutil, subprocess, time
 from pathlib import Path
-from typing import List, Optional
+from typing import Dict, List, Optional
 
 # ───────────── 配置区 ─────────────
 BASE_DIR = Path(__file__).resolve().parent
@@ -42,6 +46,8 @@ CX_DIMS = [
 ]
 CX_KEYS = [f"CX({i},{j},{k})" for i, j, n in CX_DIMS for k in range(n)]
 CY_KEYS = [f"CY({i})" for i in range(9)]
+CZ_KEYS = [f"CZ({i})" for i in range(9)]
+PARAM_KEYS = CX_KEYS + CY_KEYS + CZ_KEYS
 
 
 def log_step(name):
@@ -57,39 +63,56 @@ def log_step(name):
 
 # ---------- 读取 Parameters ----------
 
-def _format_hf(raw: str, key: str) -> str:
-    value = float(raw)
-    scale = 10000 if '%' in key else 1000000
+def _parse_float(raw: str) -> float:
+    return float(raw.replace('D', 'E').replace('d', 'e'))
+
+def _format_hf(value: float, percent: bool) -> str:
+    scale = 10000 if percent else 1000000
     return f"{int(round(value * scale)):06d}"
 
 def read_para_vals(p: Path) -> List[str]:
+    """按参数名读取 Parameters，返回 40 Cx + 9 Cy + 9 Cz（Fortran 格式）+ IMHF。
+
+    解析规则与 CF22D_optimized_example.read_cf22d_parameters 相同：
+    忽略 `#` 注释与未知键，键名不区分大小写/空白，支持 E 或 Fortran D 指数，
+    参数顺序任意，重复出现的键取最后一个值。
+    """
     if not p.exists():
         sys.exit(f"❌ Parameters 不存在 -> {p}")
 
-    lines = [l.strip() for l in p.read_text().splitlines() if l.strip()]
-    vals: List[str] = []
+    values: Dict[str, float] = {}
     hf: Optional[str] = None
 
-    for ln in lines:
+    for lineno, ln in enumerate(p.read_text().splitlines(), 1):
+        ln = ln.split('#', 1)[0].strip()
         if '=' not in ln:
             continue
         key, raw = [part.strip() for part in ln.split('=', 1)]
-        if 'HF' in key.upper():
-            try:
-                hf = _format_hf(raw, key)
-            except ValueError:
-                pass
-        elif len(vals) < 58:
-            try:
-                num = float(raw)
-                fmt = 'D' if len(vals) < 40 else 'd'
-                vals.append(f"{num:.14e}".replace('e', fmt))
-            except ValueError:
-                pass
+        key = _compact(key)
+        if key not in ('HF', 'HF%') and key not in PARAM_KEYS:
+            continue
+        try:
+            num = _parse_float(raw)
+        except ValueError:
+            sys.exit(f"❌ {p} 第 {lineno} 行无法解析数值：{ln}")
+        if key == 'HF%':
+            hf = _format_hf(num, percent=True)
+        elif key == 'HF':
+            hf = _format_hf(num, percent=False)
+        else:
+            values[key] = num
 
-    if len(vals) < 58 or hf is None:
-        sys.exit("❌ Parameters 中参数/HF 不足")
+    missing = [k for k in PARAM_KEYS if k not in values]
+    if hf is None:
+        missing.append('HF% 或 HF')
+    if missing:
+        shown = ', '.join(missing[:5]) + (', ...' if len(missing) > 5 else '')
+        sys.exit(f"❌ Parameters 中参数/HF 不足（缺少 {len(missing)} 项：{shown}）")
 
+    vals = [
+        f"{values[k]:.14e}".replace('e', 'D' if i < len(CX_KEYS) else 'd')
+        for i, k in enumerate(PARAM_KEYS)
+    ]
     return vals + [hf]
 
 
@@ -175,9 +198,12 @@ def _replace_assignment(lines: List[str], idx: int, value: str, key: str, src: P
     left, sep, _ = line.partition('=')
     if not sep or _assignment_key(line) != _compact(key):
         sys.exit(f"❌ {src} 第 {idx+1} 行不是预期的 {key} 参数行：{line.rstrip()}")
-    lines[idx] = left + f"= {value}\n"
+    new = left + f"= {value}\n"
+    changed = new != line
+    lines[idx] = new
+    return int(changed)
 
-def _write_utils(g16_src: Path, v: List[str]):
+def _write_utils(g16_src: Path, v: List[str], dry_run: bool = False):
     nz, am = g16_src / "utilnz.F", g16_src / "utilam.F"
     if not nz.exists() or not am.exists():
         sys.exit(f"❌ 找不到 utilnz.F 或 utilam.F -> {nz} / {am}")
@@ -198,16 +224,26 @@ def _write_utils(g16_src: Path, v: List[str]):
     hf_sec_start, hf_sec_end = _find_section(am_lines, "IMOpt.eq.-25", am)
     hf_idx = _find_assignment_block(am_lines, ["IMHF"], am, "IMHF", hf_sec_start, hf_sec_end)
 
+    changed = 0
     for i, key in enumerate(CX_KEYS):
-        _replace_assignment(nz_lines, cx_start+i, v[i], key, nz)
+        changed += _replace_assignment(nz_lines, cx_start+i, v[i], key, nz)
     for i in range(9):
-        _replace_assignment(am_lines, cy_start+i, v[40+i], CY_KEYS[i], am)
+        changed += _replace_assignment(am_lines, cy_start+i, v[40+i], CY_KEYS[i], am)
     for i in range(9):
-        _replace_assignment(am_lines, cz_start+i, v[49+i], CY_KEYS[i], am)
-    _replace_assignment(am_lines, hf_idx, v[58], "IMHF", am)
+        changed += _replace_assignment(am_lines, cz_start+i, v[49+i], CY_KEYS[i], am)
+    changed += _replace_assignment(am_lines, hf_idx, v[58], "IMHF", am)
+
+    print(f"  Cx  : {nz} 第 {cx_start+1}-{cx_start+len(CX_KEYS)} 行")
+    print(f"  Cy  : {am} 第 {cy_start+1}-{cy_start+9} 行")
+    print(f"  Cz  : {am} 第 {cz_start+1}-{cz_start+9} 行")
+    print(f"  IMHF: {am} 第 {hf_idx+1} 行 = {v[58]}")
+    if dry_run:
+        print(f"  dry-run：{changed} 行将被修改，未写入文件")
+        return
 
     nz.write_text(''.join(nz_lines))
     am.write_text(''.join(am_lines))
+    print(f"  已写入：{changed} 行被修改")
 
 
 # ---------- 源码目录探测与编译 ----------
@@ -260,11 +296,30 @@ def rename_g16(top_level: Path):
     top_level.rename(dst)
 
 
-def main():
-    vals = read_para_vals(PARA_TXT)
+def parse_args(argv: Optional[List[str]] = None) -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        description="用 Parameters 中的 CF22D 参数补丁 Gaussian 16 源码并编译，输出 g16-opt/。",
+    )
+    parser.add_argument(
+        "--parameters", type=Path, default=PARA_TXT, metavar="PATH",
+        help="参数文件路径（默认：脚本同目录下的 Parameters）",
+    )
+    parser.add_argument(
+        "--dry-run", action="store_true",
+        help="只检查参数文件并定位源码中的参数 block，不修改源码、不编译（如无 g16/ 仍会解压源码包）",
+    )
+    return parser.parse_args(argv)
+
+
+def main(argv: Optional[List[str]] = None):
+    args = parse_args(argv)
+    vals = read_para_vals(args.parameters)
     g16_top = prepare_g16()
     g16_src = detect_g16_src(g16_top)
-    _write_utils(g16_src, vals)
+    _write_utils(g16_src, vals, dry_run=args.dry_run)
+    if args.dry_run:
+        print("\n✅ dry-run 完成：参数文件与源码 block 检查通过，未修改任何文件")
+        return
     build_g16(g16_src)
     rename_g16(g16_top)
 
