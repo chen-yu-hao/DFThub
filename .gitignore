@@ -1,5 +1,5 @@
 __pycache__/
-*.pyc
+*.py[cod]
 *.egg-info/
 .venv*/
 .build/
@@ -15,3 +15,10 @@ auth.db
 node_modules/
 .astro/
 dist-dfthub/
+
+# Gaussian 16 sources and build output used by `dfthub g16 build`
+# (licensed software; never commit them)
+g16/
+g16-opt/
+g16.tar.gz
+CF22Dg16.tar.gz
