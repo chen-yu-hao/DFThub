@@ -3,6 +3,7 @@ import contextlib
 import fcntl
 import json
 import os
+import platform
 import signal
 import subprocess
 import sys
@@ -13,6 +14,16 @@ from pathlib import Path
 
 import psutil
 from dfthub.paths import data_dir
+
+
+def _ensure_openblas_coretype(env=None):
+    target = os.environ if env is None else env
+    if sys.platform.startswith('linux') and platform.machine().lower() in ('x86_64', 'amd64'):
+        target.setdefault('OPENBLAS_CORETYPE', 'Haswell')
+    return target
+
+
+_ensure_openblas_coretype()
 
 def cpu_capacity():
     count = os.cpu_count() or 1
@@ -83,6 +94,7 @@ def thread_environment(threads):
     env = dict(os.environ)
     env.update({key: str(threads) for key in THREAD_VARIABLES})
     env['OMP_MAX_ACTIVE_LEVELS'] = '1'
+    _ensure_openblas_coretype(env)
     return env
 
 
