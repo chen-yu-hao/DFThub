@@ -88,6 +88,16 @@ H    0.000000   -0.757200   -0.469200</pre>
           <div class="gd-file">
             <div class="gd-file-head"><span class="ico"><svg class="i" aria-hidden="true"><use href="#i-doc"></use></svg></span><div><b>Reference energies</b><small>One .ref file</small></div></div>
             <p>Lists each reaction as a formula of your molecule names, with its reference energy from experiment or high-level calculations such as CCSD(T)/CBS.</p>
+            <div class="gd-code">
+              <pre aria-label="Example .ref file">-1 Reactant_A -1 Reactant_B 1 Product_AB -12.40 1
+1 Example_001 -1 Example_002 0.00000000 1</pre>
+              <button type="button" class="icon-btn" aria-label="Copy"><svg class="i" aria-hidden="true"><use href="#i-copy"></use></svg></button>
+            </div>
+            <ul class="gd-code-note">
+              <li><span>&lt;coeff&gt; &lt;molecule&gt;</span> paired stoichiometric coefficient and molecule filename (without .xyz; negative for reactants, positive for products, matching the reaction energy definition)</li>
+              <li><span>&lt;ref_energy&gt;</span> second-to-last column: reference reaction energy (kcal/mol)</li>
+              <li><span>1</span> last column: unit conversion factor (1 means the reference energy is in kcal/mol)</li>
+            </ul>
             <p>The template shows the exact layout. Start from it rather than writing the file from scratch.</p>
             <a class="btn btn-secondary btn-sm js-template" href="https://dfthub.ecnu.space/api_dft/download/Work/template" style="justify-self:start"><svg class="i" aria-hidden="true"><use href="#i-down"></use></svg>Download template</a>
           </div>

@@ -475,16 +475,21 @@ export default function JobDetail(props: DetailProps) {
   }
   async function startEnergy() {
     if (!run || !canSpe || !energyFile || loading || requestPending.current || scopeBusy("energy")) return;
+    if (!/\.(tgz|tar\.gz|zip)$/i.test(energyFile.name)) {
+      setEnergyUploadError("Choose a .tgz, .tar.gz or .zip archive of .xyz structures.");
+      return;
+    }
+    const cleanName = energyFile.name.replace(/\.(tgz|tar\.gz|zip)$/i, "").replace(/[^A-Za-z0-9._-]/g, "_") || "energy_task";
     requestPending.current = true;
     setSubmitting(true);
     setEnergyUploadError("");
     try {
       const data = new FormData();
-      data.append("folder_dir", `Work/${user.username}/${job.id}/output/${run.id}/energy_input`);
+      data.append("folder_dir", `Work/${user.username}/${job.id}/output/${run.id}/energy_input/${cleanName}`);
       data.append("files", energyFile, energyFile.name);
       const upload = await axios.put("/api_dft/upload", data);
       if (upload.data.result === "error" || upload.data.success === false) throw new Error(upload.data.msg || "Energy archive upload failed.");
-      const response = await axios.post("/api_dft/submit", { mode: "spe", spe_scope: "energy", work_dir: `Work/${user.username}/${job.id}`, ...runFields(run.id) });
+      const response = await axios.post("/api_dft/submit", { mode: "spe", spe_scope: "energy", energy_task: cleanName, work_dir: `Work/${user.username}/${job.id}`, ...runFields(run.id) });
       if (response.data.result === "error" || response.data.success === false) throw new Error(response.data.msg || "DFT energy calculation could not be started.");
       setEnergyFile(null);
       setSpePending((previous) => ({ ...previous, [key + "/energy"]: true }));
@@ -492,13 +497,13 @@ export default function JobDetail(props: DetailProps) {
       onNotify(`DFT energy calculation submitted for ${job.id}/${run.id}.`);
       onRefresh();
     } catch (failure: any) {
-      setEnergyUploadError(failure.response?.data?.msg || failure.message || "Could not start the DFT energy calculation.");
+      setEnergyUploadError(failure.response?.data?.msg || failure.response?.data?.message || failure.message || "Could not start the DFT energy calculation.");
     } finally { requestPending.current = false; setSubmitting(false); }
   }
   function chooseEnergyFile(file: File | null) {
     setEnergyUploadError("");
     if (!file) { setEnergyFile(null); return; }
-    if (!/\.(?:tgz|tar\.gz|zip)$/i.test(file.name)) {
+    if (!/\.(tgz|tar\.gz|zip)$/i.test(file.name)) {
       setEnergyFile(null);
       setEnergyUploadError("Choose a .tgz, .tar.gz or .zip archive of .xyz structures.");
       return;
