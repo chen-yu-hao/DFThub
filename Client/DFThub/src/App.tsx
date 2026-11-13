@@ -81,11 +81,13 @@ function Application({ page }: { page: Page }) {
 
   const openNew = useCallback((settings?: JobSettings) => {
     setInitial(settings);
-    if (!user) {
+    if (user) setNewOpen(true);
+    else if (features.local) notify(loading ? "Starting your local session…" : "The local session could not start. Reload the page.", loading ? "info" : "bad");
+    else {
       setPendingNew(true);
       setShowAuthModal(true);
-    } else setNewOpen(true);
-  }, [user, setShowAuthModal]);
+    }
+  }, [user, features.local, loading, notify, setShowAuthModal]);
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -103,7 +105,7 @@ function Application({ page }: { page: Page }) {
 
   return <>
     <SymbolDefs />
-    <Header page={page} user={user} onNew={() => openNew()} onLogin={() => setShowAuthModal(true)}
+    <Header page={page} user={user} local={features.local} onNew={() => openNew()} onLogin={() => setShowAuthModal(true)}
       onLogout={() => { setPendingNew(false); logout(); }} onNotify={notify} />
     <main id="top" className={`page-${page}`}>
       <div className="wrap">
@@ -118,9 +120,11 @@ function Application({ page }: { page: Page }) {
             <div className="detail"><div className="panel">
               <div className="empty" role="status">
                 <span className="big">{loading ? <Icon name="clock" /> : <img src="/favicon.svg" alt="" aria-hidden="true" />}</span>
-                <h2>{loading ? "Restoring your workspace" : page === "analyze" ? "Sign in to analyze runs" : "Sign in to get started"}</h2>
-                <p>{loading ? "Checking your saved session…" : page === "analyze" ? "Choose runs and compare MUE results." : "Upload data, track calculations, and return to your results."}</p>
-                {!loading && <button className="btn btn-primary" onClick={() => setShowAuthModal(true)}>Sign in</button>}
+                <h2>{loading ? "Restoring your workspace" : features.local ? "The local session could not start" : page === "analyze" ? "Sign in to analyze runs" : "Sign in to get started"}</h2>
+                <p>{loading ? "Checking your saved session…" : features.local ? "Open DFThub at http://127.0.0.1 on this computer, then reload the page." : page === "analyze" ? "Choose runs and compare MUE results." : "Upload data, track calculations, and return to your results."}</p>
+                {!loading && (features.local
+                  ? <button className="btn btn-primary" onClick={() => window.location.reload()}>Reload</button>
+                  : <button className="btn btn-primary" onClick={() => setShowAuthModal(true)}>Sign in</button>)}
               </div>
             </div></div>
           </section>}
@@ -138,7 +142,7 @@ function Application({ page }: { page: Page }) {
         setNewOpen(false);
         requestAnimationFrame(() => document.getElementById("workspace")?.scrollIntoView({ block: "start" }));
       }} />}
-    <AuthSheet intent={pendingNew ? "new" : undefined} open={showAuthModal} onClose={() => { setShowAuthModal(false); setPendingNew(false); }} />
+    {!features.local && <AuthSheet intent={pendingNew ? "new" : undefined} open={showAuthModal} onClose={() => { setShowAuthModal(false); setPendingNew(false); }} />}
     <div className="toasts" aria-live="polite">
       {notices.map((notice) => <div className={`toast ${notice.kind}`} key={notice.id}>
         <Icon name={notice.kind === "good" ? "check" : notice.kind === "bad" ? "alert" : "info"} />

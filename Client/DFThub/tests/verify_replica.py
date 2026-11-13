@@ -27,8 +27,10 @@ BRANCHES = [
 
 
 class Api:
-    def __init__(self, mail=True):
+    def __init__(self, mail=True, local=False):
         self.mail = mail
+        self.local = local
+        self.local_sessions = 0
         self.short = False
         self.jobs = ["demo_failed", "demo_done"]
         self.runs = ["weight_0"]
@@ -52,7 +54,10 @@ class Api:
         if path.endswith("/me"):
             await route.fulfill(json={"success": True, "user": USER})
         elif path.endswith("/features"):
-            await route.fulfill(json={"mail": self.mail})
+            await route.fulfill(json={"mail": self.mail, "local": self.local})
+        elif path.endswith("/local-session") and self.local:
+            self.local_sessions += 1
+            await route.fulfill(json={"success": True, "token": "local-session", "user": {**USER, "email": None}})
         elif path.endswith("/login") or path.endswith("/register"):
             self.logins.append(request.post_data_json)
             await self.release.wait()

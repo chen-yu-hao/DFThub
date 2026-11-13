@@ -42,6 +42,8 @@ async function copyText(value: string, success: string, onNotify: Notify) {
 export function Header(props: {
   page: Page;
   user: User | null;
+  /** Local single-user mode: no sign-in or sign-out. */
+  local?: boolean;
   onNew: () => void;
   onLogin: () => void;
   onLogout: () => void;
@@ -159,7 +161,7 @@ export function Header(props: {
             <Icon name="plus" />
             New job
           </button>
-          {props.user ? <button type="button" className="avatar" id="avatarBtn" ref={avatarRef} aria-haspopup="menu" aria-expanded={open} aria-controls="acctMenu" aria-label="Open account menu" onClick={() => setOpen(!open)}>{initials}</button> : <button type="button" className="btn btn-secondary btn-sm" id="signIn" onClick={props.onLogin}><Icon name="user" />Sign in</button>}
+          {props.user ? <button type="button" className="avatar" id="avatarBtn" ref={avatarRef} aria-haspopup="menu" aria-expanded={open} aria-controls="acctMenu" aria-label="Open account menu" onClick={() => setOpen(!open)}>{initials}</button> : !props.local && <button type="button" className="btn btn-secondary btn-sm" id="signIn" onClick={props.onLogin}><Icon name="user" />Sign in</button>}
           <div
             className="menu"
             id="acctMenu"
@@ -170,7 +172,7 @@ export function Header(props: {
           >
             <div className="menu-head">
               <b>{props.user?.username || "Your workspace"}</b>
-              <span>{props.user ? props.user.email || "Signed in" : "Sign in to manage your jobs"}</span>
+              <span>{props.local ? "Local mode · this computer only" : props.user ? props.user.email || "Signed in" : "Sign in to manage your jobs"}</span>
             </div>
             <button
               type="button"
@@ -210,7 +212,7 @@ export function Header(props: {
                 {appearance[0].toUpperCase() + appearance.slice(1)}
               </span>
             </button>
-            <button
+            {!props.local && <button
               type="button"
               role="menuitem"
               id="sessionAction"
@@ -221,7 +223,7 @@ export function Header(props: {
             >
               <Icon name={props.user ? "ext" : "user"} />
               {props.user ? "Sign out" : "Sign in"}
-            </button>
+            </button>}
           </div>
         </div>
       </div>

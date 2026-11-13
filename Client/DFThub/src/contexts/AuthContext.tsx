@@ -10,8 +10,13 @@ interface User {
 
 /** Public server settings from /api_dft/features. */
 export interface Features {
+  /** The server e-mails job notifications. */
   mail: boolean;
+  /** Local single-user mode (dfthub serve --local): the server starts the session, nobody signs in. */
+  local: boolean;
 }
+
+const DEFAULT_FEATURES: Features = { mail: false, local: false };
 
 interface AuthContextType {
   user: User | null;
@@ -48,34 +53,50 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Keep the server and first client render identical; session restoration starts in the effect.
   const [loading, setLoading] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
-  // Until the server answers, assume no mail: nothing then asks for an address.
-  const [features, setFeatures] = useState<Features>({ mail: false });
-
-  useEffect(() => {
-    const controller = new AbortController();
-    axios.get("/api_dft/features", { signal: controller.signal })
-      .then((r) => setFeatures({ mail: r.data?.mail === true }))
-      .catch(() => { /* Keep the defaults if the server cannot be reached. */ });
-    return () => controller.abort();
-  }, []);
+  // Until the server answers, assume no mail and ordinary sign-in.
+  const [features, setFeatures] = useState<Features>(DEFAULT_FEATURES);
 
   useEffect(() => {
     installInterceptor();
+    let active = true;
     const saved = localStorage.getItem(TOKEN_KEY);
-    if (saved) {
-      setLoading(true);
-      setToken(saved);
-      axios
-        .get("/api_dft/me", { headers: { Authorization: `Bearer ${saved}` } })
-        .then((r) => {
-          if (r.data.success) setUser(r.data.user);
-          else localStorage.removeItem(TOKEN_KEY);
-        })
-        .catch(() => localStorage.removeItem(TOKEN_KEY))
-        .finally(() => setLoading(false));
-    } else {
-      setLoading(false);
+    setLoading(true);
+    if (saved) setToken(saved);
+    // Ask for the server settings and check a saved session at the same time.
+    const featuresRequest = axios.get("/api_dft/features")
+      .then((r): Features => ({ mail: r.data?.mail === true, local: r.data?.local === true }))
+      .catch(() => DEFAULT_FEATURES);
+    const savedUser = saved
+      ? axios.get("/api_dft/me", { headers: { Authorization: `Bearer ${saved}` } })
+        .then((r): User | null => (r.data.success ? r.data.user : null))
+        .catch(() => null)
+      : Promise.resolve(null);
+
+    async function start() {
+      const next = await featuresRequest;
+      if (!active) return;
+      setFeatures(next);
+      if (next.local) {
+        // Local single-user mode: the server hands out the session.
+        try {
+          const r = await axios.post("/api_dft/local-session");
+          if (active && r.data.success) {
+            localStorage.setItem(TOKEN_KEY, r.data.token);
+            setToken(r.data.token);
+            setUser(r.data.user);
+            return;
+          }
+        } catch { /* Reported by the page as a failed local session. */ }
+        if (active) { localStorage.removeItem(TOKEN_KEY); setToken(null); setUser(null); }
+        return;
+      }
+      const restored = await savedUser;
+      if (!active) return;
+      if (restored) setUser(restored);
+      else if (saved) { localStorage.removeItem(TOKEN_KEY); setToken(null); }
     }
+    start().finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
   }, []);
 
   const login = useCallback(async (identifier: string, password: string): Promise<string | null> => {
