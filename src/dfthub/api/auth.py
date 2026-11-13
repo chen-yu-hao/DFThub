@@ -252,8 +252,9 @@ def _is_loopback_name(host):
 def is_direct_local_request():
     """Whether this request comes straight from a browser on this computer.
 
-    Rejects requests relayed by a reverse proxy, and pages served under another
-    host name (DNS rebinding) or another origin.
+    Rejects requests relayed by a reverse proxy, pages served under another
+    host name (DNS rebinding), and pages of another origin: a browser's Origin
+    must match this request's scheme, host and port exactly.
     """
     if not _is_loopback_name(request.remote_addr):
         return False
@@ -262,7 +263,7 @@ def is_direct_local_request():
     if not _is_loopback_name(request.host):
         return False
     origin = request.headers.get("Origin")
-    if origin and not _is_loopback_name(origin.split("://", 1)[-1].split("/", 1)[0]):
+    if origin and origin.strip().lower() != f"{request.scheme}://{request.host}".lower():
         return False
     return True
 

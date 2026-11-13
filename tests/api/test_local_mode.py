@@ -48,7 +48,7 @@ class LocalModeTests(unittest.TestCase):
         self.assertTrue((DATA_DIR / "Work" / "local").is_dir())
         self.assertEqual(self.client.get("/api_dft/features").get_json(), {"mail": False, "local": True})
 
-        response = self.session(headers={"Origin": "http://127.0.0.1:8188"})
+        response = self.session(headers={"Host": "127.0.0.1:8188", "Origin": "http://127.0.0.1:8188"})
         self.assertEqual(response.status_code, 200, response.get_data(as_text=True))
         token = response.get_json()["token"]
         me = self.client.get("/api_dft/me", headers={"Authorization": f"Bearer {token}"})
@@ -77,6 +77,10 @@ class LocalModeTests(unittest.TestCase):
             "DNS rebinding with origin": {"headers": {"Host": "evil.example", "Origin": "http://evil.example"}},
             "other origin": {"headers": {"Origin": "http://evil.example"}},
             "opaque origin": {"headers": {"Origin": "null"}},
+            "other loopback port": {"headers": {"Host": "127.0.0.1:8188", "Origin": "http://127.0.0.1:9999"}},
+            "other scheme": {"headers": {"Host": "127.0.0.1:8188", "Origin": "https://127.0.0.1:8188"}},
+            "other loopback name": {"headers": {"Host": "127.0.0.1:8188", "Origin": "http://localhost:8188"}},
+            "IPv6 other port": {"headers": {"Host": "[::1]:8188", "Origin": "http://[::1]:9999"}},
             "reverse proxy": {"headers": {"X-Forwarded-For": "203.0.113.9"}},
             "forwarded": {"headers": {"Forwarded": "for=203.0.113.9"}},
             "real ip": {"headers": {"X-Real-IP": "203.0.113.9"}},
@@ -90,6 +94,8 @@ class LocalModeTests(unittest.TestCase):
         for host in ("127.0.0.1:8188", "localhost:8188", "[::1]:8188", "127.0.0.1"):
             with self.subTest(host=host):
                 self.assertEqual(self.session(headers={"Host": host}).status_code, 200)
+                # The page's own origin: same scheme, host and port.
+                self.assertEqual(self.session(headers={"Host": host, "Origin": f"http://{host}"}).status_code, 200)
 
     def test_accounts_are_disabled(self):
         self.local_mode()
