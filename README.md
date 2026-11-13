@@ -201,11 +201,42 @@ By default `dfthub serve` listens on **127.0.0.1:8188**, so only the machine its
 
 Then open `https://dfthub.example.org`. Replace `dfthub.example.org` with your domain; its DNS record must point to the server. More configuration options are listed in the [deployment guide](deploy/README.md).
 
-Environment variables and command-line options, offline installation, migration, reverse proxies and source builds are described in the [deployment guide](deploy/README.md). Mail is off by default; enable it explicitly after configuring SMTP. Never add a real `.env`, the authentication database, user jobs or secrets to Git.
+Environment variables and command-line options, offline installation, migration, reverse proxies and source builds are described in the [deployment guide](deploy/README.md). Mail is off by default; see [Mail and privacy](#mail-and-privacy). Never add a real `.env`, the authentication database, user jobs or secrets to Git.
 
 The scheduler allocates resources by available CPUs, memory budget and the number of basis-set AOs, supports Linux and macOS, and does not depend on systemd. The memory budget is a reservation and a PySCF working-memory hint, not a system-wide RSS limit. SCF has no wall-clock timeout and keeps staged checkpoints; a failing test set does not stop a validated training set from entering the next refinement round.
 
 The CF22D fitting descriptors, reference data and default weights that DFThub needs are included in the package. The large initial AME418 checkpoints are not part of the minimal release and must be provided separately through `DFTHUB_AME418_ROOT`; fitting, SCF, parameter export and test sets for ordinary user datasets do not depend on them.
+
+## Mail and privacy
+
+DFThub sends no e-mail unless you turn it on. The web pages load no external resources and there is no telemetry; the only outbound connection the service makes on its own is to your SMTP server, and only when mail is on. At startup `dfthub serve` prints the mail status, for example `Mail: off (no e-mail is sent)` or `Mail: on via smtp.example.org:587 (STARTTLS, with SMTP login), sender ...`.
+
+**What is sent and when.** With mail on, DFThub e-mails the job owner when a job is submitted and when it completes or fails. The message contains the username, the job and run names and a link to `DFTHUB_PUBLIC_URL`, but no results or uploaded files. It goes through the SMTP server you configure, so that provider can read it.
+
+**Turning it on.** Local use does not need an environment file. On a server, uncomment the e-mail block of [`deploy/dfthub.env.example`](deploy/dfthub.env.example) in your copy, including the switch:
+
+```text
+DFTHUB_MAIL_SUPPRESS=0
+DFTHUB_MAIL_SERVER=smtp.example.org
+DFTHUB_MAIL_PORT=587
+DFTHUB_MAIL_USE_TLS=1
+DFTHUB_MAIL_USERNAME=your-account
+DFTHUB_MAIL_PASSWORD=replace-me
+DFTHUB_MAIL_SENDER=DFThub <noreply@example.org>
+DFTHUB_PUBLIC_URL=https://dfthub.example.org
+```
+
+SMTP settings without `DFTHUB_MAIL_SUPPRESS=0` leave mail off, and the startup line says so. Use `DFTHUB_MAIL_USE_TLS=1` (STARTTLS, usually port 587) or `DFTHUB_MAIL_USE_SSL=1` (usually port 465), not both. On/off settings accept `1`/`0`, `true`/`false`, `yes`/`no` or `on`/`off`; any other value stops the service with an error instead of guessing.
+
+**Your SMTP credentials.** DFThub reads them only from the process environment or from the file named by `DFTHUB_ENV_FILE`, which must have mode 0600 or 0400. It never loads a `.env` file from the source tree, never prints or logs the credentials, and no API returns them. Keep the file outside the installation and out of Git.
+
+**What DFThub stores about users.** Everything is kept in the data directory:
+
+- `auth.db` (mode 0600): username, e-mail address, a salted password hash and the creation time. Addresses are not verified; they are used only to sign in and for notifications.
+- `.jwt_secret` (mode 0600): the key that signs login tokens. A token is valid for 7 days, is kept in the browser's local storage and contains the user ID, username and e-mail address.
+- A job's notification address is held in memory while the job is queued or running and is not written to job files. A failed delivery is logged as `[mail] ... error: ...`, and the SMTP server's error text can include the recipient address.
+
+**Public servers.** When submitting a job, a signed-in user may enter a different notification address. Registration is open, so on a publicly reachable server with mail on, anyone could create an account and make your SMTP account send notifications to arbitrary addresses. Restrict access as described in [Public access](#public-access), or keep mail off.
 
 ## Development and validation
 
