@@ -211,6 +211,8 @@ The CF22D fitting descriptors, reference data and default weights that DFThub ne
 
 DFThub sends no e-mail unless you turn it on. The web pages load no external resources and there is no telemetry; the only outbound connection the service makes on its own is to your SMTP server, and only when mail is on. At startup `dfthub serve` prints the mail status, for example `Mail: off (no e-mail is sent)` or `Mail: on via smtp.example.org:587 (STARTTLS, with SMTP login), sender ...`.
 
+**Accounts and e-mail addresses.** An e-mail address is optional when creating an account; you can sign in with your username or your address. With mail off, the New job form does not ask for an address and none is kept with the job. With mail on, the form asks for a notification address, filled in from the account when it has one.
+
 **What is sent and when.** With mail on, DFThub e-mails the job owner when a job is submitted and when it completes or fails. The message contains the username, the job and run names and a link to `DFTHUB_PUBLIC_URL`, but no results or uploaded files. It goes through the SMTP server you configure, so that provider can read it.
 
 **Turning it on.** Local use does not need an environment file. On a server, uncomment the e-mail block of [`deploy/dfthub.env.example`](deploy/dfthub.env.example) in your copy, including the switch:
@@ -232,9 +234,9 @@ SMTP settings without `DFTHUB_MAIL_SUPPRESS=0` leave mail off, and the startup l
 
 **What DFThub stores about users.** Everything is kept in the data directory:
 
-- `auth.db` (mode 0600): username, e-mail address, a salted password hash and the creation time. Addresses are not verified; they are used only to sign in and for notifications.
-- `.jwt_secret` (mode 0600): the key that signs login tokens. A token is valid for 7 days, is kept in the browser's local storage and contains the user ID, username and e-mail address.
-- A job's notification address is held in memory while the job is queued or running and is not written to job files. A failed delivery is logged as `[mail] ... error: ...`, and the SMTP server's error text can include the recipient address.
+- `auth.db` (mode 0600): username, the e-mail address if one was given, a salted password hash and the creation time. Addresses are not verified; they are used only to sign in and for notifications.
+- `.jwt_secret` (mode 0600): the key that signs login tokens. A token is valid for 7 days, is kept in the browser's local storage and contains the user ID, username and e-mail address (if any).
+- With mail on, a job's notification address is held in memory while the job is queued or running and is not written to job files. A failed delivery is logged as `[mail] ... error: ...`, and the SMTP server's error text can include the recipient address.
 
 **Public servers.** When submitting a job, a signed-in user may enter a different notification address. Registration is open, so on a publicly reachable server with mail on, anyone could create an account and make your SMTP account send notifications to arbitrary addresses. Restrict access as described in [Public access](#public-access), or keep mail off.
 
