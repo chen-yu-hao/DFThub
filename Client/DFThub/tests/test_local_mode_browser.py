@@ -50,8 +50,32 @@ async def main():
         # The shared mock has no Analyze fixtures; only sign-in prompts matter there.
         unexpected = [item for item in api.unexpected if not item.endswith("/api_dft/analysis")]
         assert not unexpected, unexpected
+        await recovery(browser)
         await browser.close()
     print("PASS local mode")
+
+
+async def recovery(browser):
+    """A failed /features or /local-session read offers Reload, never Sign in."""
+    for failing, heading in (("features_fail", "DFThub could not be reached"),
+                             ("local_session_fail", "The local session could not start")):
+        context = await browser.new_context(viewport={"width": 1280, "height": 900}, reduced_motion="reduce")
+        api = Api(mail=False, local=True)
+        setattr(api, failing, True)
+        await context.route("**/*", api.route)
+        page = await context.new_page()
+        await page.goto(ROOT + "/workspace/", wait_until="networkidle")
+        await expect(page.get_by_role("heading", name=heading)).to_be_visible()
+        await expect(page.get_by_role("button", name="Sign in")).to_have_count(0)
+        await expect(page.locator('dialog[aria-labelledby="authTitle"]')).to_have_count(0)
+        await page.keyboard.press("n")
+        await expect(page.get_by_role("dialog", name="New job", exact=True)).to_have_count(0)
+        assert api.logins == [], api.logins
+        setattr(api, failing, False)  # the server recovers; Reload restores the session
+        await page.get_by_role("button", name="Reload").click()
+        await expect(page.locator(".d-title h3")).to_have_text("demo_failed")
+        await expect(page.get_by_role("button", name="Sign in")).to_have_count(0)
+        await context.close()
 
 
 if __name__ == "__main__":

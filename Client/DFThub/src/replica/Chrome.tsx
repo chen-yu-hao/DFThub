@@ -44,6 +44,8 @@ export function Header(props: {
   user: User | null;
   /** Local single-user mode: no sign-in or sign-out. */
   local?: boolean;
+  /** Offer the Sign in button when nobody is signed in (default true). */
+  signIn?: boolean;
   onNew: () => void;
   onLogin: () => void;
   onLogout: () => void;
@@ -161,7 +163,7 @@ export function Header(props: {
             <Icon name="plus" />
             New job
           </button>
-          {props.user ? <button type="button" className="avatar" id="avatarBtn" ref={avatarRef} aria-haspopup="menu" aria-expanded={open} aria-controls="acctMenu" aria-label="Open account menu" onClick={() => setOpen(!open)}>{initials}</button> : !props.local && <button type="button" className="btn btn-secondary btn-sm" id="signIn" onClick={props.onLogin}><Icon name="user" />Sign in</button>}
+          {props.user ? <button type="button" className="avatar" id="avatarBtn" ref={avatarRef} aria-haspopup="menu" aria-expanded={open} aria-controls="acctMenu" aria-label="Open account menu" onClick={() => setOpen(!open)}>{initials}</button> : props.signIn !== false && !props.local && <button type="button" className="btn btn-secondary btn-sm" id="signIn" onClick={props.onLogin}><Icon name="user" />Sign in</button>}
           <div
             className="menu"
             id="acctMenu"

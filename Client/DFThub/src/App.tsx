@@ -23,7 +23,10 @@ export default function App({ page }: { page: Page }) {
 }
 
 function Application({ page }: { page: Page }) {
-  const { user, loading, features, logout, showAuthModal, setShowAuthModal } = useAuth();
+  const { user, loading, features, serverUnavailable, logout, showAuthModal, setShowAuthModal } = useAuth();
+  // No sign-in is offered in local mode, nor while the sign-in mode is unknown.
+  const noSignIn = features.local || serverUnavailable;
+  const unavailableText = serverUnavailable ? "DFThub could not be reached. Reload the page." : "The local session could not start. Reload the page.";
   const [count, setCount] = useState<number | null>(null);
   const [newOpen, setNewOpen] = useState(false);
   const [initial, setInitial] = useState<JobSettings | undefined>();
@@ -83,12 +86,13 @@ function Application({ page }: { page: Page }) {
   const openNew = useCallback((settings?: JobSettings) => {
     setInitial(settings);
     if (user) setNewOpen(true);
-    else if (features.local) notify(loading ? "Starting your local session…" : "The local session could not start. Reload the page.", loading ? "info" : "bad");
+    else if (loading) notify("Starting your session…", "info");
+    else if (noSignIn) notify(unavailableText, "bad");
     else {
       setPendingNew(true);
       setShowAuthModal(true);
     }
-  }, [user, features.local, loading, notify, setShowAuthModal]);
+  }, [user, noSignIn, unavailableText, loading, notify, setShowAuthModal]);
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -106,7 +110,7 @@ function Application({ page }: { page: Page }) {
 
   return <>
     <SymbolDefs />
-    <Header page={page} user={user} local={features.local} onNew={() => openNew()} onLogin={() => setShowAuthModal(true)}
+    <Header page={page} user={user} local={features.local} signIn={!noSignIn} onNew={() => openNew()} onLogin={() => setShowAuthModal(true)}
       onLogout={() => { setPendingNew(false); logout(); }} onNotify={notify} />
     <main id="top" className={`page-${page}`}>
       <div className="wrap">
@@ -121,9 +125,9 @@ function Application({ page }: { page: Page }) {
             <div className="detail"><div className="panel">
               <div className="empty" role="status">
                 <span className="big">{loading ? <Icon name="clock" /> : <img src="/favicon.svg" alt="" aria-hidden="true" />}</span>
-                <h2>{loading ? "Restoring your workspace" : features.local ? "The local session could not start" : page === "analyze" ? "Sign in to analyze runs" : "Sign in to get started"}</h2>
-                <p>{loading ? "Checking your saved session…" : features.local ? "Open DFThub at http://127.0.0.1 on this computer, then reload the page." : page === "analyze" ? "Choose runs and compare MUE results." : "Upload data, track calculations, and return to your results."}</p>
-                {!loading && (features.local
+                <h2>{loading ? "Restoring your workspace" : serverUnavailable ? "DFThub could not be reached" : features.local ? "The local session could not start" : page === "analyze" ? "Sign in to analyze runs" : "Sign in to get started"}</h2>
+                <p>{loading ? "Checking your saved session…" : serverUnavailable ? "Check that the DFThub service is running, then reload the page." : features.local ? "Open DFThub at http://127.0.0.1 on this computer, then reload the page." : page === "analyze" ? "Choose runs and compare MUE results." : "Upload data, track calculations, and return to your results."}</p>
+                {!loading && (noSignIn
                   ? <button className="btn btn-primary" onClick={() => window.location.reload()}>Reload</button>
                   : <button className="btn btn-primary" onClick={() => setShowAuthModal(true)}>Sign in</button>)}
               </div>
@@ -143,7 +147,7 @@ function Application({ page }: { page: Page }) {
         setNewOpen(false);
         requestAnimationFrame(() => document.getElementById("workspace")?.scrollIntoView({ block: "start" }));
       }} />}
-    {!features.local && <AuthSheet intent={pendingNew ? "new" : undefined} open={showAuthModal} onClose={() => { setShowAuthModal(false); setPendingNew(false); }} />}
+    {!noSignIn && <AuthSheet intent={pendingNew ? "new" : undefined} open={showAuthModal} onClose={() => { setShowAuthModal(false); setPendingNew(false); }} />}
     <div className="toasts" aria-live="polite">
       {notices.map((notice) => <div className={`toast ${notice.kind}`} key={notice.id}>
         <Icon name={notice.kind === "good" ? "check" : notice.kind === "bad" ? "alert" : "info"} />

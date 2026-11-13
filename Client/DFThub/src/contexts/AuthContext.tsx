@@ -24,6 +24,8 @@ interface AuthContextType {
   isAuthenticated: boolean;
   loading: boolean;
   features: Features;
+  /** /api_dft/features could not be read, so the sign-in mode is unknown. */
+  serverUnavailable: boolean;
   login: (identifier: string, password: string) => Promise<string | null>;
   register: (username: string, email: string, password: string) => Promise<string | null>;
   logout: () => void;
@@ -55,6 +57,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [showAuthModal, setShowAuthModal] = useState(false);
   // Until the server answers, assume no mail and ordinary sign-in.
   const [features, setFeatures] = useState<Features>(DEFAULT_FEATURES);
+  const [serverUnavailable, setServerUnavailable] = useState(false);
 
   useEffect(() => {
     installInterceptor();
@@ -65,7 +68,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Ask for the server settings and check a saved session at the same time.
     const featuresRequest = axios.get("/api_dft/features")
       .then((r): Features => ({ mail: r.data?.mail === true, local: r.data?.local === true }))
-      .catch(() => DEFAULT_FEATURES);
+      .catch(() => null);
     const savedUser = saved
       ? axios.get("/api_dft/me", { headers: { Authorization: `Bearer ${saved}` } })
         .then((r): User | null => (r.data.success ? r.data.user : null))
@@ -73,8 +76,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       : Promise.resolve(null);
 
     async function start() {
-      const next = await featuresRequest;
+      const answer = await featuresRequest;
       if (!active) return;
+      // A failed read is not "normal sign-in": in local mode /login does not
+      // exist. Keep a saved session if it is still valid, otherwise the page
+      // offers a reload instead of sign-in.
+      setServerUnavailable(answer === null);
+      const next = answer || DEFAULT_FEATURES;
       setFeatures(next);
       if (next.local) {
         // Local single-user mode: the server hands out the session.
@@ -93,7 +101,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const restored = await savedUser;
       if (!active) return;
       if (restored) setUser(restored);
-      else if (saved) { localStorage.removeItem(TOKEN_KEY); setToken(null); }
+      else if (saved && answer !== null) { localStorage.removeItem(TOKEN_KEY); setToken(null); }
+      // While the server cannot be reached, keep the saved token for the next load.
     }
     start().finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
@@ -142,7 +151,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ user, token, isAuthenticated: !!user, loading, features, login, register, logout, showAuthModal, setShowAuthModal }}
+      value={{ user, token, isAuthenticated: !!user, loading, features, serverUnavailable, login, register, logout, showAuthModal, setShowAuthModal }}
     >
       {children}
     </AuthContext.Provider>
