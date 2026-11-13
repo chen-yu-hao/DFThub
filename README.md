@@ -112,6 +112,96 @@ dfthub serve --host 127.0.0.1 --port 8188 --data-dir /var/lib/dfthub/data
 
 An administrator should create the directory first and grant the service account write access. Uploads, the account database, the JWT secret, queue state and results are all written there, so the installation itself can be read-only. Only one service process may use a data directory. Before upgrading, stop the instance and back up the whole data directory; a new version does not overwrite existing jobs or checkpoints.
 
+### Public access
+
+By default `dfthub serve` listens on **127.0.0.1:8188**, so only the machine itself can open the site. For access from other machines or the internet, keep DFThub on 127.0.0.1 and put a reverse proxy with HTTPS in front of it. The web pages and the API are served from the same origin, so one proxy rule covers the whole site. `--host 0.0.0.0` would expose the service directly over plain HTTP, sending passwords and login tokens unencrypted; use it only on a trusted private network.
+
+**Before you go public:** registration is open. Anyone who can reach the site can create an account and submit compute jobs; there is no e-mail verification or rate limit. Restrict access at the proxy or firewall (for example an IP allowlist, HTTP basic auth or a VPN) if the server should not run calculations for strangers.
+
+1. Create the data directory and an environment file outside the installation:
+
+   ```bash
+   sudo useradd --system --home /var/lib/dfthub --shell /usr/sbin/nologin dfthub
+   sudo mkdir -p /var/lib/dfthub/data /etc/dfthub
+   sudo chown -R dfthub:dfthub /var/lib/dfthub
+   sudo cp deploy/dfthub.env.example /etc/dfthub/dfthub.env
+   sudo chown dfthub:dfthub /etc/dfthub/dfthub.env
+   sudo chmod 600 /etc/dfthub/dfthub.env
+   ```
+
+   In `/etc/dfthub/dfthub.env`, set at least:
+
+   ```text
+   DFTHUB_DATA_DIR=/var/lib/dfthub/data
+   DFTHUB_PUBLIC_URL=https://dfthub.example.org
+   DFTHUB_ENABLE_HSTS=1
+   ```
+
+   Set `DFTHUB_ENABLE_HSTS=1` only when the site is served over HTTPS. `DFTHUB_PUBLIC_URL` is the address used in e-mails.
+
+2. Run DFThub on 127.0.0.1 under a process manager. With systemd (any process manager works; DFThub does not require systemd), create `/etc/systemd/system/dfthub.service`, adjusting the virtual-environment path:
+
+   ```ini
+   [Unit]
+   Description=DFThub
+   After=network.target
+
+   [Service]
+   User=dfthub
+   Environment=DFTHUB_ENV_FILE=/etc/dfthub/dfthub.env
+   ExecStart=/opt/dfthub/.venv/bin/dfthub serve --host 127.0.0.1 --port 8188
+   Restart=on-failure
+
+   [Install]
+   WantedBy=multi-user.target
+   ```
+
+   ```bash
+   sudo systemctl daemon-reload
+   sudo systemctl enable --now dfthub
+   ```
+
+   Run exactly one instance per data directory; do not start several WSGI workers that share the in-memory job queue.
+
+3. Configure nginx as the reverse proxy, e.g. `/etc/nginx/sites-available/dfthub`:
+
+   ```nginx
+   server {
+       listen 80;
+       server_name dfthub.example.org;
+
+       client_max_body_size 1g;   # nginx's 1 MB default rejects dataset uploads with 413
+
+       location / {
+           proxy_pass http://127.0.0.1:8188;
+           proxy_http_version 1.1;
+           proxy_set_header Host $host;
+           proxy_set_header X-Real-IP $remote_addr;
+           proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+           proxy_set_header X-Forwarded-Proto $scheme;
+           proxy_read_timeout 600s;
+           proxy_send_timeout 600s;
+       }
+   }
+   ```
+
+   ```bash
+   sudo ln -s /etc/nginx/sites-available/dfthub /etc/nginx/sites-enabled/dfthub
+   sudo nginx -t
+   sudo systemctl reload nginx
+   sudo certbot --nginx -d dfthub.example.org   # adds HTTPS on port 443 (Let's Encrypt)
+   ```
+
+4. Open only ports 80 and 443 in the firewall and keep 8188 closed, for example with ufw:
+
+   ```bash
+   sudo ufw allow 80/tcp
+   sudo ufw allow 443/tcp
+   sudo ufw deny 8188/tcp
+   ```
+
+Then open `https://dfthub.example.org`. Replace `dfthub.example.org` with your domain; its DNS record must point to the server. More configuration options are listed in the [deployment guide](deploy/README.md).
+
 Environment variables and command-line options, offline installation, migration, reverse proxies and source builds are described in the [deployment guide](deploy/README.md). Mail is off by default; enable it explicitly after configuring SMTP. Never add a real `.env`, the authentication database, user jobs or secrets to Git.
 
 The scheduler allocates resources by available CPUs, memory budget and the number of basis-set AOs, supports Linux and macOS, and does not depend on systemd. The memory budget is a reservation and a PySCF working-memory hint, not a system-wide RSS limit. SCF has no wall-clock timeout and keeps staged checkpoints; a failing test set does not stop a validated training set from entering the next refinement round.
