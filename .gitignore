@@ -1,0 +1,13 @@
+# Python
+__pycache__/
+*.py[cod]
+
+# Virtual environment created by the README installation steps
+.venv/
+
+# Gaussian 16 sources and build output used by dfthub_g16_builder.py
+# (licensed software; never commit them)
+g16/
+g16-opt/
+g16.tar.gz
+CF22Dg16.tar.gz
