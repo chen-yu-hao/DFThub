@@ -95,10 +95,103 @@ jobs:
           python -m pip install build
           python -m build
           python tools/offline_bundle.py --engine dist/engine/dfthub_pyscf_dft-*.whl --package dist/dfthub-0.1.1-py3-none-any.whl
+          bundle_dir=$(find dist -maxdepth 1 -type d -name 'dfthub-0.1.1-*' | head -1)
+          python -m pip download --only-binary=:all: -d "$bundle_dir/wheelhouse" 'setuptools>=70' wheel
+          cp deploy/install-offline.sh "$bundle_dir/deploy/install-offline.sh"
+          chmod +x "$bundle_dir/deploy/install-offline.sh"
+          python - "$bundle_dir" "${{ matrix.python }}" <<'PY'
+          import hashlib, sys, tarfile
+          from pathlib import Path
+
+          root = Path(sys.argv[1]).resolve()
+          py_mm = sys.argv[2]
+          py_bin = f"python{py_mm}"
+          cp_tag = f"cp{py_mm.replace('.', '')}"
+          bundle_name = root.name
+
+          readme = f"""# DFThub Offline Bundle ({bundle_name})
+
+          This offline bundle targets **Python {py_mm} ({cp_tag})** on Linux x86_64 and includes the prebuilt `dfthub` wheel, the pinned `dfthub-pyscf-dft` engine, runtime dependencies, and build wheels (`setuptools`, `wheel`) in `wheelhouse/`.
+
+          ## 1. Offline Installation
+
+          ### Option A: Automated verification and lockfile install (recommended)
+
+          `deploy/install-offline.sh` automatically detects `{py_bin}` from `platform.json` (or `wheelhouse/`), verifies the platform, Python `major.minor` version and `SHA256SUMS`, creates the virtual environment, installs all locked wheels, and runs `dfthub doctor --strict`:
+
+          ```bash
+          cd {bundle_name}
+          bash deploy/install-offline.sh .venv
+          source .venv/bin/activate
+          # Optional explicit interpreter override:
+          #   DFTHUB_INSTALL_PYTHON={py_bin} bash deploy/install-offline.sh .venv
+          ```
+
+          ### Option B: Manual virtual environment and wheelhouse install
+
+          ```bash
+          cd {bundle_name}
+          {py_bin} -m venv .venv
+          source .venv/bin/activate
+          python -m pip install --no-index --find-links ./wheelhouse dfthub
+          ```
+
+          ### Option C: Offline install from a Git source checkout
+
+          When installing from a DFThub source checkout on an offline machine using this bundle's `wheelhouse/`:
+
+          ```bash
+          {py_bin} -m venv .venv
+          source .venv/bin/activate
+          python -m pip install --no-index --find-links /path/to/{bundle_name}/wheelhouse .
+          # Or, if setuptools>=70 is already installed in the active environment, skip build isolation:
+          python -m pip install --no-index --no-build-isolation --find-links /path/to/{bundle_name}/wheelhouse .
+          ```
+
+          ## 2. Verify and Start the Service
+
+          ```bash
+          dfthub doctor --strict
+          dfthub serve --data-dir ./dfthub-data
+          ```
+
+          Then open **http://127.0.0.1:8188** in your browser.
+
+          ## 3. Command-Line Tools Quick Start
+
+          ```bash
+          dfthub params check Parameters                 # validate; --json for machine-readable output
+          dfthub params show Parameters                  # every coefficient with its LibXC name
+          dfthub export pyscf    Parameters -o CF22D_optimized.py
+          dfthub export gaussian Parameters -o cf22d.gjf
+          dfthub export orca     Parameters -o cf22d.inp
+          dfthub export psi4     Parameters -o cf22d_psi4.py
+          dfthub g16 build --source ./g16 --parameters Parameters --dry-run
+          dfthub pyscf demo --parameters Parameters      # H2 check; --original, --no-d3
+          ```
+
+          See `deploy/README.md` for production deployment and configuration details, and `conda/README.md` for Conda environments.
+          """
+          (root / 'README.md').write_text(readme)
+
+          sums_path = root / 'SHA256SUMS'
+          if sums_path.exists():
+              sums_path.unlink()
+          sums = [
+              f"{hashlib.sha256(p.read_bytes()).hexdigest()}  {p.relative_to(root)}"
+              for p in sorted(root.rglob('*'))
+              if p.is_file()
+          ]
+          sums_path.write_text('\n'.join(sums) + '\n')
+
+          tar_path = root.parent / f"{bundle_name}.tar.gz"
+          with tarfile.open(tar_path, 'w:gz') as archive:
+              archive.add(root, arcname=bundle_name)
+          PY
       - name: Fresh offline environment and regression tests
         run: |
           bundle_dir=$(find dist -maxdepth 1 -type d -name 'dfthub-0.1.1-*' | head -1)
-          DFTHUB_INSTALL_PYTHON=python bash "$bundle_dir/deploy/install-offline.sh" .venv-verify
+          bash "$bundle_dir/deploy/install-offline.sh" .venv-verify
           .venv-verify/bin/python -m pip check
           python tools/ci_run.py .venv-verify/bin/python tools/run_tests.py
           python tools/ci_run.py .venv-verify/bin/python tools/scientific_smoke.py --output dist/scientific-smoke.json
