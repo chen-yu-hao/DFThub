@@ -116,6 +116,31 @@ class OptionalEmailTests(unittest.TestCase):
         self.assertEqual(accepted.status_code, 200, accepted.get_data(as_text=True))
         self.assertEqual([message.recipients for message in outbox], [["loud@example.com"]])
 
+    def test_mail_on_follow_ups_take_the_address_from_the_request(self):
+        """An account without e-mail can run every follow-up when the page sends an address."""
+        token = self.register("later").get_json()["token"]
+        self.upload_work(token, "later", "job_c")
+        follow_ups = {
+            "optim": {"mode": "optim", "weightFile": "weight_1"},
+            "spe input": {"mode": "spe", "spe_scope": "input", "weightFile": "weight_0"},
+            "spe overlap": {"mode": "spe", "spe_scope": "overlap", "weightFile": "weight_0"},
+            "spe energy": {"mode": "spe", "spe_scope": "energy", "weightFile": "weight_0", "energy_task": "task_1"},
+            "refine": {"mode": "refine", "weightFile": "weight_0"},
+        }
+        headers = {"Authorization": f"Bearer {token}"}
+        with patch.object(api_module, "_mail_enabled", return_value=True):
+            for name, body in follow_ups.items():
+                with self.subTest(name):
+                    body = {"work_dir": "Work/later/job_c", **body}
+                    missing = self.client.post("/api_dft/submit", headers=headers, json=body)
+                    self.assertEqual(missing.status_code, 400)
+                    self.assertIn("notification email", missing.get_json()["msg"])
+                    given = self.client.post("/api_dft/submit", headers=headers, json={**body, "email": "later@example.com"})
+                    self.assertNotIn("notification email", given.get_json().get("msg", ""), given.get_data(as_text=True))
+        with patch.object(api_module, "_mail_enabled", return_value=False):
+            quiet = self.client.post("/api_dft/submit", headers=headers, json={"work_dir": "Work/later/job_c", **follow_ups["optim"]})
+            self.assertNotIn("notification email", quiet.get_json().get("msg", ""))
+
     def test_jobs_without_address_send_nothing(self):
         job = {"email": None, "user": "quiet", "mode": "optim", "work_name": "w", "weight_name": "weight_0"}
         with api_module.appx.app_context(), mail.record_messages() as outbox:

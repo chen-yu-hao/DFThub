@@ -4,6 +4,7 @@ import axios from "axios";
 import type { DetailProps, SpeScope, ParameterArtifact } from "./data";
 import { displayDate, statusLabel, runFields, downloadFile, errorMessage } from "./data";
 import { Icon } from "./Icons";
+import { useNotifyEmail } from "./NotifyEmail";
 import { originalMueForRun, parseDatasetMue } from "./mue";
 import MueViews from "./MueViews";
 import { datasetType } from "./datasetMetadata";
@@ -118,6 +119,7 @@ function Empty({
 }
 
 export default function JobDetail(props: DetailProps) {
+  const { ask: askNotifyEmail } = useNotifyEmail();
   const {
     job,
     runs,
@@ -351,6 +353,8 @@ export default function JobDetail(props: DetailProps) {
   }
   async function submitWeights() {
     if (!run || !edits || invalid || requestPending.current || loading) return;
+    const notify = await askNotifyEmail();
+    if (!notify) return;
     requestPending.current = true;
     setSubmitting(true);
     setSubmitError("");
@@ -401,6 +405,7 @@ export default function JobDetail(props: DetailProps) {
         mode: "optim",
         work_dir: workDir,
         weightFile: newRun,
+        ...notify,
       });
       if (submitted.data.result === "error" || submitted.data.success === false)
         throw new Error(
@@ -441,6 +446,8 @@ export default function JobDetail(props: DetailProps) {
       )
     )
       return;
+    const notify = await askNotifyEmail();
+    if (!notify) return;
     requestPending.current = true;
     setSubmitting(true);
     try {
@@ -449,6 +456,7 @@ export default function JobDetail(props: DetailProps) {
         spe_scope: scope,
         work_dir: "Work/" + user.username + "/" + job.id,
         ...runFields(run.id),
+        ...notify,
       });
       if (response.data.result === "error" || response.data.success === false)
         throw new Error(
@@ -475,6 +483,8 @@ export default function JobDetail(props: DetailProps) {
   }
   async function startEnergy() {
     if (!run || !canSpe || !energyFile || loading || requestPending.current || scopeBusy("energy")) return;
+    const notify = await askNotifyEmail();
+    if (!notify) return;
     requestPending.current = true;
     setSubmitting(true);
     setEnergyUploadError("");
@@ -484,7 +494,7 @@ export default function JobDetail(props: DetailProps) {
       data.append("files", energyFile, energyFile.name);
       const upload = await axios.put("/api_dft/upload", data);
       if (upload.data.result === "error" || upload.data.success === false) throw new Error(upload.data.msg || "Energy archive upload failed.");
-      const response = await axios.post("/api_dft/submit", { mode: "spe", spe_scope: "energy", work_dir: `Work/${user.username}/${job.id}`, ...runFields(run.id) });
+      const response = await axios.post("/api_dft/submit", { mode: "spe", spe_scope: "energy", work_dir: `Work/${user.username}/${job.id}`, ...runFields(run.id), ...notify });
       if (response.data.result === "error" || response.data.success === false) throw new Error(response.data.msg || "DFT energy calculation could not be started.");
       setEnergyFile(null);
       setSpePending((previous) => ({ ...previous, [key + "/energy"]: true }));
@@ -530,12 +540,15 @@ export default function JobDetail(props: DetailProps) {
 
   async function refineInput() {
     if (!run || !canRefine || loading || requestPending.current) return;
+    const notify = await askNotifyEmail();
+    if (!notify) return;
     requestPending.current = true;
     setSubmitting(true);
     try {
       const response = await axios.post("/api_dft/submit", {
         mode: "refine", work_dir: `Work/${user.username}/${job.id}`,
         ...runFields(run.id), descriptor_snapshot_id: files.inputDescriptors!.id,
+        ...notify,
       });
       if (!response.data.run_id) throw new Error(response.data.msg || "Refinement could not be started.");
       setTab("overview");

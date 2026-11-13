@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
 import { Icon } from "./Icons";
 import { basisOptions, ecpOptions, zetaOptions } from "./basis";
+import { useNotifyEmail } from "./NotifyEmail";
 
 type Props = {
   open: boolean;
@@ -72,6 +73,7 @@ function OptionalTestDrop({ kind, file, onChange, disabled }: {
 }
 
 export default function NewJobSheet(props: Props) {
+  const { remember } = useNotifyEmail();
   const dialog = useRef<HTMLDialogElement>(null);
   const picker = useRef<HTMLDetailsElement>(null);
   const advanced = useRef<HTMLDetailsElement>(null);
@@ -163,6 +165,7 @@ export default function NewJobSheet(props: Props) {
       setStatus("Submitting…");
       const response = await axios.post("/api_dft/submit", { mode: "new", work_dir: workDir, weightFile: "weight_0", basis, ...(props.mail ? { email: email.trim() } : {}), reMark: remarks });
       if (response.data.result === "error") throw new Error(response.data.msg || "The job could not be submitted.");
+      if (props.mail && email.trim()) remember(email);
       props.onSubmitted(id);
       props.onClose();
       props.onNotify(`${id} submitted. Follow its progress in your workspace.`, "good");

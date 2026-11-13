@@ -211,7 +211,7 @@ The CF22D fitting descriptors, reference data and default weights that DFThub ne
 
 DFThub sends no e-mail unless you turn it on. The web pages load no external resources and there is no telemetry; the only outbound connection the service makes on its own is to your SMTP server, and only when mail is on. At startup `dfthub serve` prints the mail status, for example `Mail: off (no e-mail is sent)` or `Mail: on via smtp.example.org:587 (STARTTLS, with SMTP login), sender ...`.
 
-**Accounts and e-mail addresses.** An e-mail address is optional when creating an account; you can sign in with your username or your address. With mail off, the New job form does not ask for an address and none is kept with the job. With mail on, the form asks for a notification address, filled in from the account when it has one.
+**Accounts and e-mail addresses.** An e-mail address is optional when creating an account; you can sign in with your username or your address. With mail off, the New job form does not ask for an address and none is kept with the job. With mail on, the form asks for a notification address, filled in from the account when it has one. For an account without an address, every later calculation (new weights, SCF, DFT energy, refinement) also asks for one. The last address entered is offered again until the page is reloaded; it is not kept in browser storage or with the job.
 
 **What is sent and when.** With mail on, DFThub e-mails the job owner when a job is submitted and when it completes or fails. The message contains the username, the job and run names and a link to `DFTHUB_PUBLIC_URL`, but no results or uploaded files. It goes through the SMTP server you configure, so that provider can read it.
 

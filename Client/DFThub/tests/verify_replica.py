@@ -27,7 +27,8 @@ BRANCHES = [
 
 
 class Api:
-    def __init__(self, mail=True):
+    def __init__(self, mail=True, user=None):
+        self.user = USER if user is None else user
         self.mail = mail
         self.short = False
         self.jobs = ["demo_failed", "demo_done"]
@@ -50,7 +51,7 @@ class Api:
                 await route.continue_()
             return
         if path.endswith("/me"):
-            await route.fulfill(json={"success": True, "user": USER})
+            await route.fulfill(json={"success": True, "user": self.user})
         elif path.endswith("/features"):
             await route.fulfill(json={"mail": self.mail})
         elif path.endswith("/login") or path.endswith("/register"):
