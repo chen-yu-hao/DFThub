@@ -8,7 +8,7 @@ import types
 import unittest
 import numpy as np
 
-REPO_ROOT = Path(__file__).resolve().parents[1]
+REPO_ROOT = Path(__file__).resolve().parents[2]
 SRC_DIR = REPO_ROOT / "src"
 OPTIMIZER_DIR = SRC_DIR / "dfthub" / "resources" / "optimizer"
 
