@@ -1,27 +1,27 @@
 # DFThub
 
-DFThub 将 CF22D 参数拟合、训练/测试集评估、SCF 迭代和结果分析放在同一个网页中。Python wheel 内置静态前端；安装后不需要 Node.js、pnpm、PDM 或独立前端服务。
+DFThub brings CF22D parameter fitting, training/test set evaluation, SCF iterations, and result analysis together in a single web interface. The Python wheel ships with a prebuilt static frontend, so after installation you do not need Node.js, pnpm, PDM, or a separate frontend server.
 
-## 安装
+## Installation
 
-使用 **CPython 3.10–3.12**，推荐 3.12；v0.1.1 提供 **Linux x86_64（glibc 2.35+，例如 Ubuntu 22.04+）** 预编译包。macOS Apple Silicon 使用 Conda 环境和最新 DFT 源码编译路径；Windows 可使用符合 Linux 要求的 WSL2。
+Use **CPython 3.10–3.12** (3.12 recommended). v0.1.1 provides prebuilt packages for **Linux x86_64 (glibc 2.35+, e.g. Ubuntu 22.04+)**. On macOS Apple Silicon, use the Conda environment and build from the latest DFT source; on Windows, use WSL2 with a distribution that meets the Linux requirements.
 
-从 [GitHub Releases](https://github.com/chen-yu-hao/DFThub/releases/tag/v0.1.1) 下载与你的操作系统、CPU 和 Python 小版本匹配的离线包，解压后：
+Download the offline bundle matching your operating system, CPU, and Python minor version from [GitHub Releases](https://github.com/chen-yu-hao/DFThub/releases/tag/v0.1.1), extract it, and then run:
 
 ```bash
 python3.12 -m venv .venv
 source .venv/bin/activate
 python -m pip install --no-index --find-links ./wheelhouse dfthub
-# 或核对平台和所有 SHA256，并按锁文件安装：
+# Or verify the platform and all SHA256 checksums, and install from the lock file:
 DFTHUB_INSTALL_PYTHON=python3.12 bash deploy/install-offline.sh .venv
 
 dfthub doctor --strict
 dfthub serve --data-dir ./dfthub-data
 ```
 
-打开 **http://127.0.0.1:8188**。Workspace、Analyze、Guide、Energy 和 API 文档均由此服务提供，页面运行不请求 CDN。离线包不含 Python 解释器，需先在目标机准备 Python 和 venv；Ubuntu 可用系统 python3/venv，macOS 可用 Python.org universal2 安装器并以 arm64 运行。Conda 用户可 `conda create -n dfthub python=3.12 pip`，再在该环境执行相同 pip 命令；隔离包须在联网机提前下载。
+Open **http://127.0.0.1:8188**. The Workspace, Analyze, Guide, and Energy pages and the API documentation are all served by this process, and the pages make no CDN requests at runtime. The offline bundle does not include a Python interpreter, so prepare Python and venv on the target machine first: on Ubuntu, use the system python3/venv; on macOS, use the Python.org universal2 installer and run it as arm64. Conda users can run `conda create -n dfthub python=3.12 pip` and then run the same pip commands inside that environment; for air-gapped machines, the packages must be downloaded in advance on a networked machine.
 
-本次发布位置是 GitHub Release，不是 PyPI。普通 `pip install dfthub` 只有在指定本发布的 wheelhouse 后才是本项目。不要从未知同名索引包安装。源码安装也需先准备匹配的引擎 wheel：
+This release is distributed through GitHub Releases, not PyPI. A plain `pip install dfthub` installs this project only when it points to this release's wheelhouse. Do not install a package with the same name from an unknown index. Installing from source also requires the matching engine wheel to be available first:
 
 ```bash
 git clone --branch release/0.1.1 https://github.com/chen-yu-hao/DFThub.git
@@ -29,20 +29,20 @@ cd DFThub
 python -m pip install --find-links /path/to/wheelhouse .
 ```
 
-## PySCF DFT 引擎
+## PySCF DFT engine
 
-必须使用 `chen-yu-hao/pyscf` 的 **DFT** 分支固定提交
-`e7cb735789293acf461f8ebbb4ac6a08b68ba5d6`，不是 DFT-combined，也不是上游 PyPI `pyscf`。
+DFThub requires the **DFT** branch of `chen-yu-hao/pyscf` at the pinned commit
+`e7cb735789293acf461f8ebbb4ac6a08b68ba5d6`. This is neither the DFT-combined branch nor upstream `pyscf` from PyPI.
 
-数值依赖固定为 NumPy 2.2.6、SciPy 1.15.3、pandas 2.3.3 和 threadpoolctl 3.x，并用完整训练/测试拟合验证。
+Numerical dependencies are pinned to NumPy 2.2.6, SciPy 1.15.3, pandas 2.3.3, and threadpoolctl 3.x, and have been validated with full training/test set fitting.
 
-分发名为 `dfthub-pyscf-dft==2.14.0+dfthub.e7cb7357`，Python 导入名仍为 `pyscf`。它包含 PySCF 2.14.0、LibXC 7.1.2、libcint 6.2.0 和固定 XCFun。`dfthub doctor --strict` 核对提交、代码/动态库 SHA256、LibXC 和 CF22D 可用性；服务启动前也进行此检查。不要在同一环境安装上游 `pyscf`，pip 不会识别两个分发包共享模块的冲突。
+The distribution name is `dfthub-pyscf-dft==2.14.0+dfthub.e7cb7357`; the Python import name remains `pyscf`. It contains PySCF 2.14.0, LibXC 7.1.2, libcint 6.2.0, and a pinned XCFun. `dfthub doctor --strict` verifies the commit, the SHA256 checksums of the code and shared libraries, LibXC, and CF22D availability; the same check runs before the server starts. Do not install upstream `pyscf` in the same environment: pip does not detect the conflict between two distributions that share a module.
 
-已有独立计算环境可用 `DFTHUB_PYTHON=/path/to/python`，该环境也必须安装本 DFThub wheel 和配套引擎。无需复制整个 conda 环境。
+If you already have a separate compute environment, point to it with `DFTHUB_PYTHON=/path/to/python`; that environment must also have this DFThub wheel and the matching engine installed. There is no need to copy the entire conda environment.
 
 ### Conda
 
-Conda 用于准备 Python、BLAS 和数值库，DFThub 与固定 PySCF DFT 引擎继续通过 release wheelhouse 安装：
+Conda prepares Python, BLAS, and the numerical libraries, while DFThub and the pinned PySCF DFT engine are still installed from the release wheelhouse:
 
 ```bash
 conda env create -f conda/environment.yml
@@ -51,28 +51,28 @@ bash conda/install-release.sh /path/to/dfthub-0.1.1-linux-x86_64-cp312
 dfthub doctor --strict
 ```
 
-macOS arm64 当前没有随 v0.1.1 上传预编译引擎 wheel；使用 `conda/environment.yml` 后按部署文档从 DFT 源码构建。详细说明见 [Conda 安装文档](conda/README.md)。
+No prebuilt engine wheel for macOS arm64 is published with v0.1.1; after setting up `conda/environment.yml`, build from the DFT source as described in the deployment guide. See the [Conda installation guide](conda/README.md) for details.
 
-## 数据和部署
+## Data and deployment
 
-默认数据目录为 `$XDG_DATA_HOME/dfthub`，未设置时是 `~/.local/share/dfthub`。生产环境可指定：
+The default data directory is `$XDG_DATA_HOME/dfthub`, or `~/.local/share/dfthub` if that variable is unset. In production, specify it explicitly:
 
 ```bash
 dfthub serve --host 127.0.0.1 --port 8188 --data-dir /var/lib/dfthub/data
 ```
 
-先由管理员创建目录并授权服务账户写入。上传文件、账号数据库、JWT 密钥、队列状态和结果均写入该目录，安装包可以只读。一个数据目录只允许一个服务进程。升级前停止该实例并备份整个数据目录；新版本不会覆盖既有任务和检查点。
+An administrator should create this directory first and grant the service account write access to it. Uploaded files, the account database, JWT secrets, queue state, and results are all written to this directory, so the installed package can be read-only. Only one server process may use a data directory at a time. Before upgrading, stop the instance and back up the entire data directory; a new version does not overwrite existing jobs or checkpoints.
 
-环境变量与命令行、离线安装、迁移、反向代理和源代码构建见 [部署说明](deploy/README.md)。邮件默认关闭；配置 SMTP 后显式启用。不要将真实 `.env`、认证库、用户任务或密钥加入 Git。
+See the [deployment guide](deploy/README.md) for environment variables and command-line options, offline installation, migration, reverse proxies, and building from source. Email is disabled by default; enable it explicitly after configuring SMTP. Never commit a real `.env` file, authentication database, user jobs, or secrets to Git.
 
-调度器按可用 CPU、内存预算和基组 AO 数分配资源，支持 Linux 和 macOS，无 systemd 依赖。内存预算是预约和 PySCF 工作内存提示，不是系统级 RSS 限制。SCF 没有墙钟超时，保留分阶段检查点；测试集失败不会阻止已验证训练集进入下一轮 refine。
+The scheduler allocates resources based on available CPUs, the memory budget, and the number of basis-set AOs. It supports Linux and macOS and does not depend on systemd. The memory budget is a reservation and a hint for PySCF working memory, not a system-level RSS limit. SCF has no wall-clock timeout and keeps staged checkpoints; a test set failure does not prevent a validated training set from proceeding to the next refine round.
 
-必需的 CF22D 拟合描述符、参考数据和默认权重包含在包内。AME418 的大型初始检查点不属于最小发布，需要通过 `DFTHUB_AME418_ROOT` 单独提供；普通用户数据集的拟合、SCF、参数导出及测试集不依赖它。
+The CF22D fitting descriptors, reference data, and default weights required for fitting are included in the package. The large AME418 initial checkpoints are not part of the minimal release and must be supplied separately via `DFTHUB_AME418_ROOT`; fitting, SCF, parameter export, and test sets for ordinary user datasets do not depend on them.
 
-## 开发和验证
+## Development and testing
 
 ```bash
-# 仅重新构建前端时需要 Node >=22 和 pnpm 11.5.3
+# Node >=22 and pnpm 11.5.3 are only needed to rebuild the frontend
 cd Client/DFThub
 pnpm install --frozen-lockfile
 pnpm run build
@@ -84,6 +84,6 @@ python tools/run_tests.py
 python tools/scientific_smoke.py
 ```
 
-回归覆盖认证、删除/取消、运行状态、测试集继承、训练集成功而测试集失败、检查点复用。CI 对 Linux x86_64 的 Python 3.10/3.11/3.12 验证安装、页面和真实 RKS/UKS 科学 smoke；macOS 的源码编译路径保留在部署文档中。
+Regression tests cover authentication, deletion/cancellation, run status, test set inheritance, the case where the training set succeeds but the test set fails, and checkpoint reuse. CI validates installation, the web pages, and real RKS/UKS scientific smoke tests on Linux x86_64 with Python 3.10/3.11/3.12; the macOS build-from-source path is documented in the deployment guide.
 
-原仓库 Gaussian 参数导出工具与说明保留于 [Gaussian 文档](docs/GAUSSIAN.md)。
+The Gaussian parameter export tool and instructions from the original repository are preserved in the [Gaussian documentation](docs/GAUSSIAN.md).

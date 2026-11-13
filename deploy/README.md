@@ -1,14 +1,14 @@
-# 离线部署
+# Offline deployment
 
-## Python 准备
+## Preparing Python
 
-推荐独立 CPython 3.12 venv；也支持 3.10/3.11 的当前补丁版。Conda 用户可以使用 `conda/environment.yml` 后执行 `conda/install-release.sh`。不要把旧服务器绝对路径或 site-packages 复制到新机器。
+A dedicated CPython 3.12 venv is recommended; current patch releases of 3.10/3.11 are also supported. Conda users can set up `conda/environment.yml` and then run `conda/install-release.sh`. Do not copy absolute paths or site-packages from an old server to a new machine.
 
-- Ubuntu 22.04+ x86_64：安装所选版本 Python、对应 venv 支持和系统 C 运行库。离线机器需提前通过发行版包管理器准备安装介质。
-- macOS Apple Silicon：安装 arm64 Python 3.10–3.12，避免 Rosetta x86_64 解释器；v0.1.1 需按源码构建步骤编译最新 DFT 引擎。
-- Conda：联网机先创建 `conda create -n dfthub python=3.12 pip`，或提前准备同架构离线 conda 包；DFThub wheelhouse 不携带 Python。
+- Ubuntu 22.04+ x86_64: install the chosen Python version, the matching venv support, and the system C runtime libraries. For offline machines, prepare the installation media in advance with the distribution's package manager.
+- macOS Apple Silicon: install an arm64 Python 3.10–3.12 and avoid Rosetta x86_64 interpreters; v0.1.1 requires compiling the latest DFT engine following the build-from-source steps.
+- Conda: on a networked machine, first run `conda create -n dfthub python=3.12 pip`, or prepare offline conda packages for the same architecture in advance; the DFThub wheelhouse does not include Python.
 
-Linux Release 离线包命名包含架构和 `cp310/cp311/cp312`。解压后运行：
+The Linux Release offline bundle names include the architecture and `cp310/cp311/cp312`. After extracting, run:
 
 ```bash
 DFTHUB_INSTALL_PYTHON=python3.12 bash deploy/install-offline.sh /opt/dfthub/.venv
@@ -16,43 +16,43 @@ DFTHUB_INSTALL_PYTHON=python3.12 bash deploy/install-offline.sh /opt/dfthub/.ven
 /opt/dfthub/.venv/bin/dfthub serve --data-dir /var/lib/dfthub/data
 ```
 
-安装器先验证平台和 SHA256SUMS，再用 `--no-index --require-hashes` 安装所有依赖。无匹配 wheel 时明确失败，不在断网机器上尝试编译或获取上游 PySCF。所有科学库、静态页面和 Swagger UI 资源都包含在发行包中。Conda 安装路径同样使用这个 wheelhouse，不从 Conda/PyPI 安装上游 `pyscf`；macOS 使用源码构建路径。
+The installer first verifies the platform and SHA256SUMS, then installs all dependencies with `--no-index --require-hashes`. If no matching wheel exists, it fails explicitly rather than attempting to compile or fetch upstream PySCF on an offline machine. All scientific libraries, static pages, and Swagger UI assets are included in the release bundle. The Conda installation path uses the same wheelhouse and does not install upstream `pyscf` from Conda/PyPI; macOS uses the build-from-source path.
 
-## 配置、路径和迁移
+## Configuration, paths, and migration
 
-复制 `dfthub.env.example` 到仓库之外，`chmod 600`，设置 `DFTHUB_ENV_FILE`。文件在导入 API 配置前加载；现有进程环境优先，命令行 `--data-dir/--python` 优先于两者。
+Copy `dfthub.env.example` to a location outside the repository, run `chmod 600` on it, and set `DFTHUB_ENV_FILE`. The file is loaded before the API configuration is imported; variables already set in the process environment take precedence over it, and the command-line options `--data-dir/--python` take precedence over both.
 
-| 配置 | 默认值/用途 |
+| Setting | Default / purpose |
 |---|---|
-| DFTHUB_DATA_DIR | XDG data home 下的 dfthub；账号、任务、模板、检查点 |
-| DFTHUB_PYTHON | 当前解释器；独立计算环境也需安装 DFThub 和 DFT 引擎 |
-| DFTHUB_TMB11_DIR | 包内只读 optimizer 资源 |
-| DFTHUB_DEMO_ROOT | 数据目录下的 optimizer，可写临时优化目录 |
-| DFTHUB_SCHEDULER_DIR | 数据目录下 scheduler |
-| DFTHUB_AME418_ROOT | 外部 AME418 初始计算数据；最小包不含大型检查点 |
-| DFTHUB_MAIL_SUPPRESS | 1；配置邮件时显式设为 0 |
-| DFTHUB_PUBLIC_URL | 邮件中的访问地址 |
-| DFTHUB_CPU_THREADS / DFTHUB_MEMORY_MB | CPU/内存预约池，默认自动探测 |
-| DFTHUB_TASK_THREADS / DFTHUB_OPTIMIZER_THREADS | 每项任务的最大线程数 |
+| DFTHUB_DATA_DIR | `dfthub` under the XDG data home; accounts, jobs, templates, checkpoints |
+| DFTHUB_PYTHON | The current interpreter; a separate compute environment must also have DFThub and the DFT engine installed |
+| DFTHUB_TMB11_DIR | Read-only optimizer resources inside the package |
+| DFTHUB_DEMO_ROOT | `optimizer` under the data directory; writable temporary optimization directory |
+| DFTHUB_SCHEDULER_DIR | `scheduler` under the data directory |
+| DFTHUB_AME418_ROOT | External AME418 initial calculation data; the minimal package does not include the large checkpoints |
+| DFTHUB_MAIL_SUPPRESS | `1`; set explicitly to `0` when email is configured |
+| DFTHUB_PUBLIC_URL | Access URL used in emails |
+| DFTHUB_CPU_THREADS / DFTHUB_MEMORY_MB | CPU/memory reservation pool; auto-detected by default |
+| DFTHUB_TASK_THREADS / DFTHUB_OPTIMIZER_THREADS | Maximum number of threads per task |
 
-现有服务器迁移：停服务，复制整个旧 `dft_files` 为新数据目录；把需要恢复的历史 `demo_*` 单独复制到 `DFTHUB_DEMO_ROOT`。旧 Work/common/program 副本不再作为程序入口，发行包使用其自身固定版本。已有输出、test_set 和 input_srp 目录原样保留。不要把工作目录打进公开发布包。
+Migrating an existing server: stop the service and copy the entire old `dft_files` directory as the new data directory; copy any historical `demo_*` directories you want to restore separately into `DFTHUB_DEMO_ROOT`. The old Work/common/program copies are no longer used as program entry points; the release package uses its own pinned versions. Existing output, test_set, and input_srp directories are preserved as-is. Do not include working directories in a public release package.
 
-新 fork 和 SCF 快照的几何输入目录名为 `inputs/`，避免 macOS 默认磁盘将旧 `input/` 目录与 `INPUT` 描述符文件视为同名。Linux 上仍可读取旧布局。把旧 Linux 数据搬到 macOS 前，应在 Linux 的停机备份副本上先运行 `python tools/migrate_data_layout.py --data-dir /backup/dft_files` 查看清单，再加 `--apply` 重命名目录，之后传输整个副本。不要先把存在大小写冲突的数据复制到 macOS。
+For new forks and SCF snapshots, the geometry input directory is named `inputs/`, so that the default case-insensitive macOS file system does not treat an old `input/` directory and the `INPUT` descriptor file as the same name. The old layout can still be read on Linux. Before moving old Linux data to macOS, run `python tools/migrate_data_layout.py --data-dir /backup/dft_files` on a backup copy taken on Linux while the service is stopped to review the list of changes, then add `--apply` to rename the directories, and only then transfer the whole copy. Do not copy data with case conflicts to macOS first.
 
-服务默认监听 127.0.0.1:8188。对外服务可用 nginx/Caddy 转发整个站点；API 和前端同源。HTTPS 由反向代理管理，仅在 HTTPS 下设 `DFTHUB_ENABLE_HSTS=1`。用进程管理器启动 `dfthub serve`，不要用多个 WSGI 进程共享一个内存队列。CLI 锁定数据目录以避免双实例。
+The service listens on 127.0.0.1:8188 by default. To expose it externally, use nginx/Caddy to forward the entire site; the API and frontend share the same origin. HTTPS is handled by the reverse proxy; set `DFTHUB_ENABLE_HSTS=1` only when serving over HTTPS. Start `dfthub serve` with a process manager, and do not use multiple WSGI processes sharing one in-memory queue. The CLI locks the data directory to prevent two instances from running.
 
-## 从固定源代码构建引擎
+## Building the engine from pinned source
 
-在联网构建机准备 Python 的 `build wheel setuptools cmake<4`；Linux 还需 C/C++ 编译器、OpenBLAS 开发库、auditwheel、patchelf；macOS arm64 需 Xcode command-line tools、Homebrew llvm/libomp/openblas 和 delocate。
+On a networked build machine, prepare `build wheel setuptools cmake<4` for Python. Linux additionally requires a C/C++ compiler, the OpenBLAS development libraries, auditwheel, and patchelf; macOS arm64 requires the Xcode command-line tools, Homebrew llvm/libomp/openblas, and delocate.
 
 ```bash
 git clone --branch DFT https://github.com/chen-yu-hao/pyscf.git .build/pyscf
-# 也可使用 git@github.com:chen-yu-hao/pyscf.git
+# Alternatively, use git@github.com:chen-yu-hao/pyscf.git
 git -C .build/pyscf checkout e7cb735789293acf461f8ebbb4ac6a08b68ba5d6
 python tools/build_engine.py --source .build/pyscf --output dist/engine
 python -m build
 python tools/offline_bundle.py --engine dist/engine/dfthub_pyscf_dft-*.whl --package dist/dfthub-0.1.1-py3-none-any.whl
 ```
 
-macOS 的 LLVM/OpenBLAS flags 与完整构建流程见 `.github/workflows/release.yml`；设置 `CMAKE_OSX_ARCHITECTURES=arm64`、`_PYTHON_HOST_PLATFORM=macosx-14.0-arm64` 及 `DFTHUB_MACOS_LIBOMP` 指向 Homebrew libomp.dylib。修复 wheel 时统一 OpenMP 动态库引用，避免不同 Homebrew 前缀的同名库冲突。引擎源码包也作为 Release 资产保存。源码回退构建需要获得 LibXC/libcint/XCFun 源码和工具链；离线安装使用预编译 wheelhouse，无需编译器。不要启用 `-march=native`，以免发行包绑定构建机指令集。
-构建脚本会写入最新 DFT 提交 `e7cb735789293acf461f8ebbb4ac6a08b68ba5d6` 的源码归档和 provenance；不要使用旧版 `v0.1.0` wheel 代替本次构建。
+See `.github/workflows/release.yml` for the macOS LLVM/OpenBLAS flags and the complete build process; set `CMAKE_OSX_ARCHITECTURES=arm64` and `_PYTHON_HOST_PLATFORM=macosx-14.0-arm64`, and point `DFTHUB_MACOS_LIBOMP` to Homebrew's libomp.dylib. When repairing the wheel, unify the OpenMP shared library references to avoid conflicts between identically named libraries under different Homebrew prefixes. The engine source archive is also kept as a Release asset. A fallback source build requires the LibXC/libcint/XCFun sources and a toolchain; offline installation uses the prebuilt wheelhouse and needs no compiler. Do not enable `-march=native`, so that the release package is not tied to the build machine's instruction set.
+The build script records the source archive and provenance of the latest DFT commit `e7cb735789293acf461f8ebbb4ac6a08b68ba5d6`; do not use the old `v0.1.0` wheel in place of this build.
