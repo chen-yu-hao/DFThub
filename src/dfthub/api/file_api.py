@@ -303,6 +303,17 @@ class FILE_LIST(Schema):
     )
 
 
+def _read_total_mue(mue_path: Path) -> str:
+    if not mue_path.exists():
+        return "No Mue"
+    with open(mue_path, "r") as ft:
+        lines = [line.strip() for line in ft if line.strip()]
+    for line in lines:
+        if line.startswith("new_total_mue:"):
+            return line
+    return lines[-1] if lines else "No Mue"
+
+
 @app.post("/file_list")
 @app.doc(summary="List files or folders", description="List files or folders inside the authenticated user's Work directory.", security=[{"bearerAuth": []}])
 @login_required
@@ -348,12 +359,8 @@ def get_file_list(json_data):
                     r["_display_order"] = 0
             r["status"] = _derive_status(f, activity)
             r.update(_display_activity(f, activity))
-            mue=f.joinpath('Mue')
-            if mue.exists():
-                with open(mue,'r') as ft:
-                    r["total_mue"]=ft.readlines()[-1]
-            else:
-                r["total_mue"] = "No Mue"
+            mue = f.joinpath("Mue")
+            r["total_mue"] = _read_total_mue(mue)
             result += [r]
     if any("_display_order" in item for item in result):
         # The frontend reverses the returned list before rendering, so return
