@@ -22,7 +22,7 @@ export default function App({ page }: { page: Page }) {
 }
 
 function Application({ page }: { page: Page }) {
-  const { user, loading, logout, showAuthModal, setShowAuthModal } = useAuth();
+  const { user, loading, features, logout, showAuthModal, setShowAuthModal } = useAuth();
   const [count, setCount] = useState<number | null>(null);
   const [newOpen, setNewOpen] = useState(false);
   const [initial, setInitial] = useState<JobSettings | undefined>();
@@ -128,7 +128,7 @@ function Application({ page }: { page: Page }) {
     </main>
     <Footer onNotify={notify} />
     {user && <NewJobSheet open={newOpen} onClose={() => setNewOpen(false)} username={user.username}
-      email={user.email} existingIds={jobIds} initial={initial} onNotify={notify}
+      email={user.email || ""} mail={features.mail} existingIds={jobIds} initial={initial} onNotify={notify}
       onSubmitted={(id) => {
         if (page !== "workspace") {
           window.location.assign(`/workspace/?job=${encodeURIComponent(id)}`);
@@ -154,7 +154,7 @@ function matchesFilter(job: Job, filter: string) {
 }
 
 function Workspace({ user, onNew, onNotify, createdJob, revision, onJobsChanged }: {
-  user: { username: string; email: string }; onNew: (initial?: JobSettings) => void;
+  user: { username: string; email: string | null }; onNew: (initial?: JobSettings) => void;
   onNotify: Notify; createdJob: string; revision: number;
   onJobsChanged: (ids: string[]) => void;
 }) {

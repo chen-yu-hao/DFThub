@@ -48,7 +48,7 @@ export type DetailProps = {
   files: RunFiles;
   loading: boolean;
   error: string;
-  user: { username: string; email: string };
+  user: { username: string; email: string | null };
   onRefresh: () => void;
   onNew: (initial?: { basis?: string; email?: string; id?: string }) => void;
   onNotify: (message: string, kind?: "good" | "bad" | "info") => void;

@@ -300,7 +300,7 @@ export default function JobDetail(props: DetailProps) {
       ...runs.map((item) => Number(item.id.match(/^weight_(\d+)$/)?.[1] ?? -1)),
     ) +
       1);
-  const newSettings = () => onNew({ basis, email: user.email, id: job.id });
+  const newSettings = () => onNew({ basis, email: user.email || undefined, id: job.id });
 
   useEffect(() => {
     setSearch("");

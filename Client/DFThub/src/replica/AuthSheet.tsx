@@ -4,10 +4,11 @@ import { useAuth } from "../contexts/AuthContext";
 import { Icon } from "./Icons";
 
 export default function AuthSheet({ open, onClose, intent }: { open: boolean; onClose: () => void; intent?: "new" }) {
-  const { login, register } = useAuth();
+  const { login, register, features } = useAuth();
   const dialog = useRef<HTMLDialogElement>(null);
   const pending = useRef(false);
   const [mode, setMode] = useState<"login" | "register">("login");
+  const [identifier, setIdentifier] = useState("");
   const [email, setEmail] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -17,9 +18,10 @@ export default function AuthSheet({ open, onClose, intent }: { open: boolean; on
   const usernameError = mode === "register" && username.trim() && !/^[A-Za-z0-9_-]{3,32}$/.test(username.trim()) ? "Use 3–32 letters, numbers, - or _." : "";
   const passwordError = mode === "register" && password.length > 0 && password.length < 6 ? "Use at least 6 characters." : "";
   const confirmError = mode === "register" && confirmPassword.length > 0 && password !== confirmPassword ? "Passwords do not match." : "";
+  const emailError = mode === "register" && email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()) ? "Enter a valid email address, or leave it empty." : "";
 
   useEffect(() => {
-    if (open && !dialog.current?.open) { setError(""); dialog.current?.showModal(); dialog.current?.querySelector<HTMLInputElement>("#authEmail")?.focus(); }
+    if (open && !dialog.current?.open) { setError(""); dialog.current?.showModal(); dialog.current?.querySelector<HTMLInputElement>("input")?.focus(); }
     else if (!open && dialog.current?.open) { dialog.current.close(); setPassword(""); setConfirmPassword(""); }
   }, [open]);
 
@@ -27,10 +29,10 @@ export default function AuthSheet({ open, onClose, intent }: { open: boolean; on
     event.preventDefault();
     if (pending.current) return;
     setError("");
-    if (mode === "register" && (usernameError || passwordError || confirmError || password !== confirmPassword)) { setError(usernameError || passwordError || confirmError || "Passwords do not match."); return; }
+    if (mode === "register" && (usernameError || emailError || passwordError || confirmError || password !== confirmPassword)) { setError(usernameError || emailError || passwordError || confirmError || "Passwords do not match."); return; }
     pending.current = true; setBusy(true);
     try {
-      const message = mode === "login" ? await login(email.trim(), password) : await register(username.trim(), email.trim(), password);
+      const message = mode === "login" ? await login(identifier.trim(), password) : await register(username.trim(), email.trim(), password);
       if (message) setError(message);
       else { setPassword(""); setConfirmPassword(""); }
     } finally { pending.current = false; setBusy(false); }
@@ -50,7 +52,8 @@ export default function AuthSheet({ open, onClose, intent }: { open: boolean; on
           </div>
           <div className="group">
             {mode === "register" && <div className="field"><label htmlFor="authUsername">Username</label><input className={`inp${usernameError ? " bad" : ""}`} id="authUsername" autoComplete="username" required value={username} onChange={(event) => setUsername(event.target.value)} aria-invalid={Boolean(usernameError)} /><div className={`help${usernameError ? " err" : ""}`}>{usernameError || "3–32 letters, numbers, - and _. Used to name your workspace."}</div></div>}
-            <div className="field"><label htmlFor="authEmail">Email</label><input className="inp" id="authEmail" type="email" autoComplete="email" required value={email} onChange={(event) => setEmail(event.target.value)} placeholder="you@example.com" /></div>
+            {mode === "login" ? <div className="field"><label htmlFor="authLogin">Username or email</label><input className="inp" id="authLogin" autoComplete="username" autoCapitalize="none" spellCheck={false} required value={identifier} onChange={(event) => setIdentifier(event.target.value)} /></div>
+              : <div className="field"><label htmlFor="authEmail">Email (optional)</label><input className={`inp${emailError ? " bad" : ""}`} id="authEmail" type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="you@example.com" aria-describedby="authEmailHelp" aria-invalid={Boolean(emailError)} /><div className={`help${emailError ? " err" : ""}`} id="authEmailHelp">{emailError || (features.mail ? "Job notifications go here. You can also sign in with it." : "You can sign in with it. This server does not send e-mail.")}</div></div>}
             <div className="field"><label htmlFor="authPassword">Password</label><input className={`inp${passwordError ? " bad" : ""}`} id="authPassword" type="password" autoComplete={mode === "login" ? "current-password" : "new-password"} minLength={mode === "register" ? 6 : undefined} required value={password} onChange={(event) => setPassword(event.target.value)} placeholder={mode === "register" ? "At least 6 characters" : "Your password"} aria-invalid={Boolean(passwordError)} />{mode === "register" && <div className={`help${passwordError ? " err" : ""}`}>{passwordError || "At least 6 characters."}</div>}</div>
             {mode === "register" && <div className="field"><label htmlFor="authConfirm">Confirm password</label><input className={`inp${confirmError ? " bad" : ""}`} id="authConfirm" type="password" autoComplete="new-password" required value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} aria-invalid={Boolean(confirmError)} /><div className={`help${confirmError ? " err" : ""}`}>{confirmError || "Repeat your password."}</div></div>}
           </div>

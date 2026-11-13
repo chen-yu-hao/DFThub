@@ -170,7 +170,7 @@ export function Header(props: {
           >
             <div className="menu-head">
               <b>{props.user?.username || "Your workspace"}</b>
-              <span>{props.user?.email || "Sign in to manage your jobs"}</span>
+              <span>{props.user ? props.user.email || "Signed in" : "Sign in to manage your jobs"}</span>
             </div>
             <button
               type="button"

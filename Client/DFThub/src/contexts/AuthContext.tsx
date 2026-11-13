@@ -5,7 +5,12 @@ import axios from "axios";
 interface User {
   id: number;
   username: string;
-  email: string;
+  email: string | null;
+}
+
+/** Public server settings from /api_dft/features. */
+export interface Features {
+  mail: boolean;
 }
 
 interface AuthContextType {
@@ -13,7 +18,8 @@ interface AuthContextType {
   token: string | null;
   isAuthenticated: boolean;
   loading: boolean;
-  login: (email: string, password: string) => Promise<string | null>;
+  features: Features;
+  login: (identifier: string, password: string) => Promise<string | null>;
   register: (username: string, email: string, password: string) => Promise<string | null>;
   logout: () => void;
   showAuthModal: boolean;
@@ -42,6 +48,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Keep the server and first client render identical; session restoration starts in the effect.
   const [loading, setLoading] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
+  // Until the server answers, assume no mail: nothing then asks for an address.
+  const [features, setFeatures] = useState<Features>({ mail: false });
+
+  useEffect(() => {
+    const controller = new AbortController();
+    axios.get("/api_dft/features", { signal: controller.signal })
+      .then((r) => setFeatures({ mail: r.data?.mail === true }))
+      .catch(() => { /* Keep the defaults if the server cannot be reached. */ });
+    return () => controller.abort();
+  }, []);
 
   useEffect(() => {
     installInterceptor();
@@ -62,9 +78,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const login = useCallback(async (email: string, password: string): Promise<string | null> => {
+  const login = useCallback(async (identifier: string, password: string): Promise<string | null> => {
     try {
-      const r = await axios.post("/api_dft/login", { email, password });
+      const r = await axios.post("/api_dft/login", { login: identifier, password });
       if (r.data.success) {
         localStorage.setItem(TOKEN_KEY, r.data.token);
         setToken(r.data.token);
@@ -81,7 +97,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const register = useCallback(
     async (username: string, email: string, password: string): Promise<string | null> => {
       try {
-        const r = await axios.post("/api_dft/register", { username, email, password });
+        const r = await axios.post("/api_dft/register", { username, password, ...(email ? { email } : {}) });
         if (r.data.success) {
           localStorage.setItem(TOKEN_KEY, r.data.token);
           setToken(r.data.token);
@@ -105,7 +121,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ user, token, isAuthenticated: !!user, loading, login, register, logout, showAuthModal, setShowAuthModal }}
+      value={{ user, token, isAuthenticated: !!user, loading, features, login, register, logout, showAuthModal, setShowAuthModal }}
     >
       {children}
     </AuthContext.Provider>

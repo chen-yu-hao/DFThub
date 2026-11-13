@@ -27,7 +27,8 @@ BRANCHES = [
 
 
 class Api:
-    def __init__(self):
+    def __init__(self, mail=True):
+        self.mail = mail
         self.short = False
         self.jobs = ["demo_failed", "demo_done"]
         self.runs = ["weight_0"]
@@ -50,6 +51,8 @@ class Api:
             return
         if path.endswith("/me"):
             await route.fulfill(json={"success": True, "user": USER})
+        elif path.endswith("/features"):
+            await route.fulfill(json={"mail": self.mail})
         elif path.endswith("/login") or path.endswith("/register"):
             self.logins.append(request.post_data_json)
             await self.release.wait()
@@ -222,6 +225,7 @@ async def run():
                 await wait_for(lambda: len(api.submits) == before + 1)
                 await expect(dialog).not_to_be_visible()
                 assert api.submits[-1]["basis"] == "cc-pvqz"
+                assert api.submits[-1]["email"] == USER["email"], api.submits[-1]
                 init_file = next(part["body"] for part in api.uploads[-1] if part["filename"] == "init_weight.csv")
                 assert init_file.splitlines()[-1].split(",", 1)[0] == "Demo", init_file
             else:
@@ -244,12 +248,12 @@ async def run():
         await page.goto(BASE, wait_until="networkidle")
         await page.get_by_role("button", name="Sign in", exact=True).click()
         auth = page.get_by_role("dialog", name="Sign in to DFThub")
-        await auth.locator("#authEmail").fill(USER["email"])
+        await auth.locator("#authLogin").fill(USER["username"])
         await auth.locator("#authPassword").fill("test-password")
         await auth.locator("#authPassword").press("Enter")
         await expect(auth).not_to_be_visible()
         await expect(page.locator(".d-title h3")).to_have_text("demo_failed")
-        assert len(api.logins) == 1
+        assert api.logins == [{"login": USER["username"], "password": "test-password"}], api.logins
         await context.close()
         await browser.close()
     (OUT / "report.json").write_text(json.dumps({"mocked_api": True, "views": reports, "auth": "passed"}, indent=2))

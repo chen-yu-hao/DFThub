@@ -9,6 +9,8 @@ async def main():
         await context.add_init_script("localStorage.setItem('auth_token','test');localStorage.setItem('dfthub.theme','light')")
         async def route(route):
             path = unquote(urlparse(route.request.url).path)
+            if path.endswith('/features'):
+                return await route.fulfill(json={'mail': True})
             if path.endswith('/me'):
                 return await route.fulfill(json={'success': True, 'user': {'id': 1, 'username': 'researcher', 'email': 'researcher@example.test'}})
             if path.endswith('/submit_count.txt'):
