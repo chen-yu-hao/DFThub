@@ -5,7 +5,9 @@ from pathlib import Path
 import subprocess
 import sys
 import tempfile
+import time
 import unittest
+from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from test_gaussian import UTILAM, UTILNZ, make_tree  # noqa: E402
@@ -101,17 +103,61 @@ class G16CommandTests(unittest.TestCase):
             self.assertIn("would change", result.stdout)
 
 
+class DoctorAndProcessCommandTests(unittest.TestCase):
+    def test_doctor_formatting(self):
+        from dfthub import cli
+        with patch("dfthub.doctor.check", return_value={
+            "engine": {"branch": "DFT", "commit": "e7cb7357", "pyscf": "2.14.0"},
+            "errors": [],
+        }):
+            report = cli._format_doctor_report({
+                "engine": {"branch": "DFT", "commit": "e7cb7357", "pyscf": "2.14.0"},
+                "errors": [],
+            })
+        self.assertIn("Engine:\n  branch: DFT\n  commit: e7cb7357\n  pyscf: 2.14.0", report)
+        self.assertIn("Status: OK (all checks passed)", report)
+
+    def test_ps_and_kill_commands(self):
+        result_ps = dfthub("ps")
+        self.assertEqual(result_ps.returncode, 0, result_ps.stderr)
+        result_ps_json = dfthub("ps", "--json")
+        self.assertEqual(result_ps_json.returncode, 0, result_ps_json.stderr)
+        self.assertIsInstance(json.loads(result_ps_json.stdout), list)
+
+        result_kill_missing = dfthub("kill")
+        self.assertEqual(result_kill_missing.returncode, 1)
+
+        with tempfile.TemporaryDirectory() as temporary:
+            proc = subprocess.Popen([sys.executable, "-c", "import time; time.sleep(30)"])
+            try:
+                fake_tasks = [{"pid": proc.pid, "output": str(Path(temporary).resolve()),
+                               "scope": "optimization", "mode": "new"}]
+                from dfthub import cli
+                with patch("dfthub.processes.tasks", return_value=fake_tasks):
+                    rc = cli.main(["ps"])
+                    self.assertEqual(rc, 0)
+                    rc_kill = cli.main(["kill", str(proc.pid)])
+                    self.assertEqual(rc_kill, 0)
+                proc.wait(timeout=5)
+                self.assertIsNotNone(proc.returncode)
+            finally:
+                if proc.poll() is None:
+                    proc.kill()
+                    proc.wait()
+
+
 @unittest.skipUnless(HAS_PYSCF, "PySCF engine not installed")
 class PySCFTests(unittest.TestCase):
     def test_register_sets_parameters(self):
         from pyscf import dft, gto
         from pyscf.dft import libxc
-        from dfthub.functional.pyscf import register_cf22d
+        from dfthub.functional.pyscf import apply_cf22d, register_cf22d
         params = read_parameters(PARAMETERS)
         mf = dft.RKS(gto.M(atom="H 0 0 0; H 0 0 0.74", basis="sto-3g", verbose=0))
         register_cf22d(mf, params, name="dfthub_test_cf22d", with_d3=False)
         self.assertEqual(mf.xc, "dfthub_test_cf22d")
         self.assertIs(mf.disp, False)
+        self.assertIs(apply_cf22d, register_cf22d)
         self.assertAlmostEqual(libxc.hybrid_coeff(mf.xc), params.hf, places=14)
 
     def test_h2_reference_energy(self):
@@ -120,7 +166,11 @@ class PySCFTests(unittest.TestCase):
             import pyscf.dispersion  # noqa: F401
             with_d3 = True
         except ImportError:
-            with_d3 = False
+            try:
+                import dftd3.pyscf  # noqa: F401
+                with_d3 = True
+            except ImportError:
+                with_d3 = False
         energy = run_demo(PARAMETERS, with_d3=with_d3, verbose=0)
         # README reference, RKS/def2-QZVP/grid 6; the D3 term for H2 is below 1e-10 Eh.
         self.assertAlmostEqual(energy, -1.16348600462391, delta=1e-8)

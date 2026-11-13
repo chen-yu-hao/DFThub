@@ -1,13 +1,17 @@
 import argparse
 import json
 import os
-import sys
 from pathlib import Path
+import platform
+import sys
+
+if sys.platform.startswith("linux") and platform.machine().lower() in ("x86_64", "amd64"):
+    os.environ.setdefault("OPENBLAS_CORETYPE", "Haswell")
 
 from .paths import data_dir, initialize_data, load_environment
 
 VERSION = "DFThub 0.1.1"
-TOOL_COMMANDS = ("params", "export", "g16", "pyscf")
+TOOL_COMMANDS = ("params", "export", "g16", "pyscf", "ps", "kill")
 
 
 def build_parser():
@@ -24,6 +28,17 @@ def build_parser():
     serve.add_argument("--port", type=int, default=8188)
     serve.add_argument("--data-dir")
     serve.add_argument("--python", help="Compute Python with DFThub and its DFT engine installed")
+
+    ps = commands.add_parser("ps", help="List running DFThub background calculation processes")
+    ps.add_argument("--json", action="store_true", help="machine-readable output")
+
+    kill = commands.add_parser("kill", help="Terminate running DFThub background calculation processes")
+    kill.add_argument("targets", nargs="*", metavar="PID_OR_OUTPUT",
+                      help="process ID(s) or output directory path(s) to terminate")
+    kill.add_argument("-a", "--all", action="store_true", help="terminate all running DFThub calculation processes")
+    kill.add_argument("--scope", choices=("optimization", "input", "ame418", "energy", "overlap"),
+                      help="filter by calculation scope")
+    kill.add_argument("--json", action="store_true", help="machine-readable output")
 
     params = commands.add_parser("params", help="Read and validate a CF22D Parameters file")
     params_actions = params.add_subparsers(dest="action", required=True)
@@ -161,8 +176,111 @@ def _pyscf_command(args):
     return 0
 
 
+def _ps_command(args):
+    from .processes import tasks
+
+    running = list(tasks())
+    if args.json:
+        print(json.dumps(running, indent=2))
+        return 0
+    if not running:
+        print("No running DFThub tasks.")
+        return 0
+    print(f"{'PID':<10} {'MODE':<8} {'SCOPE':<14} OUTPUT")
+    for item in running:
+        print(f"{item['pid']:<10} {item['mode']:<8} {item['scope']:<14} {item['output']}")
+    return 0
+
+
+def _kill_command(args):
+    import psutil
+    from .processes import tasks
+
+    if not args.all and not args.targets:
+        raise ValueError("Specify at least one PID or output path, or pass --all")
+
+    running = list(tasks())
+    if args.scope:
+        running = [item for item in running if item["scope"] == args.scope]
+
+    selected_roots = []
+    if args.all:
+        selected_roots = [item["pid"] for item in running]
+    else:
+        want_pids = set()
+        want_outputs = set()
+        for target in args.targets:
+            try:
+                want_pids.add(int(target))
+            except ValueError:
+                want_outputs.add(str(Path(target).resolve()))
+        for item in running:
+            if item["pid"] in want_pids or item["output"] in want_outputs:
+                selected_roots.append(item["pid"])
+
+    stopped = {}
+    for root_pid in selected_roots:
+        try:
+            root_proc = psutil.Process(root_pid)
+            tree = [p.pid for p in root_proc.children(recursive=True)] + [root_pid]
+        except psutil.Error:
+            tree = [root_pid]
+        for pid in tree:
+            if pid == os.getpid():
+                continue
+            try:
+                proc = psutil.Process(pid)
+                proc.terminate()
+                stopped[pid] = proc
+            except psutil.Error:
+                pass
+
+    if stopped:
+        _, alive = psutil.wait_procs(list(stopped.values()), timeout=2)
+        for proc in alive:
+            try:
+                proc.kill()
+            except psutil.Error:
+                pass
+        psutil.wait_procs(alive, timeout=2)
+
+    killed_pids = sorted(stopped)
+    if args.json:
+        print(json.dumps({"stopped": len(killed_pids), "pids": killed_pids}, indent=2))
+    elif killed_pids:
+        print(f"Terminated {len(killed_pids)} process(es): {', '.join(map(str, killed_pids))}")
+    else:
+        print("No matching DFThub processes found.")
+    return 0
+
+
+def _format_doctor_report(result):
+    lines = [VERSION, f"Data: {data_dir()}"]
+    engine = result.get("engine") or {}
+    if isinstance(engine, dict) and engine:
+        lines.append("Engine:")
+        for key, value in engine.items():
+            lines.append(f"  {key}: {value}")
+    else:
+        lines.append("Engine: unavailable")
+    errors = result.get("errors") or []
+    if errors:
+        lines.extend(errors)
+        lines.append(f"Status: FAILED ({len(errors)} error(s))")
+    else:
+        lines.append("Status: OK (all checks passed)")
+    return "\n".join(lines)
+
+
 def _run_tool(args):
-    handlers = {"params": _params_command, "export": _export_command, "g16": _g16_command, "pyscf": _pyscf_command}
+    handlers = {
+        "params": _params_command,
+        "export": _export_command,
+        "g16": _g16_command,
+        "pyscf": _pyscf_command,
+        "ps": _ps_command,
+        "kill": _kill_command,
+    }
     try:
         return handlers[args.command](args)
     except (OSError, ValueError, RuntimeError) as exc:  # GaussianBuildError is a RuntimeError
@@ -171,9 +289,11 @@ def _run_tool(args):
 
 
 def main(argv=None):
+    if sys.platform.startswith("linux") and platform.machine().lower() in ("x86_64", "amd64"):
+        os.environ.setdefault("OPENBLAS_CORETYPE", "Haswell")
     args = build_parser().parse_args(argv)
     if args.command in TOOL_COMMANDS:
-        # Parameter tools never need the service environment or the engine check.
+        # Parameter and process tools never need the service environment or the engine check.
         return _run_tool(args)
     try:
         load_environment()
@@ -182,10 +302,9 @@ def main(argv=None):
         if getattr(args, "python", None):
             os.environ["DFTHUB_PYTHON"] = args.python
         from .doctor import check
-        result = check()
+        result = check(strict=bool(getattr(args, "strict", False)))
         if args.command == "doctor":
-            print(json.dumps(result, indent=2) if args.json else "\n".join(
-                [VERSION, f"Data: {data_dir()}", f"Engine: {result['engine']}"] + result["errors"]))
+            print(json.dumps(result, indent=2) if args.json else _format_doctor_report(result))
             return int(args.strict and bool(result["errors"]))
         if result["errors"]:
             raise RuntimeError("Environment verification failed: " + "; ".join(result["errors"]))

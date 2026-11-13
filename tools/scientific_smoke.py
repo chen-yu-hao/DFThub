@@ -8,6 +8,7 @@ import io
 import json
 import os
 from pathlib import Path
+import platform
 import sys
 import tempfile
 import time
@@ -18,6 +19,8 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--output', type=Path)
     args = parser.parse_args()
+    if sys.platform.startswith('linux') and platform.machine().lower() in ('x86_64', 'amd64'):
+        os.environ.setdefault('OPENBLAS_CORETYPE', 'Haswell')
     for key in ('OMP_NUM_THREADS', 'OPENBLAS_NUM_THREADS', 'MKL_NUM_THREADS', 'NUMEXPR_NUM_THREADS'):
         os.environ[key] = '1'
     os.environ['DFTHUB_MOLECULE_THREADS'] = '1'
@@ -156,6 +159,19 @@ def main():
                 section['resumed_energy'] = float(run_staged_scf(resumed, functional, staged_path, identity))
                 assert section['resumed_energy'] == section['staged_energy']
                 section['passed'] = True
+
+            from dfthub.doctor import H2_DEF2_QZVP_REF_ENERGY, _check_h2_def2_qzvp
+            qzvp_energy = _check_h2_def2_qzvp()
+            qzvp_error = abs(qzvp_energy - H2_DEF2_QZVP_REF_ENERGY)
+            assert qzvp_error < 1e-6, f'RKS_H2_def2_qzvp error {qzvp_error} >= 1e-6'
+            report['checks']['RKS_H2_def2_qzvp'] = {
+                'basis': 'def2-qzvp',
+                'grid_level': 6,
+                'energy': qzvp_energy,
+                'reference_energy': H2_DEF2_QZVP_REF_ENERGY,
+                'error': qzvp_error,
+                'passed': True,
+            }
         report['passed'] = True
     except Exception:
         report['passed'] = False
