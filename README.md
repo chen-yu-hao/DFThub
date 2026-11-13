@@ -35,7 +35,7 @@ dfthub serve --data-dir ./dfthub-data
 
 For Python 3.10 or 3.11, replace `cp312` and `python3.12` accordingly. If pip reports `Location './wheelhouse' is ignored` or `No matching distribution found for dfthub`, the current directory is not the unpacked bundle; `cd` into it first.
 
-Open **http://127.0.0.1:8188**. Workspace, Analyze, Guide, Energy and the API documentation are all served from there, and the pages make no CDN requests. The offline bundle does not contain a Python interpreter: prepare Python and venv on the target machine first. On Ubuntu use the system python3/venv; on macOS use the Python.org universal2 installer and run it as arm64. Conda users can run `conda create -n dfthub python=3.12 pip` and then the same pip commands inside that environment; for an isolated machine, download the bundle in advance on a connected one.
+Open **http://127.0.0.1:8188**. Workspace, Analyze, Guide, Energy and the API documentation are all served from there, and the pages make no CDN requests. On a computer only you use, `dfthub serve --local` skips registration and sign-in; see [Local single-user mode](#local-single-user-mode). The offline bundle does not contain a Python interpreter: prepare Python and venv on the target machine first. On Ubuntu use the system python3/venv; on macOS use the Python.org universal2 installer and run it as arm64. Conda users can run `conda create -n dfthub python=3.12 pip` and then the same pip commands inside that environment; for an isolated machine, download the bundle in advance on a connected one.
 
 This release is published on GitHub Releases, not PyPI. A plain `pip install dfthub` refers to this project only when it points at this release's wheelhouse; do not install a same-named package from an unknown index.
 
@@ -111,6 +111,21 @@ dfthub serve --host 127.0.0.1 --port 8188 --data-dir /var/lib/dfthub/data
 ```
 
 An administrator should create the directory first and grant the service account write access. Uploads, the account database, the JWT secret, queue state and results are all written there, so the installation itself can be read-only. Only one service process may use a data directory. Before upgrading, stop the instance and back up the whole data directory; a new version does not overwrite existing jobs or checkpoints.
+
+### Local single-user mode
+
+On a computer only you use, `dfthub serve --local` turns sign-in off. The pages open straight into the workspace of one account, `local`, which is created on first start without an e-mail address or a usable password.
+
+```bash
+dfthub serve --local
+dfthub serve --local --local-user alice   # use an existing account and its jobs instead
+```
+
+- `--local` works only with a loopback `--host` (the default `127.0.0.1`, or `::1`); any other address is refused before the service starts. Open the site at http://127.0.0.1:8188 or http://localhost:8188.
+- Anyone who can use this computer, including other user accounts and programs, can use DFThub as that account without a password. Do not use `--local` on a shared machine.
+- Never put a reverse proxy in front of `--local`. The session is handed out only to requests made directly on this computer: requests with proxy headers (`Forwarded`, `X-Forwarded-For`, `X-Forwarded-Host`, `X-Real-IP`), another host name, or a page of another origin are refused. A proxy that adds none of these would still expose the account.
+- While `--local` runs, registration and password sign-in are off. An account created by `--local` has no usable password, so keep starting it with `--local`.
+- Every other endpoint still requires a token; the page gets one from `POST /api_dft/local-session`, which answers only in local mode.
 
 ### Public access
 
@@ -211,6 +226,8 @@ The CF22D fitting descriptors, reference data and default weights that DFThub ne
 
 DFThub sends no e-mail unless you turn it on. The web pages load no external resources and there is no telemetry; the only outbound connection the service makes on its own is to your SMTP server, and only when mail is on. At startup `dfthub serve` prints the mail status, for example `Mail: off (no e-mail is sent)` or `Mail: on via smtp.example.org:587 (STARTTLS, with SMTP login), sender ...`.
 
+**Accounts and e-mail addresses.** An e-mail address is optional when creating an account; you can sign in with your username or your address. With mail off, the New job form does not ask for an address and none is kept with the job. With mail on, the form asks for a notification address, filled in from the account when it has one. For an account without an address, every later calculation (new weights, SCF, DFT energy, refinement) also asks for one. The last address entered is offered again until the page is reloaded; it is not kept in browser storage or with the job.
+
 **What is sent and when.** With mail on, DFThub e-mails the job owner when a job is submitted and when it completes or fails. The message contains the username, the job and run names and a link to `DFTHUB_PUBLIC_URL`, but no results or uploaded files. It goes through the SMTP server you configure, so that provider can read it.
 
 **Turning it on.** Local use does not need an environment file. On a server, uncomment the e-mail block of [`deploy/dfthub.env.example`](deploy/dfthub.env.example) in your copy, including the switch:
@@ -232,9 +249,9 @@ SMTP settings without `DFTHUB_MAIL_SUPPRESS=0` leave mail off, and the startup l
 
 **What DFThub stores about users.** Everything is kept in the data directory:
 
-- `auth.db` (mode 0600): username, e-mail address, a salted password hash and the creation time. Addresses are not verified; they are used only to sign in and for notifications.
-- `.jwt_secret` (mode 0600): the key that signs login tokens. A token is valid for 7 days, is kept in the browser's local storage and contains the user ID, username and e-mail address.
-- A job's notification address is held in memory while the job is queued or running and is not written to job files. A failed delivery is logged as `[mail] ... error: ...`, and the SMTP server's error text can include the recipient address.
+- `auth.db` (mode 0600): username, the e-mail address if one was given, a salted password hash and the creation time. Addresses are not verified; they are used only to sign in and for notifications.
+- `.jwt_secret` (mode 0600): the key that signs login tokens. A token is valid for 7 days, is kept in the browser's local storage and contains the user ID, username and e-mail address (if any).
+- With mail on, a job's notification address is held in memory while the job is queued or running and is not written to job files. A failed delivery is logged as `[mail] ... error: ...`, and the SMTP server's error text can include the recipient address.
 
 **Public servers.** When submitting a job, a signed-in user may enter a different notification address. Registration is open, so on a publicly reachable server with mail on, anyone could create an account and make your SMTP account send notifications to arbitrary addresses. Restrict access as described in [Public access](#public-access), or keep mail off.
 

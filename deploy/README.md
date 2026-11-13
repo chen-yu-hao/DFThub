@@ -20,7 +20,7 @@ DFTHUB_INSTALL_PYTHON=python3.12 bash deploy/install-offline.sh /opt/dfthub/.ven
 
 ## 配置、路径和迁移
 
-本地使用无需环境文件：`dfthub serve` 只监听 127.0.0.1:8188，数据放在 XDG data home 下的 dfthub，且不发送邮件。服务器部署时，复制 `dfthub.env.example` 到安装目录和仓库之外，`chmod 600`，并设置 `DFTHUB_ENV_FILE` 指向它。DFThub 只读取这一个环境文件，不会自动加载源码目录中的 `.env`。
+本地使用无需环境文件：`dfthub serve` 只监听 127.0.0.1:8188，数据放在 XDG data home 下的 dfthub，且不发送邮件；加 `--local` 还可以免去注册和登录（见下文“本地单用户模式”）。服务器部署时，复制 `dfthub.env.example` 到安装目录和仓库之外，`chmod 600`，并设置 `DFTHUB_ENV_FILE` 指向它。DFThub 只读取这一个环境文件，不会自动加载源码目录中的 `.env`。
 
 文件格式为每行一个 `KEY=value`，`#` 开头的行是注释，值后面不能再写注释；空值（`KEY=`）视为未设置。现有进程环境优先，命令行 `--data-dir/--python` 优先于两者。开关类设置接受 `1`/`0`（也接受 true/false、yes/no、on/off），其他值会让服务报错退出而不是猜测。文件不存在、权限不是 0600/0400 或某行格式错误时，`dfthub serve` 会给出文件名和行号并退出。
 
@@ -50,9 +50,26 @@ DFTHUB_INSTALL_PYTHON=python3.12 bash deploy/install-offline.sh /opt/dfthub/.ven
 
 服务默认监听 127.0.0.1:8188。对外服务可用 nginx/Caddy 转发整个站点；API 和前端同源。HTTPS 由反向代理管理，仅在 HTTPS 下设 `DFTHUB_ENABLE_HSTS=1`。用进程管理器启动 `dfthub serve`，不要用多个 WSGI 进程共享一个内存队列。CLI 锁定数据目录以避免双实例。
 
+## 本地单用户模式
+
+只有自己使用的电脑上，可以用 `dfthub serve --local` 关闭注册和登录。页面直接进入账号 `local` 的工作区；该账号在首次启动时创建，没有邮箱，也没有可用的密码。
+
+```bash
+dfthub serve --local
+dfthub serve --local --local-user alice   # 改用已有账号及其任务
+```
+
+- `--local` 只能配合回环地址的 `--host`（默认 `127.0.0.1`，或 `::1`）；其他地址会在服务启动前被拒绝。用 http://127.0.0.1:8188 或 http://localhost:8188 打开。
+- 能使用这台电脑的任何人（包括其他系统用户和程序）都可以不输密码、以该账号使用 DFThub。不要在多人共用的机器上使用 `--local`。
+- 不要在 `--local` 前面加反向代理。会话只发给直接来自本机的请求：带代理头（`Forwarded`、`X-Forwarded-For`、`X-Forwarded-Host`、`X-Real-IP`）、使用其他主机名或来自其他来源页面的请求都会被拒绝；但不添加这些头的代理仍会暴露该账号。
+- `--local` 运行期间，注册和密码登录关闭。由 `--local` 创建的账号没有可用的密码，请继续用 `--local` 启动。
+- 其他接口仍需令牌；页面通过只在本地模式下响应的 `POST /api_dft/local-session` 获取。
+
 ## 邮件与隐私
 
 默认不发送任何邮件。网页不加载外部资源，也没有遥测；服务自身唯一的对外连接是开启邮件后连接你配置的 SMTP 服务器。`dfthub serve` 启动时会打印邮件状态，例如 `Mail: off (no e-mail is sent)` 或 `Mail: on via smtp.example.org:587 (STARTTLS, with SMTP login), sender ...`。
+
+**账号与邮箱。** 注册时邮箱是可选的，可以用用户名或邮箱登录。邮件关闭时，新建任务表单不会要求填写邮箱，任务也不保存任何地址；邮件开启时，表单要求填写通知地址，账号有邮箱时自动填入；账号没有邮箱时，之后的每次计算（重新调权重、SCF、DFT 能量、精修）也会询问通知地址。最近填写的地址会在页面刷新前再次自动填入，不会保存在浏览器存储或任务中。
 
 **发送内容与时机。** 开启后，任务提交时以及完成或失败时，DFThub 会给任务所有者发邮件。邮件包含用户名、任务名、Run 名和指向 `DFTHUB_PUBLIC_URL` 的链接，不含计算结果或上传的文件。邮件经由你配置的 SMTP 服务器发送，该服务商能看到邮件内容。
 
@@ -75,9 +92,9 @@ DFTHUB_PUBLIC_URL=https://dfthub.example.org
 
 **DFThub 保存的用户信息。** 全部位于数据目录：
 
-- `auth.db`（权限 0600）：用户名、邮箱地址、加盐的密码哈希和创建时间。邮箱不做验证，只用于登录和通知。
-- `.jwt_secret`（权限 0600）：登录令牌的签名密钥。令牌有效期 7 天，保存在浏览器 local storage 中，内含用户 ID、用户名和邮箱。
-- 任务的通知地址只在任务排队和运行期间保存在内存中，不写入任务文件。投递失败时会记录 `[mail] ... error: ...`，SMTP 服务器的错误信息可能包含收件地址。
+- `auth.db`（权限 0600）：用户名、邮箱地址（如果填写了）、加盐的密码哈希和创建时间。邮箱不做验证，只用于登录和通知。
+- `.jwt_secret`（权限 0600）：登录令牌的签名密钥。令牌有效期 7 天，保存在浏览器 local storage 中，内含用户 ID、用户名和邮箱（如有）。
+- 邮件开启时，任务的通知地址只在任务排队和运行期间保存在内存中，不写入任务文件。投递失败时会记录 `[mail] ... error: ...`，SMTP 服务器的错误信息可能包含收件地址。
 
 **公网部署。** 提交任务时，已登录用户可以填写另一个通知地址。注册是开放的，因此在任何人都能访问且开启了邮件的服务器上，任何人都可以注册账号，让你的 SMTP 账号向任意地址发送通知邮件。请按主 README 的 Public access 一节限制访问，或保持邮件关闭。
 

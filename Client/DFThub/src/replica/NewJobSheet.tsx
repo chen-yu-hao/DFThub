@@ -3,12 +3,15 @@ import { useEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
 import { Icon } from "./Icons";
 import { basisOptions, ecpOptions, zetaOptions } from "./basis";
+import { useNotifyEmail } from "./NotifyEmail";
 
 type Props = {
   open: boolean;
   onClose: () => void;
   username: string;
   email: string;
+  /** Whether this server sends job notifications; without mail no address is asked for. */
+  mail: boolean;
   existingIds: string[];
   initial?: { basis?: string; email?: string; id?: string };
   onSubmitted: (id: string) => void;
@@ -70,6 +73,7 @@ function OptionalTestDrop({ kind, file, onChange, disabled }: {
 }
 
 export default function NewJobSheet(props: Props) {
+  const { remember } = useNotifyEmail();
   const dialog = useRef<HTMLDialogElement>(null);
   const picker = useRef<HTMLDetailsElement>(null);
   const advanced = useRef<HTMLDetailsElement>(null);
@@ -108,7 +112,7 @@ export default function NewJobSheet(props: Props) {
   }, [props.open]);
 
   const idError = !jobId.trim() ? "Give the job an ID." : !/^[A-Za-z0-9_-]+$/.test(jobId.trim()) ? "Use only letters, numbers, - and _." : props.existingIds.includes(jobId.trim()) ? "You already have a job with this ID." : "";
-  const emailError = !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()) ? "Enter a valid notification email." : "";
+  const emailError = props.mail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()) ? "Enter a valid notification email." : "";
   const weightNumber = Number(weight);
   const weightError = !weight.trim() || !Number.isFinite(weightNumber) || weightNumber < 0.001 || weightNumber > 10 ? "Enter a value from 0.001 to 10." : "";
   const filesValid = Boolean(archive && /\.(tgz|tar\.gz)$/i.test(archive.name) && reference && /(\.ref|_ref)$/i.test(reference.name));
@@ -159,8 +163,9 @@ export default function NewJobSheet(props: Props) {
       const uploaded = await axios.put("/api_dft/upload", upload);
       if (uploaded.data.result === "error") throw new Error(uploaded.data.msg || "The files could not be uploaded.");
       setStatus("Submitting…");
-      const response = await axios.post("/api_dft/submit", { mode: "new", work_dir: workDir, weightFile: "weight_0", basis, email: email.trim(), reMark: remarks });
+      const response = await axios.post("/api_dft/submit", { mode: "new", work_dir: workDir, weightFile: "weight_0", basis, ...(props.mail ? { email: email.trim() } : {}), reMark: remarks });
       if (response.data.result === "error") throw new Error(response.data.msg || "The job could not be submitted.");
+      if (props.mail && email.trim()) remember(email);
       props.onSubmitted(id);
       props.onClose();
       props.onNotify(`${id} submitted. Follow its progress in your workspace.`, "good");
@@ -187,9 +192,9 @@ export default function NewJobSheet(props: Props) {
               <button type="button" className="icon-btn" id="regenId" aria-label="Generate a new ID" title="Generate a new ID" onClick={() => setJobId(newId())}><Icon name="refresh" /></button></div>
               <div className={`help${idError ? " err" : ""}`} id="fIdHelp">{idError || "Letters, numbers, - and _. Choose a name you can recognize."}</div>
             </div>
-            <div className="field"><label htmlFor="fEmail">Email</label><input className={`inp${emailError ? " bad" : ""}`} id="fEmail" type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} aria-describedby="fEmailHelp" aria-invalid={Boolean(emailError)} required />
-              <div className={`help${emailError ? " err" : ""}`} id="fEmailHelp">{emailError || "We’ll email you when each step finishes."}</div>
-            </div>
+            {props.mail && <div className="field"><label htmlFor="fEmail">Email</label><input className={`inp${emailError ? " bad" : ""}`} id="fEmail" type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} aria-describedby="fEmailHelp" aria-invalid={Boolean(emailError)} required />
+              <div className={`help${emailError ? " err" : ""}`} id="fEmailHelp">{emailError || "We’ll email you when the job is submitted and when each step finishes."}</div>
+            </div>}
           </div></div>
           <div><div className="group-label">Data set</div><div className="group" style={{ padding: 14, display: "grid", gap: 12 }}>
             <DatasetDrop key={`tgz-${fileVersion}`} kind="Tgz" file={archive} onChange={setArchive} disabled={submitting} />

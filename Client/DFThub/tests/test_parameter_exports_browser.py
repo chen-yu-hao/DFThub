@@ -40,6 +40,8 @@ class Api:
 
     async def route(self, route):
         path = unquote(urlparse(route.request.url).path)
+        if path.endswith('/features'):
+            return await route.fulfill(json={'mail': True})
         if path.endswith('/me'):
             return await route.fulfill(json={'success': True, 'user': USER})
         if path.endswith('/submit_count.txt'):

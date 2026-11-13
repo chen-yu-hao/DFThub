@@ -31,6 +31,8 @@ class Api:
         path = unquote(urlparse(req.url).path)
         if not path.startswith('/api_dft/'):
             return await route.continue_()
+        if path.endswith('/features'):
+            return await route.fulfill(json={'mail': True})
         if path.endswith('/me'):
             return await route.fulfill(json={'success': True, 'user': USER})
         if path.endswith('/submit_count.txt'):

@@ -104,6 +104,19 @@ jobs:
           python tools/ci_run.py .venv-verify/bin/python tools/scientific_smoke.py --output dist/scientific-smoke.json
           python tools/ci_run.py .venv-verify/bin/python tools/workflow_smoke.py
           python tools/audit_release.py
+      - name: Browser checks (installed pages, mocked API)
+        if: matrix.python == '3.12'
+        run: |
+          python -m pip install playwright==1.63.0
+          python -m playwright install --with-deps chromium
+          data=$(mktemp -d)
+          DFTHUB_WORKERS=0 .venv-verify/bin/dfthub serve --data-dir "$data/data" --port 18289 > "$data/serve.log" 2>&1 &
+          for i in $(seq 1 60); do curl -sf http://127.0.0.1:18289/workspace/ -o /dev/null && break; sleep 1; done
+          curl -sf http://127.0.0.1:18289/workspace/ -o /dev/null || { cat "$data/serve.log"; exit 1; }
+          cd Client/DFThub/tests
+          export BASE_URL=http://127.0.0.1:18289 OUTPUT_DIR="$data/qa"
+          python test_optional_email_browser.py
+          python test_local_mode_browser.py
       - uses: actions/upload-artifact@v4
         with:
           name: bundle-${{ matrix.os }}-${{ matrix.python }}

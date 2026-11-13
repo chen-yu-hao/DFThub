@@ -65,6 +65,8 @@ class Api:
         if not path.startswith('/api_dft/'):
             return await route.continue_()
         self.requests.append((request.method, path))
+        if path.endswith('/features'):
+            return await route.fulfill(json={'mail': True})
         if path.endswith('/me'):
             return await route.fulfill(json={'success': True, 'user': USER})
         if path.endswith('/submit_count.txt'):

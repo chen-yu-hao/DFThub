@@ -26,6 +26,8 @@ async def main():
                 path = unquote(urlparse(route.request.url).path)
                 if not path.startswith('/api_dft/'):
                     return await route.continue_()
+                if path.endswith('/features'):
+                    return await route.fulfill(json={'mail': True})
                 if path.endswith('/me'):
                     return await route.fulfill(json={'success': True, 'user': {'id': 1, 'username': 'demo', 'email': 'demo@example.test'}})
                 if path.endswith('/submit_count.txt'):

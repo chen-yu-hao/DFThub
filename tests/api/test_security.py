@@ -302,7 +302,8 @@ class ApiSecurityTests(unittest.TestCase):
     def test_submit_accepts_frontend_trailing_slash_and_queues_argv(self):
         work_name = "work;no-shell"
         self.assertEqual(self._upload_new_work(work_name).status_code, 200)
-        with mail.record_messages() as outbox:
+        # Mail on, while Flask-Mail itself stays suppressed and only records.
+        with patch.object(api_module, "_mail_enabled", return_value=True), mail.record_messages() as outbox:
             response = self.client.post(
                 "/api_dft/submit",
                 headers=self._auth(self.alice_token),
