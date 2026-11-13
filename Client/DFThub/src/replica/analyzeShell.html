@@ -1,0 +1,50 @@
+<section class="ws an" id="analyze" aria-labelledby="anTitle">
+  <div class="ws-head">
+    <div>
+      <h1 id="anTitle">Analyze</h1>
+    </div>
+    <button type="button" class="btn btn-primary js-new"><svg class="i" aria-hidden="true"><use href="#i-plus"></use></svg>New job</button>
+  </div>
+  <div class="ws-grid">
+    <aside class="sidebar" aria-label="Job and run selection">
+      <div class="side-top">
+        <div class="seg full sidebar-levels" role="group" aria-label="Sidebar level" id="anLevel">
+          <button type="button" aria-pressed="false" data-level="jobs">Jobs <span class="count num">0</span></button>
+          <button type="button" aria-pressed="true" data-level="runs">Runs <span class="count num">0</span></button>
+        </div>
+        <div class="sidebar-job-context" id="anJobCtx"><span class="muted">Job</span><strong title=""></strong></div>
+        <label class="search"><span class="sr">Search runs</span><svg class="i" aria-hidden="true"><use href="#i-search"></use></svg><input id="anRunSearch" type="search" placeholder="Search runs" autocomplete="off" aria-label="Search runs" aria-keyshortcuts="/"><kbd aria-hidden="true">/</kbd></label>
+        <div class="seg full" role="group" aria-label="Filter runs by type" id="anKind">
+          <button type="button" aria-pressed="true" data-kind="all">All <span class="count num">0</span></button>
+          <button type="button" aria-pressed="false" data-kind="weight">Weights <span class="count num">3</span></button>
+          <button type="button" aria-pressed="false" data-kind="fork">Forks <span class="count num">3</span></button>
+        </div>
+      </div>
+      <ul class="job-list runs-list" id="anList" aria-label="Runs in analysis"></ul>
+      <div class="side-foot an-side-foot" id="anSideFoot" hidden></div>
+    </aside>
+    <article class="detail" id="anDetail">
+      <div class="d-head">
+        <div>
+          <div class="d-title"><h2 id="anJobTitle"></h2></div>
+          <div class="d-meta" id="anMeta"></div>
+        </div>
+        <div class="d-actions spe-actions" id="anActions">
+          <a class="btn btn-secondary" href="/workspace/"><svg class="i" aria-hidden="true"><use href="#i-ext"></use></svg>Open in Workspace</a>
+          <button type="button" class="btn btn-secondary" id="anExport"><svg class="i" aria-hidden="true"><use href="#i-down"></use></svg>Export CSV</button>
+          <button type="button" class="btn btn-primary" id="anCalcScf"><svg class="i" aria-hidden="true"><use href="#i-play"></use></svg>Calculate SCF Input</button>
+        </div>
+      </div>
+      <div class="d-tabs">
+        <div class="seg detail-sections" role="tablist" aria-label="Analysis views">
+          <button type="button" role="tab" id="anTab-trends" aria-controls="anPanel" aria-selected="true" tabindex="0" data-tab="trends">Trends</button>
+          <button type="button" role="tab" id="anTab-scf" aria-controls="anPanel" aria-selected="false" tabindex="-1" data-tab="scf">Input vs SCF</button>
+          <button type="button" role="tab" id="anTab-overlap" aria-controls="anPanel" aria-selected="false" tabindex="-1" data-tab="overlap">Wavefunction overlap</button>
+          <button type="button" role="tab" id="anTab-changes" aria-controls="anPanel" aria-selected="false" tabindex="-1" data-tab="changes">All changes</button>
+          <button type="button" role="tab" id="anTab-density" aria-controls="anPanel" aria-selected="false" tabindex="-1" data-tab="density" hidden>Density chain</button>
+        </div>
+      </div>
+      <div class="panel" id="anPanel" role="tabpanel" aria-labelledby="anTab-trends"></div>
+    </article>
+  </div>
+</section>

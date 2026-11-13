@@ -1,0 +1,941 @@
+/* ==========================================================================
+   DFThub · Liquid Glass layer (flat controls)
+   --------------------------------------------------------------------------
+   Load AFTER replica.css, together with seg-indicator.js.
+
+   - Floating surfaces (nav bar, menus, toasts, save bar) use a flat,
+     translucent glass material: the ambient color field behind the page
+     shows through and tints them. No gloss, bevels or glows.
+   - Buttons are flat fills.
+   - Segmented toggles follow apple.com's TabNav: #e8e8ed track, #1d1d1f
+     pill, white label, and a pill that slides to the new choice
+     (0.32s ease-out) while labels cross-fade (0.16s ease-out).
+   - Content cards stay solid.
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1. Tokens
+   -------------------------------------------------------------------------- */
+:root {
+  --gutter: clamp(16px, 4vw, 32px);
+
+  --r-lg: 18px;
+  --r-md: 18px;
+  --r-sm: 12px;
+
+  /* Ambient color field behind the page */
+  --amb-blue: rgba(10, 132, 255, 0.2);
+  --amb-indigo: rgba(94, 92, 230, 0.16);
+  --amb-cyan: rgba(100, 210, 255, 0.22);
+  --amb-violet: rgba(191, 90, 242, 0.1);
+
+  /* Flat glass material for floating surfaces */
+  --g-tint: rgba(255, 255, 255, 0.52);
+  --g-tint-strong: rgba(250, 250, 252, 0.74);
+  --g-filter: blur(16px) saturate(180%);
+  --g-filter-strong: blur(20px) saturate(180%);
+  --g-edge: 0 0 0 0.5px rgba(0, 0, 0, 0.08);
+  --g-shadow: 0 10px 30px -12px rgba(16, 24, 40, 0.22);
+
+  /* Flat button fills (translucent, so the page color can show through) */
+  --b-fill: rgba(118, 118, 128, 0.12);
+  --b-fill-hover: rgba(118, 118, 128, 0.18);
+  --b-fill-active: rgba(118, 118, 128, 0.24);
+
+  /* Segmented toggle, values taken from apple.com's TabNav */
+  --seg-platter: rgb(232, 232, 237);
+  --seg-indicator: rgb(29, 29, 31);
+  --seg-ink: rgb(0, 0, 0);
+  --seg-ink-selected: rgb(255, 255, 255);
+  --seg-focus: rgb(0, 113, 227);
+  --seg-pad: 4px;
+  --seg-move: 0.32s ease-out;
+  --seg-fade: 0.16s ease-out;
+
+  /* Solid content cards */
+  --card-line: 0 0 0 0.5px rgba(0, 0, 0, 0.06);
+  --card-shadow: 0 1px 2px rgba(16, 24, 40, 0.03), 0 10px 30px -12px rgba(16, 24, 40, 0.1);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --amb-blue: rgba(10, 132, 255, 0.3);
+    --amb-indigo: rgba(94, 92, 230, 0.28);
+    --amb-cyan: rgba(100, 210, 255, 0.14);
+    --amb-violet: rgba(191, 90, 242, 0.18);
+
+    --g-tint: rgba(30, 30, 32, 0.56);
+    --g-tint-strong: rgba(36, 36, 40, 0.78);
+    --g-edge: 0 0 0 0.5px rgba(255, 255, 255, 0.12);
+    --g-shadow: 0 12px 32px -12px rgba(0, 0, 0, 0.7);
+
+    --b-fill: rgba(118, 118, 128, 0.24);
+    --b-fill-hover: rgba(118, 118, 128, 0.32);
+    --b-fill-active: rgba(118, 118, 128, 0.4);
+
+    --seg-platter: rgb(51, 51, 54);
+    --seg-indicator: #636366;
+    --seg-ink: rgb(255, 255, 255);
+    --seg-ink-selected: #ffffff;
+
+    --card-line: 0 0 0 0.5px rgba(255, 255, 255, 0.07);
+    --card-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  }
+}
+
+:root[data-theme="dark"] {
+  --amb-blue: rgba(10, 132, 255, 0.3);
+  --amb-indigo: rgba(94, 92, 230, 0.28);
+  --amb-cyan: rgba(100, 210, 255, 0.14);
+  --amb-violet: rgba(191, 90, 242, 0.18);
+
+  --g-tint: rgba(30, 30, 32, 0.56);
+  --g-tint-strong: rgba(36, 36, 40, 0.78);
+  --g-edge: 0 0 0 0.5px rgba(255, 255, 255, 0.12);
+  --g-shadow: 0 12px 32px -12px rgba(0, 0, 0, 0.7);
+
+  --b-fill: rgba(118, 118, 128, 0.24);
+  --b-fill-hover: rgba(118, 118, 128, 0.32);
+  --b-fill-active: rgba(118, 118, 128, 0.4);
+
+  --seg-platter: rgb(51, 51, 54);
+  --seg-indicator: #636366;
+  --seg-ink: rgb(255, 255, 255);
+  --seg-ink-selected: #ffffff;
+
+  --card-line: 0 0 0 0.5px rgba(255, 255, 255, 0.07);
+  --card-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+/* No backdrop-filter support: make glass a little more opaque */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  :root {
+    --g-tint: color-mix(in srgb, var(--raised) 90%, transparent);
+    --g-tint-strong: var(--raised);
+  }
+}
+
+/* "Reduce transparency": solid materials */
+@media (prefers-reduced-transparency: reduce) {
+  :root,
+  :root[data-theme] {
+    --g-tint: var(--raised);
+    --g-tint-strong: var(--raised);
+    --g-filter: none;
+    --g-filter-strong: none;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   2. Page canvas: ambient color field the glass picks up
+   -------------------------------------------------------------------------- */
+html {
+  scroll-padding-top: 92px;
+}
+
+body {
+  background:
+    radial-gradient(720px 520px at 8% 40px, var(--amb-blue), transparent 70%),
+    radial-gradient(640px 520px at 96% 120px, var(--amb-indigo), transparent 70%),
+    radial-gradient(760px 620px at 104% 42%, var(--amb-cyan), transparent 70%),
+    radial-gradient(700px 620px at -6% 66%, var(--amb-violet), transparent 70%),
+    radial-gradient(720px 520px at 70% 100%, var(--amb-blue), transparent 70%),
+    var(--bg);
+  background-repeat: no-repeat;
+  min-height: 100vh;
+}
+
+/* --------------------------------------------------------------------------
+   3. Flat glass surfaces (floating UI only)
+   -------------------------------------------------------------------------- */
+.nav .wrap,
+.menu,
+.toast,
+.savebar,
+.tip {
+  border: 0;
+  background: var(--g-tint);
+  -webkit-backdrop-filter: var(--g-filter);
+  backdrop-filter: var(--g-filter);
+  box-shadow: var(--g-edge), var(--g-shadow);
+}
+
+.menu,
+.toast,
+.savebar,
+.tip {
+  background: var(--g-tint-strong);
+  -webkit-backdrop-filter: var(--g-filter-strong);
+  backdrop-filter: var(--g-filter-strong);
+}
+
+/* --------------------------------------------------------------------------
+   4. Navigation: floating glass bar
+   -------------------------------------------------------------------------- */
+.nav {
+  background: none;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  border-bottom: 0;
+  padding-top: 10px;
+  pointer-events: none; /* only the bar itself is interactive */
+}
+
+/* Soft scroll edge: content fades and softens as it slides under the bar */
+.nav::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 -14px;
+  z-index: -1;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--bg) 55%, transparent),
+    color-mix(in srgb, var(--bg) 0%, transparent)
+  );
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+  -webkit-mask: linear-gradient(180deg, #000 45%, transparent);
+  mask: linear-gradient(180deg, #000 45%, transparent);
+  pointer-events: none;
+}
+
+.nav .wrap {
+  position: relative;
+  pointer-events: auto;
+  width: min(100% - 2 * max(10px, var(--gutter) - 14px), 1200px - 2 * var(--gutter) + 28px);
+  max-width: none;
+  height: 56px;
+  margin-inline: auto;
+  padding: 0 10px 0 14px;
+  border-radius: var(--r-pill);
+  gap: 16px;
+}
+
+.brand {
+  gap: 10px;
+}
+
+.nav-links {
+  gap: 2px;
+  margin-left: 14px;
+  font-size: var(--font-size-sm);
+}
+
+.nav-links a {
+  display: inline-flex;
+  align-items: center;
+  height: 36px;
+  padding: 0 14px;
+  border-radius: var(--r-pill);
+  color: var(--ink-2);
+  transition:
+    background-color 0.16s ease-out,
+    color 0.16s ease-out;
+}
+
+.nav-links a:hover {
+  color: var(--ink);
+}
+
+.nav-links a[aria-current="true"] {
+  color: var(--ink);
+  background: var(--b-fill);
+}
+
+.nav-right {
+  gap: 8px;
+}
+
+.nav .btn-sm {
+  height: 36px;
+  padding: 0 16px;
+  font-size: var(--font-size-sm);
+}
+
+.avatar {
+  width: 36px;
+  height: 36px;
+  font: 600 var(--font-size-sm)/36px var(--font-text);
+  background: var(--b-fill);
+  transition: background-color 0.16s ease-out;
+}
+
+.avatar:hover,
+.avatar[aria-expanded="true"] {
+  background: var(--b-fill-hover);
+}
+
+/* Account menu */
+.menu {
+  top: 50px;
+  min-width: 248px;
+  padding: 8px;
+  border-radius: var(--r-lg);
+  transform-origin: top right;
+  animation: popIn 0.2s ease-out;
+}
+
+.menu-head {
+  padding: 10px 12px 12px;
+}
+
+.menu button {
+  border-radius: var(--r-sm);
+  padding: 9px 12px;
+  transition: background-color 0.16s ease-out;
+}
+
+.menu button:hover {
+  background: var(--b-fill);
+}
+
+@keyframes popIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.97) translateY(-4px);
+  }
+}
+
+/* --------------------------------------------------------------------------
+   5. Flat buttons
+   -------------------------------------------------------------------------- */
+.btn,
+.icon-btn,
+.toggle-chip,
+.qbtn,
+.hero-cta .js-template {
+  border: 0;
+  box-shadow: none;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  transition:
+    background-color 0.16s ease-out,
+    color 0.16s ease-out,
+    opacity 0.16s ease-out;
+}
+
+.btn:active:not(:disabled) {
+  transform: none;
+}
+
+/* One focus ring for every control: Apple's 2px ring, offset 2px */
+.btn:focus-visible,
+.icon-btn:focus-visible,
+.avatar:focus-visible,
+.toggle-chip:focus-visible,
+.qbtn:focus-visible,
+.nav-links a:focus-visible,
+.hero-cta .js-template:focus-visible {
+  outline: 2px solid var(--seg-focus);
+  outline-offset: 2px;
+}
+
+.btn-primary {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: var(--accent-hover);
+}
+
+.btn-primary:active:not(:disabled) {
+  background: color-mix(in srgb, var(--accent) 92%, #000);
+}
+
+.btn-secondary {
+  background: var(--b-fill);
+  color: var(--accent-ink);
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: var(--b-fill-hover);
+}
+
+.btn-secondary:active:not(:disabled) {
+  background: var(--b-fill-active);
+}
+
+.btn-danger {
+  background: var(--bad-tint);
+  color: var(--bad);
+}
+
+.btn-danger:hover:not(:disabled) {
+  filter: none;
+  background: color-mix(in srgb, var(--bad-dot) 18%, transparent);
+}
+
+.btn-lg {
+  height: 48px;
+  padding: 0 26px;
+}
+
+.btn-sm {
+  height: 30px;
+  padding: 0 14px;
+}
+
+/* Hero "Download template" reads as a secondary button */
+.hero-cta {
+  gap: 14px 20px;
+  margin-top: 36px;
+}
+
+.hero-cta .js-template {
+  height: 48px;
+  padding: 0 22px;
+  gap: 7px;
+  border-radius: var(--r-pill);
+  font-size: var(--font-size-lg);
+  font-weight: 500;
+  background: var(--b-fill);
+}
+
+.hero-cta .js-template:hover {
+  text-decoration: none;
+  background: var(--b-fill-hover);
+}
+
+/* Round icon buttons */
+.icon-btn {
+  background: var(--b-fill);
+  color: var(--ink-2);
+}
+
+.icon-btn:hover {
+  background: var(--b-fill-hover);
+  color: var(--ink);
+}
+
+.d-actions .icon-btn {
+  width: 36px;
+  height: 36px;
+}
+
+.sheet-head .icon-btn {
+  width: 32px;
+  height: 32px;
+}
+
+/* Row-level delete stays quiet until hovered */
+.job-delete {
+  background: transparent;
+}
+
+/* Chips and quick-set buttons share the toggle colors */
+.toggle-chip {
+  height: 32px;
+  padding: 0 14px;
+  border-radius: var(--r-pill);
+  background: var(--b-fill);
+  color: var(--ink);
+}
+
+.toggle-chip:hover {
+  background: var(--b-fill-hover);
+}
+
+.toggle-chip[aria-pressed="true"] {
+  background: var(--seg-indicator);
+  border-color: transparent;
+  color: var(--seg-ink-selected);
+}
+
+.qbtn {
+  border-radius: var(--r-pill);
+  min-width: 34px;
+  background: var(--b-fill);
+}
+
+.qbtn:hover {
+  background: var(--b-fill-hover);
+}
+
+/* --------------------------------------------------------------------------
+   6. Segmented toggles (apple.com TabNav)
+   The sliding pill is .seg::before. seg-indicator.js measures the selected
+   button and writes --seg-x/--seg-y/--seg-w/--seg-h on the .seg element.
+   Without the script the selected button simply fills itself.
+   -------------------------------------------------------------------------- */
+.seg {
+  position: relative;
+  isolation: isolate;
+  gap: 0;
+  padding: var(--seg-pad);
+  border-radius: var(--r-pill);
+  background: var(--seg-platter);
+  box-shadow: none;
+}
+
+.seg::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  left: var(--seg-x, var(--seg-pad));
+  top: var(--seg-y, var(--seg-pad));
+  width: var(--seg-w, 0px);
+  height: var(--seg-h, 0px);
+  border-radius: var(--r-pill);
+  background: var(--seg-indicator);
+  opacity: var(--seg-o, 0);
+  pointer-events: none;
+}
+
+.seg button {
+  height: var(--seg-btn-h, 32px);
+  padding: 0 14px;
+  border-radius: var(--r-pill);
+  background: transparent;
+  box-shadow: none;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  color: color-mix(in srgb, var(--seg-ink) 80%, transparent);
+  font-size: var(--font-size-sm);
+  font-weight: 400;
+  letter-spacing: -0.016em;
+}
+
+.seg button:hover:not([aria-pressed="true"]):not([aria-selected="true"]) {
+  background: transparent;
+  color: var(--seg-ink);
+}
+
+.seg button[aria-pressed="true"],
+.seg button[aria-selected="true"] {
+  background: transparent;
+  box-shadow: none;
+  color: var(--seg-ink-selected);
+  cursor: default;
+}
+
+/* Fallback before the script runs (or without it) */
+.seg:not([data-seg-ready]) button[aria-pressed="true"],
+.seg:not([data-seg-ready]) button[aria-selected="true"] {
+  background: var(--seg-indicator);
+}
+
+.seg .count {
+  color: inherit;
+  opacity: 1;
+}
+
+/* Keyboard focus: Apple's 2px ring, 2px away from the pill */
+.seg button:focus-visible {
+  outline: 2px solid var(--seg-focus);
+  outline-offset: 2px;
+  border-radius: var(--r-pill);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .seg[data-seg-ready]:not([data-seg-instant])::before {
+    transition:
+      left var(--seg-move),
+      top var(--seg-move),
+      width var(--seg-move),
+      height var(--seg-move),
+      opacity var(--seg-fade);
+  }
+
+  /* Labels cross-fade while the pill travels, as on apple.com */
+  .seg button {
+    transition: color var(--seg-fade);
+  }
+}
+
+/* Sizes: apple.com uses a 44px track (36px pill) for standard tab navs */
+.detail-sections {
+  --seg-btn-h: 36px;
+  padding: var(--seg-pad);
+  gap: 0;
+  border-radius: var(--r-pill);
+}
+
+.detail-sections button {
+  min-height: 0;
+  padding: 0 16px;
+  border-radius: var(--r-pill);
+  font-size: var(--font-size-md);
+  font-weight: 400;
+}
+
+.detail-sections button[aria-selected="true"] {
+  color: var(--seg-ink-selected);
+  font-weight: 400;
+  box-shadow: none;
+}
+
+.sidebar-levels button,
+.mue-view-switch button {
+  min-height: 0;
+}
+
+.seg.full button {
+  padding: 0 8px;
+}
+
+/* --------------------------------------------------------------------------
+   7. Slider: flat track, pill thumb in the toggle color
+   -------------------------------------------------------------------------- */
+.slider input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 28px;
+  margin: 0;
+  background: transparent;
+  cursor: pointer;
+  accent-color: var(--seg-indicator);
+}
+
+.slider input[type="range"]::-webkit-slider-runnable-track {
+  height: 6px;
+  border-radius: var(--r-pill);
+  background: var(--seg-platter);
+}
+
+.slider input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 30px;
+  height: 20px;
+  margin-top: -7px;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: var(--seg-indicator);
+}
+
+.slider input[type="range"]::-moz-range-track {
+  height: 6px;
+  border-radius: var(--r-pill);
+  background: var(--seg-platter);
+}
+
+.slider input[type="range"]::-moz-range-progress {
+  height: 6px;
+  border-radius: var(--r-pill);
+  background: var(--seg-indicator);
+}
+
+.slider input[type="range"]::-moz-range-thumb {
+  width: 30px;
+  height: 20px;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: var(--seg-indicator);
+}
+
+.slider input[type="range"]:focus-visible {
+  outline: none;
+}
+
+.slider input[type="range"]:focus-visible::-webkit-slider-thumb {
+  outline: 2px solid var(--seg-focus);
+  outline-offset: 2px;
+}
+
+.slider input[type="range"]:focus-visible::-moz-range-thumb {
+  outline: 2px solid var(--seg-focus);
+  outline-offset: 2px;
+}
+
+/* --------------------------------------------------------------------------
+   8. Floating feedback
+   -------------------------------------------------------------------------- */
+.toasts {
+  top: calc(84px + env(safe-area-inset-top, 0px));
+}
+
+.toast {
+  border-radius: var(--r-lg);
+  padding: 12px 18px;
+  animation: popIn 0.24s ease-out;
+}
+
+.savebar {
+  border-radius: var(--r-lg);
+  padding: 10px 10px 10px 20px;
+}
+
+.tip {
+  border-radius: var(--r-sm);
+}
+
+/* --------------------------------------------------------------------------
+   9. Content stays solid, calm and roomy
+   -------------------------------------------------------------------------- */
+.hero {
+  padding-block: clamp(56px, 9vw, 112px) clamp(44px, 6vw, 72px);
+  gap: clamp(32px, 6vw, 80px);
+}
+
+.eyebrow {
+  margin-bottom: 18px;
+}
+
+.lead {
+  margin-top: 24px;
+}
+
+.hero-meta {
+  margin-top: 30px;
+  gap: 8px 22px;
+}
+
+.how {
+  padding: 32px;
+  box-shadow: var(--card-line), var(--card-shadow);
+}
+
+.how > p {
+  margin-bottom: 24px;
+}
+
+.how ol {
+  gap: 22px;
+}
+
+.cite {
+  background: var(--surface);
+  border: 0;
+  border-radius: var(--r-lg);
+  padding: 22px 26px;
+  gap: 14px 18px;
+  box-shadow: var(--card-line), var(--card-shadow);
+}
+
+.ws {
+  padding-block: clamp(72px, 9vw, 112px) 32px;
+}
+
+.ws-head {
+  margin-bottom: 28px;
+}
+
+.ws-head p {
+  margin-top: 8px;
+}
+
+.ws-grid {
+  gap: 24px;
+}
+
+.sidebar {
+  top: 86px;
+  max-height: calc(100vh - 106px);
+  box-shadow: var(--card-line), var(--card-shadow);
+}
+
+.side-top {
+  padding: 16px 16px 14px;
+  gap: 12px;
+}
+
+.search input {
+  height: 36px;
+  border-radius: var(--r-pill);
+  padding: 0 38px 0 36px;
+  background: var(--b-fill);
+}
+
+.search svg {
+  left: 13px;
+}
+
+.search kbd {
+  right: 10px;
+  border-radius: var(--r-pill);
+  padding: 3px 7px;
+}
+
+.job-list {
+  padding: 8px;
+}
+
+.job {
+  border-radius: var(--r-sm);
+  padding: 11px 12px;
+  transition: background-color 0.16s ease-out;
+}
+
+.side-foot {
+  padding: 12px 18px 16px;
+}
+
+.detail {
+  box-shadow: var(--card-line), var(--card-shadow);
+}
+
+.d-head {
+  padding: 30px 32px 20px;
+  gap: 18px 20px;
+}
+
+.d-meta {
+  margin-top: 10px;
+}
+
+.d-actions {
+  gap: 10px;
+}
+
+.d-tabs {
+  padding: 0 32px 22px;
+}
+
+.panel {
+  padding: 30px 32px 34px;
+  gap: 28px;
+}
+
+.alert {
+  padding: 18px 20px;
+}
+
+.parameters-panel {
+  border-color: var(--sep-2);
+}
+
+.mue-overview {
+  padding: 26px;
+  gap: 28px;
+}
+
+.mue-summary section {
+  padding: 22px 24px;
+}
+
+.mue-change-grid {
+  gap: 24px;
+}
+
+.mue-changes header {
+  margin-bottom: 14px;
+}
+
+.mue-note {
+  padding: 0 18px 14px;
+}
+
+footer {
+  margin-top: 48px;
+  padding-block: 44px 56px;
+}
+
+/* Dialogs: solid sheet for forms, lighter scrim so the color field shows */
+dialog.sheet {
+  border-radius: var(--r-lg);
+  box-shadow:
+    var(--shadow-sheet),
+    0 0 0 0.5px rgba(0, 0, 0, 0.06);
+}
+
+dialog.sheet::backdrop {
+  background: color-mix(in srgb, var(--scrim) 70%, transparent);
+  -webkit-backdrop-filter: blur(8px) saturate(140%);
+  backdrop-filter: blur(8px) saturate(140%);
+}
+
+.sheet-head {
+  padding: 20px 24px 16px;
+}
+
+.sheet-body {
+  padding: 24px;
+  gap: 24px;
+}
+
+.sheet-foot {
+  padding: 16px 24px calc(16px + env(safe-area-inset-bottom, 0px));
+}
+
+.inp {
+  border-radius: var(--r-sm);
+}
+
+.drop {
+  border-radius: var(--r-lg);
+}
+
+/* --------------------------------------------------------------------------
+   10. Responsive
+   -------------------------------------------------------------------------- */
+@media (max-width: 1000px) {
+  .sidebar {
+    position: static;
+    max-height: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .nav .wrap {
+    height: 52px;
+    padding: 0 8px 0 12px;
+  }
+
+  .how {
+    padding: 24px;
+  }
+
+  .cite {
+    padding: 20px;
+  }
+
+  .d-head {
+    padding: 22px 20px 16px;
+  }
+
+  .d-tabs,
+  .panel {
+    padding-inline: 20px;
+  }
+
+  /* Multi-row toggles: rounded-rect track, labels may wrap */
+  .detail-sections,
+  .mue-view-switch {
+    border-radius: var(--r-lg);
+  }
+
+  .detail-sections button,
+  .mue-view-switch button {
+    height: auto;
+    min-height: 40px;
+    padding: 6px 10px;
+    white-space: normal;
+    line-height: 1.2;
+  }
+
+  .mue-view-switch button {
+    font-size: var(--font-size-sm);
+  }
+
+  .mue-overview {
+    padding: 18px;
+  }
+
+  dialog.sheet {
+    border-radius: var(--r-lg) var(--r-lg) 0 0;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   11. Accessibility fallbacks
+   -------------------------------------------------------------------------- */
+@media (forced-colors: active) {
+  .seg::before {
+    background: Highlight;
+  }
+
+  .seg button[aria-pressed="true"],
+  .seg button[aria-selected="true"] {
+    color: HighlightText;
+  }
+
+  .nav .wrap,
+  .menu,
+  .toast,
+  .savebar,
+  .btn,
+  .icon-btn,
+  .avatar {
+    border: 1px solid CanvasText;
+  }
+}

@@ -1,0 +1,14 @@
+2	12_ethane_Alk44	-1	13_propane_Alk44	-1	11_methane_Alk44	0.003505923
+3	12_ethane_Alk44	-1	14_butane_Alk44	-2	11_methane_Alk44	0.00723495
+4	12_ethane_Alk44	-1	15_pentane_Alk44	-3	11_methane_Alk44	0.010868361
+5	12_ethane_Alk44	-1	16_hexane_Alk44	-4	11_methane_Alk44	0.014549581
+6	12_ethane_Alk44	-1	17_heptane_Alk44	-5	11_methane_Alk44	0.018246736
+7	12_ethane_Alk44	-1	18_octane_Alk44	-6	11_methane_Alk44	0.021959827
+3	12_ethane_Alk44	-1	19_isobutane_Alk44	-2	11_methane_Alk44	0.009529736
+4	12_ethane_Alk44	-1	20_isopentane_Alk44	-3	11_methane_Alk44	0.012318539
+5	12_ethane_Alk44	-1	21_isohexane_Alk44	-4	11_methane_Alk44	0.01595195
+6	12_ethane_Alk44	-1	22_isoheptane_Alk44	-5	11_methane_Alk44	0.019696913
+7	12_ethane_Alk44	-1	23_isooctane_Alk44	-6	11_methane_Alk44	0.024541461
+4	12_ethane_Alk44	-1	24_neopentane_Alk44	-3	11_methane_Alk44	0.016764686
+5	12_ethane_Alk44	-1	25_neohexane_Alk44	-4	11_methane_Alk44	0.018533584
+6	12_ethane_Alk44	-1	26_neoheptane_Alk44	-5	11_methane_Alk44	0.022135123

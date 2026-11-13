@@ -1,0 +1,14 @@
+1	11_ch3oh_ch3sch3_cs_dim_DS14	-1	11_ch3oh_ch3sch3_cs_monA_DS14	-1	11_ch3oh_ch3sch3_cs_monB_DS14	-0.009067592
+1	12_ch3sch3_benzene_c2v_dim_DS14	-1	12_ch3sch3_benzene_c2v_monA_DS14	-1	12_ch3sch3_benzene_c2v_monB_DS14	-0.001784834
+1	13_ch3sh_benzene_cs_dim_DS14	-1	13_ch3sh_benzene_cs_monA_DS14	-1	13_ch3sh_benzene_cs_monB_DS14	-0.005577605
+1	14_ch3sh_dimer_dim_DS14	-1	14_ch3sh_dimer_monA_DS14	-1	14_ch3sh_dimer_monB_DS14	-0.005019844
+1	15_ch3sh_h2co_dim_DS14	-1	15_ch3sh_h2co_monA_DS14	-1	15_ch3sh_h2co_monB_DS14	-0.0049561
+1	16_ch3sh_h2o_cs_dim_DS14	-1	16_ch3sh_h2o_cs_monA_DS14	-1	16_ch3sh_h2o_cs_monB_DS14	-0.003760899
+1	17_ch3sh_nh3_cs_dim_DS14	-1	17_ch3sh_nh3_cs_monA_DS14	-1	17_ch3sh_nh3_cs_monB_DS14	-0.004701124
+1	18_formamide_ch3sh_dim_DS14	-1	18_formamide_ch3sh_monA_DS14	-1	18_formamide_ch3sh_monB_DS14	-0.010087497
+1	19_h2o_ch3sch3_cs_dim_DS14	-1	19_h2o_ch3sch3_cs_monA_DS14	-1	19_h2o_ch3sch3_cs_monB_DS14	-0.008525767
+1	20_h2o_dimer_cs_dim_DS14	-1	20_h2o_dimer_cs_monA_DS14	-1	20_h2o_dimer_cs_monB_DS14	-0.007904263
+1	21_h2o_h2s_cs_dim_DS14	-1	21_h2o_h2s_cs_monA_DS14	-1	21_h2o_h2s_cs_monB_DS14	-0.004621444
+1	22_h2s_ch4_dim_DS14	-1	22_h2s_ch4_monA_DS14	-1	22_h2s_ch4_monB_DS14	-0.001354561
+1	23_h2s_dimer_cs_dim_DS14	-1	23_h2s_dimer_cs_monA_DS14	-1	23_h2s_dimer_cs_monB_DS14	-0.002661314
+1	24_h2s_h2o_cs_dim_DS14	-1	24_h2s_h2o_cs_monA_DS14	-1	24_h2s_h2o_cs_monB_DS14	-0.00423898

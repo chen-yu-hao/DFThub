@@ -1,11 +1,22 @@
-# Python
 __pycache__/
 *.py[cod]
+*.egg-info/
+.venv*/
+.build/
+build/
+dist/
+wheelhouse/
+.env
+auth.db
+.jwt_secret
+*.log
+*.bak*
+.backups/
+node_modules/
+.astro/
+dist-dfthub/
 
-# Virtual environment created by the README installation steps
-.venv/
-
-# Gaussian 16 sources and build output used by dfthub_g16_builder.py
+# Gaussian 16 sources and build output used by `dfthub g16 build`
 # (licensed software; never commit them)
 g16/
 g16-opt/

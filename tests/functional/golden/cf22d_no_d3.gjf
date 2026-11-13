@@ -1,0 +1,12 @@
+%Chk=cf22d.chk
+#P MN15/def2QZVP
+
+CF22D, DFThub parameters sha256 86f643ff1232b59e, HF=0.581035
+Run with a g16 built by 'dfthub g16 build'; MN15 is the patched slot.
+An unpatched Gaussian silently runs the original MN15.
+D3 dispersion disabled; CF22D is parameterized with D3(0).
+
+0 1
+H 0.000000 0.000000 0.000000
+H 0.000000 0.000000 0.740000
+

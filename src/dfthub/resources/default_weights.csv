@@ -1,0 +1,92 @@
+Database	Description	Type	Source	Number	Inverse Weight
+SR-MGM-BE9	single-reference main-group metal bond energies	TC	MDB2019	8	0.84007544444138
+SR-MGN-BE107	single-reference main-group non-metal bond energies	TC	MDB2019	107	0.93761699868819
+SR-TML-BE11	single reference TM bond energies	TC	MDB2019	11	3.21975908756633
+SR-TMD-BE4	multi-reference TM bond energies	TC	MDB2019	4	3.21975908756633
+MR-MGM-BE4	multi-reference main-group metal bond energies	TC	MDB2019	4	0.794188106818777
+MR-MGN-BE17	multi-reference main-group non-metal bond energies	TC	MDB2019	17	3.34206440048416
+MR-TML-BE12	single-reference TM dimer bond energies (Cu2, CuAg, Zr2, Ag2)	TC	MDB2019	12	3.40955630343526
+MR-TMD-BE3	multi-reference TM dimer bond energies (V2, Cr2, Fe2)	TC	MDB2019	3	1.09680397562565
+HTBH38	hydrogen transfer barrier heights	BH	MDB2019	38	0.208536487179584
+NHTBH38	non-hydrogen transfer barrier heights	BH	MDB2019	38	0.15567178804468
+NGD21	noble gas dimer weak interactions	NC	MDB2019	21	0.269857816544089
+3dEE8	3d TM atomic excitation energies and first excitation energy of Fe2	EE	MDB2019	8	1.72154629663685
+4dAEE5	4d TM atomic excitation energies	EE	MDB2019	5	0.82047217938509
+pAEE5	p-block atomic excitation energies	EE	MDB2019	5	3.19879188702116
+IsoL6	isomerization energies of large molecules	IE	MDB2019	6	1.1202180987861
+2pIsoE4	2p isomerization energies	IE	MDB2019	4	1.34523845405822
+4pIsoE4	4p isomerization energies	IE	MDB2019	4	1.25231726783512
+HC7	hydrocarbon chemistry	TC	MDB2019	7	1.91482269957533
+IP23	ionization potentials	TC	MDB2019	23	1.77270480585249
+EA13	electron affinities	TC	MDB2019	13	1.1353555118957
+PA8	proton affinities	TC	MDB2019	8	0.925867114154515
+AE17	atomic energies	TC	MDB2019	17	4.64260477211675
+DC9	difficult cases	TC	MDB2019	9	4.87331824365315
+SMAE3	sulfur molecules atomization energies	TC	MDB2019	3	0.936054611968975
+NCCE30		built-in	TMB11		0.06937893786996
+CT7	noncovalent complexation energies	NC	MDB2019	7	0.10607410747309
+πIE3		built-in	TMB11		0.83368920833887
+πPa10		built-in	TMB11		0.396789968023809
+A21x12	PECs for the 21 equilibrium complexes from A24	NC	MGCDB84	252	0.0571307354236068
+A24	Binding energies of small noncovalent complexes	NC	MGCDB84	24	0.063257144971844
+AlkAtom19	n = 1−8 alkane atomization energies	TC	MGCDB84	19	0.10796324887635
+AlkIsomer11	Isomerization energies of n = 4 − 8 alkanes	IE	MGCDB84	11	0.0621534242356776
+AlkIsod14	n = 3−8 alkane isodesmic reaction energies	TC	MGCDB84	14	0.0994137376589614
+Bauza30	Binding energies of halogen-, chalcogen-, and pnicogen-bonded dimers	NC	MGCDB84	30	0.0845385608023336
+Butanediol65	Isomerization energies of butane-1,4-diol	IE	MGCDB84	65	0.00729174118843758
+BzDC215	PECs for benzene interacting with two rare-gas atoms and eight first- and second-row hydrides	NC	MGCDB84	215	0.220917369543102
+CT20	Binding energies of charge-transfer complexes	NC	MGCDB84	20	0.106205797933231
+DIE60	Isomerization energies of reactions involving double-bond migration in conjugated dienes	IE	MGCDB84	60	0.386744057684168
+DS14	Binding energies of complexes containing divalent sulfur	NC	MGCDB84	14	0.102028394460809
+EIE22	Isomerization energies of enecarbonyls	IE	MGCDB84	22	0.404590317052526
+FmH2O10	Binding energies of isomers of F−(H2O)10	NC	MGCDB84	10	0.55665049878394
+ACONF	Isomerization energies of alkane conformers	IE	MGCDB84	15	0.0470949087032059
+CYCONF	Isomerization energies of cysteine conformers	IE	MGCDB84	11	0.107739084275295
+G21EA	Adiabatic electron affinities of atoms and small molecules	TC	MGCDB84	25	1.90607330869041
+G21IP	Adiabatic ionization potentials of atoms and small molecules	TC	MGCDB84	36	2.82002986958659
+NBPRC	Reactions involving NH3/BH3 and PH3/BH3	TC	MGCDB84	12	1.26233091215391
+WATER27	Binding energies of neutral and charged water clusters	NC	MGCDB84	23	0.680800858197267
+H2O6Bind8	Binding energies of isomers of (H2O)6	NC	MGCDB84	8	0.114043547268072
+HB15	Binding energies of hydrogen-bonded dimers featuring ionic groups common in biomolecules	NC	MGCDB84	15	0.169787379567986
+HW30	Binding energies of hydrocarbon-water dimers	NC	MGCDB84	30	0.221467865969466
+HW6Cl	Binding energies of Cl-(H2O)n(n=1-6)	NC	MGCDB84	6	1.11476589792838
+HW6F	Binding energies of F-(H2O)n(n=1-6)	NC	MGCDB84	6	0.098932713726616
+NC15	Binding energies of very small noncovalent complexes	NC	MGCDB84	15	0.0673773550921976
+Pentane14	Isomerization energies of stationary points on the n-pentane torsional surface	IE	MGCDB84	14	0.025206045980193
+Shields38	Binding energies of (H2O)n(n=2-10)	NC	MGCDB84	38	0.337077667196769
+SW49Rel345	Isomerization energies of SO42-(H2O)n(n=3-5)	IE	MGCDB84	31	0.086729379287168
+SW49Bind345	Binding energies of SO42-(H2O)n(n=3-5)	NC	MGCDB84	31	0.132721863642345
+SW49Rel6	Isomerization energies of SO42-(H2O)6	IE	MGCDB84	18	0.0614771927944955
+SW49Bind6	Binding energies of SO42-(H2O)6	NC	MGCDB84	18	0.151315755027095
+TA13	Binding energies of dimers involving radicals	NC	MGCDB84	13	0.205649367424055
+BHPERI26	Barrier heights of pericyclic reactions	BH	MGCDB84	26	0.134345364796769
+CR20	Cycloreversion reaction energies	BH	MGCDB84	20	0.316476072999806
+CRBH20	Barrier heights for cycloreversion of heterocyclic rings	BH	MGCDB84	20	0.591281837414385
+AlkBind12	Binding energies of saturated and unsaturated hydrocarbon dimers	NC	MGCDB84	12	0.188792518174541
+HB49	Binding energies of small- and medium-sized hydrogen-bonded systems	NC	MGCDB84	49	0.160655622103171
+Ionic43	Binding energies of anion-neutral, cation-neutral, and anion-cation dimers	NC	MGCDB84	43	0.454492574207733
+H2O20Bind4	Binding energies of isomers of (H2O)20(dod, fc, fs, and es)	NC	MGCDB84	4	0.445100727211908
+H2O20Rel4	Isomerization energies of isomers of (H2O)20(dod, fc, fs, and es)	IE	MGCDB84	4	0.148366909070653
+H2O20Bind10	Binding energies of isomers of (H2O)20(low-energy structures)	NC	MGCDB84	10	0.313481213286397
+H2O20Rel10	Isomerization energies of isomers of (H2O)20(low-energy structures)	IE	MGCDB84	10	0.145621900807468
+H2O16Rel5	Isomerization energies of (H2O)16(boat and fused cube structures)	IE	MGCDB84	5	0.0362257648813192
+BSR36	Hydrocarbon bond separation reaction energies	TC	MGCDB84	36	0.331057631121412
+HNBrBDE18	Homolytic N–Br bond dissociation energies	TC	MGCDB84	18	1.11917490604133
+PlatonicTAE6	Total atomization energies of platonic hydrocarbon cages, CnHn (n =4,6,8,10,12,20)	TC	MGCDB84	6	0.513936470161187
+PlatonicIG6	Isogyric reactions of platonic hydrocarbon cages, CnHn (n =4,6,8,10,12,20)	TC	MGCDB84	6	4.06766640678643
+PlatonicID6	Isodesmic reactions of platonic hydrocarbon cages, CnHn (n =4,6,8,10,12,20)	TC	MGCDB84	6	0.302793825908775
+PlatonicHD6	Homodesmotic reactions of platonic hydrocarbon cages, CnHn (n =4,6,8,10,12,20)	TC	MGCDB84	6	4.67473907905172
+PX13	Barrier heights for proton exchange in water, ammonia, and hydrogen fluoride clusters	BH	MGCDB84	13	1.75769463189025
+CE20	Binding energies of water, ammonia, and hydrogen fluoride clusters	NC	MGCDB84	20	0.155003898861968
+WCPT27	Barrier heights of water-catalyzed proton-transfer reactions	BH	MGCDB84	27	0.283915539542914
+WCPT6	Tautomerization energies for water-catalyzed proton-transfer reactions	TC	MGCDB84	6	0.148775463816488
+HAT707MR	Heavy-atom transfer energies (MR)	TC	MGCDB84	202	0.109243363632885
+HAT707nonMR	Heavy-atom transfer energies (SR)	TC	MGCDB84	505	0.136554204541106
+TAE140MR	Total atomization energies (MR)	TC	MGCDB84	16	0.487640008041818
+TAE140nonMR	Total atomization energies (SR)	TC	MGCDB84	124	0.162546669347273
+BDE99MR	Bond dissociation energies (MR)	TC	MGCDB84	16	0.234609257950233
+BDE99nonMR	Bond dissociation energies (SR)	TC	MGCDB84	83	0.293261572437791
+ISOMERIZATION20	Isomerization energies	IE	MGCDB84	20	0.278645726873492
+SN13	Nucleophilic substitution energies	TC	MGCDB84	13	0.106690688411982
+BH76RC	Reaction energies from HTBH38  and NHTBH38	TC	MGCDB84	30	0.0813142431835875
+DBH24	Diverse barrier heights	BH	MGCDB84	24	0.0550079729038863

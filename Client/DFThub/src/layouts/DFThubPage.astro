@@ -1,0 +1,38 @@
+---
+import "../styles/replica.css";
+import "../styles/liquid-glass.css";
+import "../styles/pages.css";
+import "../styles/analyze.css";
+import "../styles/energy.css";
+import "../styles/workbench.css";
+import segIndicatorUrl from "../styles/seg-indicator.js?url";
+import App from "../App";
+import type { Page } from "../replica/Chrome";
+
+interface Props { page: Page }
+const { page } = Astro.props;
+const title = page === "overview" ? "DFThub" : `${page[0].toUpperCase()}${page.slice(1)} · DFThub`;
+const description = page === "analyze" ? "Compare density-functional runs, basis sets and MUE trends." : page === "energy" ? "Calculate molecular energies with optimized DFThub functionals." : page === "workspace" ? "Upload data sets and manage DFThub calculations." : page === "guide" ? "Learn how to prepare data, submit jobs, read results and compare DFThub runs." : "DFThub density-functional parameterization workspace.";
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content={description} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content={`https://dfthub.ecnu.space${Astro.url.pathname}`} />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <title>{title}</title>
+    <script is:inline src={segIndicatorUrl} defer></script>
+  </head>
+  <body data-page={page}>
+    <App page={page} client:load />
+  </body>
+</html>

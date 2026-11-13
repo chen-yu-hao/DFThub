@@ -1,0 +1,107 @@
+2	CH3_abde4	-1	C2H6_abde4	97.39	1
+1	CH3_abde4	1	CH3O	-1	C2H6O					95.00	1
+1	CH3_abde4	1	iPr	-1	C4H10					89.79	1
+1	CH3O	1	iPr	-1	C4H10O					91.51	1
+1	Et-	1	H-	-1	Et-H					108.92	1
+1	CH3-	1	Et-	-1	Et-CH3					95.89	1
+1	Et-	1	OCH3-	-1	EtOCH3					95.26	1
+1	Et-	1	OH-	-1	EtOH					100.29	1
+1	H-	1	tBu-	-1	tBu-H					103.86	1
+1	tBu-	1	CH3-	-1	tBu-CH3					93.67	1
+1	tBu-	1	OCH3-	-1	tBu-OCH3					89.27	1
+1	tBu-	1	OH-	-1	tBu-OH					115.02	1
+1	C	1	H	-1	CH					84.18	1
+1	C	2	H	-1	CH2_3B1					190.66	2
+1	C	2	H	-1	CH2_1A1					181.37	2
+1	C	3	H	-1	CH3_nmsr95					307.79	3
+1	C	4	H	-1	CH4					420.34	4
+1	N	1	H	-1	NH					83.10	1
+1	N	2	H	-1	NH2					182.59	2
+1	N	3	H	-1	NH3					298.02	3
+1	O	1	H	-1	OH					107.19	1
+1	O	2	H	-1	H2O					232.75	2
+1	F	1	H	-1	HF					141.25	1
+1	Si	2	H	-1	SiH2_1A1					151.79	2
+1	Si	2	H	-1	SiH2_3B1					131.05	2
+1	Si	3	H	-1	SiH3					227.58	3
+1	Si	4	H	-1	SiH4					324.52	4
+1	P	2	H	-1	PH2					153.20	2
+1	P	3	H	-1	PH3					242.27	3
+1	S	2	H	-1	H2S					183.35	2
+1	Cl	1	H	-1	HCl					106.66	1
+2	C	2	H	-1	C2H2					405.35	3
+2	C	4	H	-1	C2H4					563.51	5
+2	C	6	H	-1	C2H6_nmsr95					712.80	7
+1	H	1	C	1	N	-1	HCN			313.34	2
+1	H	1	C	1	O	-1	HCO			279.11	2
+1	C	1	O	2	H	-1	H2CO			374.35	3
+1	C	1	O	4	H	-1	CH3OH			513.22	5
+2	N	4	H	-1	NH2NH2					438.60	5
+2	O	2	H	-1	H2O2					268.57	3
+2	Si	-1	Si2							75.72	1
+2	P	-1	P2							117.59	1
+2	S	-1	S2							103.13	1
+2	Cl	-1	Cl2							58.07	1
+1	S	1	C	-1	SC					171.11	1
+1	Cl	1	F	-1	ClF					61.57	1
+2	Si	6	H	-1	Si2H6					535.03	7
+1	C	1	Cl	3	H	-1	CH3Cl			395.51	4
+1	C	1	S	4	H	-1	CH3SH			473.84	5
+1	O	1	Cl	1	H	-1	HOCl			165.17	2
+1	B	3	Cl	-1	BCl3					322.90	3
+1	B	3	F	-1	BF3					469.79	3
+2	C	4	Cl	-1	C2Cl4					466.28	5
+2	C	4	F	-1	C2F4					589.36	5
+3	C	4	H	-1	C3H4_pro					704.79	6
+4	C	4	H	1	O	-1	C4H4O			993.74	9
+4	C	4	H	1	S	-1	C4H4S			962.73	9
+4	C	5	H	1	N	-1	C4H5N			1071.57	10
+4	C	6	H	-1	C4H6_tra					1012.37	9
+4	C	6	H	-1	C4H6_yne					1004.13	9
+5	C	5	H	1	N	-1	C5H5N			1237.69	11
+2	C	1	H	-1	CCH					265.13	2
+1	C	4	Cl	-1	CCl4					312.74	4
+2	C	3	F	1	N	-1	CF3CN			639.85	5
+1	C	4	F	-1	CF4					476.32	4
+1	C	1	O	3	H	-1	CH2OH			409.76	4
+2	C	3	H	1	N	-1	CH3CN			615.84	5
+1	C	5	H	1	N	-1	CH3NH2			582.22	6
+1	C	1	N	3	H	2	O	-1	CH3NO2	601.27	6
+1	C	1	H	3	Cl	-1	CHCl3			343.18	4
+1	C	1	H	3	F	-1	CHF3			457.50	4
+1	Cl	3	F	-1	ClF3					125.33	3
+2	H	-1	H2			109.49	1
+2	C	3	H	-1	CH2CH					445.91	4
+2	C	2	O	4	H	-1	HCOOCH3			785.26	7
+1	C	2	O	2	H	-1	HCOOH			500.98	4
+1	P	3	F	-1	PF3					363.87	3
+1	H	1	S	-1	SH					86.98	1
+1	Si	4	Cl	-1	SiCl4					384.94	4
+1	Si	4	F	-1	SiF4					574.35	4
+2	C	5	H	-1	C2H5					603.75	6
+4	C	6	H	-1	C4H6_bic					987.20	11
+4	C	6	H	-1	C4H6_cyc					1001.61	10
+2	H	2	C	2	O	-1	HCOCOH			633.35	5
+2	C	4	H	1	O	-1	CH3CHO			677.03	6
+2	C	1	O	4	H	-1	C2H4O			650.70	7
+2	C	5	H	1	O	-1	C2H5O			698.64	7
+2	C	6	H	1	O	-1	CH3OCH3			798.05	8
+2	C	1	O	6	H	-1	CH3CH2OH			810.36	8
+3	C	4	H	-1	C3H4_all					703.20	6
+3	C	4	H	-1	C3H4_cyc					682.74	7
+2	C	2	O	4	H	-1	CH3COOH			803.04	7
+3	C	1	O	6	H	-1	CH3COCH3			977.96	9
+3	C	6	H	-1	C3H6					853.41	9
+3	C	6	H	-1	CH3CHCH2					860.61	8
+3	C	8	H	-1	C3H8					1006.87	10
+3	C	1	O	8	H	-1	C2H5OCH3			1095.12	11
+4	C	10	H	-1	C4H10_iso					1303.04	13
+4	C	10	H	-1	C4H10_anti					1301.32	13
+4	C	8	H	-1	C4H8_cyc					1149.01	12
+4	C	8	H	-1	C4H8_iso					1158.61	11
+5	C	8	H	-1	C5H8_spi					1284.28	14
+6	C	6	H	-1	C6H6					1367.56	12
+2	C	1	O	3	H	-1	CH3CO			581.58	5
+3	C	7	H	-1	CH3CHCH3					900.75	9
+4	C	9	H	-1	C4H9_t					1199.34	12
+2	C	1	O	2	H	-1	CH2CO			532.32	4

@@ -1,0 +1,12 @@
+name: dfthub-0.1.1
+channels:
+  - conda-forge
+dependencies:
+  - python=3.12
+  - pip
+  - numpy=2.2.6
+  - scipy=1.15.3
+  - pandas=2.3.3
+  - h5py>=3.11
+  - psutil>=6,<8
+  - threadpoolctl>=3,<4
