@@ -8,15 +8,27 @@
 - macOS Apple Silicon：安装 arm64 Python 3.10–3.12，避免 Rosetta x86_64 解释器；v0.1.1 需按源码构建步骤编译最新 DFT 引擎。
 - Conda：联网机先创建 `conda create -n dfthub python=3.12 pip`，或提前准备同架构离线 conda 包；DFThub wheelhouse 不携带 Python。
 
-Linux Release 离线包命名包含架构和 `cp310/cp311/cp312`。解压后运行：
+Linux Release 离线包命名包含架构和 `cp310/cp311/cp312`。解压并进入离线包目录后运行：
 
 ```bash
-DFTHUB_INSTALL_PYTHON=python3.12 bash deploy/install-offline.sh /opt/dfthub/.venv
+bash deploy/install-offline.sh /opt/dfthub/.venv
+# 如需显式指定 Python 解释器，可设置 DFTHUB_INSTALL_PYTHON=python3.12（或 python3.11 / python3.10）
 /opt/dfthub/.venv/bin/dfthub doctor --strict
 /opt/dfthub/.venv/bin/dfthub serve --data-dir /var/lib/dfthub/data
 ```
 
-安装器先验证平台和 SHA256SUMS，再用 `--no-index --require-hashes` 安装所有依赖。无匹配 wheel 时明确失败，不在断网机器上尝试编译或获取上游 PySCF。所有科学库、静态页面和 Swagger UI 资源都包含在发行包中。Conda 安装路径同样使用这个 wheelhouse，不从 Conda/PyPI 安装上游 `pyscf`；macOS 使用源码构建路径。
+也可手动创建虚拟环境并从离线包 `wheelhouse/` 安装，或在离线环境中结合 `--no-build-isolation` 从源码目录安装：
+
+```bash
+python3.12 -m venv /opt/dfthub/.venv
+source /opt/dfthub/.venv/bin/activate
+python -m pip install --no-index --find-links ./wheelhouse dfthub
+# 若需在离线机从 Git 源码目录安装（建议配合 --no-build-isolation）：
+#   python -m pip install --no-index --find-links /path/to/dfthub-0.1.1-linux-x86_64-cp312/wheelhouse .
+#   python -m pip install --no-index --no-build-isolation --find-links /path/to/dfthub-0.1.1-linux-x86_64-cp312/wheelhouse .
+```
+
+安装脚本未显式设置 `DFTHUB_INSTALL_PYTHON` 时，会优先从 `platform.json`（或 `wheelhouse/dfthub_pyscf_dft-*-cp3XX-*.whl`）自动推断目标 Python 版本（`python3.10`、`python3.11` 或 `python3.12`，未找到对应二进制时回退到 `python3`），并在安装前校验该解释器的 `major.minor` 版本、系统架构和 `SHA256SUMS`，再用 `--no-index --require-hashes` 安装所有依赖。无匹配 wheel 或版本不匹配时明确失败并输出提示信息，不在断网机器上尝试编译或获取上游 PySCF。所有科学库、静态页面和 Swagger UI 资源都包含在发行包中。Conda 安装路径同样使用这个 wheelhouse，不从 Conda/PyPI 安装上游 `pyscf`；macOS 使用源码构建路径。
 
 ## 配置、路径和迁移
 

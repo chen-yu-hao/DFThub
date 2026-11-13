@@ -25,7 +25,9 @@ cd dfthub-0.1.1-linux-x86_64-cp312
 python3.12 -m venv .venv
 source .venv/bin/activate
 python -m pip install --no-index --find-links ./wheelhouse dfthub
-# or verify the platform and every SHA256, then install from the lock file:
+# or verify the platform and every SHA256, then install from the lock file
+# (auto-detects python3.10/3.11/3.12 from platform.json, or override with DFTHUB_INSTALL_PYTHON):
+#   bash deploy/install-offline.sh .venv
 #   DFTHUB_INSTALL_PYTHON=python3.12 bash deploy/install-offline.sh .venv
 
 # 5. Verify and start
@@ -39,14 +41,16 @@ Open **http://127.0.0.1:8188**. Workspace, Analyze, Guide, Energy and the API do
 
 This release is published on GitHub Releases, not PyPI. A plain `pip install dfthub` refers to this project only when it points at this release's wheelhouse; do not install a same-named package from an unknown index.
 
-A source install (needed for features newer than the published bundle, such as the [command-line tools](#command-line-tools)) uses the bundle's wheelhouse for the pinned engine. Replace `/path/to/dfthub-0.1.1-linux-x86_64-cp312` with the bundle directory unpacked in step 2:
+A source install (needed for features newer than the published bundle, such as the [command-line tools](#command-line-tools)) uses the bundle's wheelhouse for the pinned engine and build tools (`setuptools>=70`, `wheel`). Replace `/path/to/dfthub-0.1.1-linux-x86_64-cp312` with the bundle directory unpacked in step 2:
 
 ```bash
 git clone https://github.com/chen-yu-hao/DFThub.git
 cd DFThub
 python3.12 -m venv .venv
 source .venv/bin/activate
-python -m pip install --find-links /path/to/dfthub-0.1.1-linux-x86_64-cp312/wheelhouse .
+python -m pip install --no-index --find-links /path/to/dfthub-0.1.1-linux-x86_64-cp312/wheelhouse .
+# or if setuptools>=70 is already installed in the active environment, add --no-build-isolation:
+#   python -m pip install --no-index --no-build-isolation --find-links /path/to/dfthub-0.1.1-linux-x86_64-cp312/wheelhouse .
 dfthub doctor --strict
 ```
 
