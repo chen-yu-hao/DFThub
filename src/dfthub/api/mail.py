@@ -27,7 +27,9 @@ def mail_settings():
     try:
         port = int(port_text)
     except ValueError:
-        raise ValueError(f"DFTHUB_MAIL_PORT must be a port number (got {port_text!r})") from None
+        port = 0
+    if not 1 <= port <= 65535:
+        raise ValueError(f"DFTHUB_MAIL_PORT must be a port number from 1 to 65535 (got {port_text!r})")
     use_tls = env_flag("DFTHUB_MAIL_USE_TLS", False)
     use_ssl = env_flag("DFTHUB_MAIL_USE_SSL", False)
     if use_tls and use_ssl:

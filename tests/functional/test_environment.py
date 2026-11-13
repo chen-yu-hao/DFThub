@@ -101,6 +101,15 @@ class MailSettingsTests(unittest.TestCase):
             self.assertIn("password is sent unencrypted", text)
             self.assertIn("DFTHUB_PUBLIC_URL is not set", text)
 
+    def test_port_must_be_in_range(self):
+        for port in ("1", "465", "587", "65535"):
+            with self.subTest(port=port), clean_environment(DFTHUB_MAIL_PORT=port):
+                self.assertEqual(mail_settings()["MAIL_PORT"], int(port))
+        for port in ("-1", "0", "65536", "smtp", "25.0"):
+            with self.subTest(port=port), clean_environment(DFTHUB_MAIL_PORT=port):
+                with self.assertRaisesRegex(ValueError, "DFTHUB_MAIL_PORT must be a port number from 1 to 65535"):
+                    mail_settings()
+
     def test_invalid_values_fail_clearly(self):
         cases = ({"DFTHUB_MAIL_SUPPRESS": "maybe"}, {"DFTHUB_MAIL_PORT": "smtp"},
                  {"DFTHUB_MAIL_USE_TLS": "1", "DFTHUB_MAIL_USE_SSL": "1"})
