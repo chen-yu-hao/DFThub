@@ -8,28 +8,49 @@ DFThub also includes command-line tools that read a DFThub `Parameters` file and
 
 Use **CPython 3.10–3.12**; 3.12 is recommended. v0.1.1 provides prebuilt packages for **Linux x86_64 (glibc 2.35+, e.g. Ubuntu 22.04+)**. On macOS Apple Silicon, use the Conda environment and build the latest DFT engine from source; on Windows, use WSL2 with a distribution that meets the Linux requirements.
 
-Download the offline bundle that matches your operating system, CPU and Python minor version from [GitHub Releases](https://github.com/chen-yu-hao/DFThub/releases/tag/v0.1.1), unpack it, then:
+Download the offline bundle that matches your operating system, CPU and Python minor version from [GitHub Releases](https://github.com/chen-yu-hao/DFThub/releases/tag/v0.1.1) (`cp310`, `cp311` or `cp312` for Python 3.10, 3.11 or 3.12). The `wheelhouse/` directory is inside the unpacked bundle, not in this Git repository, so run the install commands from the bundle directory. The complete sequence for Python 3.12:
 
 ```bash
+# 1. Check the Python version (must be 3.10–3.12 and match the bundle)
+python3.12 --version
+
+# 2. Download and unpack the bundle in a directory of your choice (not inside the Git checkout)
+curl -LO https://github.com/chen-yu-hao/DFThub/releases/download/v0.1.1/dfthub-0.1.1-linux-x86_64-cp312.tar.gz
+tar xzf dfthub-0.1.1-linux-x86_64-cp312.tar.gz
+
+# 3. Enter the bundle directory (it contains wheelhouse/, deploy/, conda/, requirements.lock)
+cd dfthub-0.1.1-linux-x86_64-cp312
+
+# 4. Create a clean virtual environment and install
 python3.12 -m venv .venv
 source .venv/bin/activate
 python -m pip install --no-index --find-links ./wheelhouse dfthub
 # or verify the platform and every SHA256, then install from the lock file:
-DFTHUB_INSTALL_PYTHON=python3.12 bash deploy/install-offline.sh .venv
+#   DFTHUB_INSTALL_PYTHON=python3.12 bash deploy/install-offline.sh .venv
 
+# 5. Verify and start
 dfthub doctor --strict
 dfthub serve --data-dir ./dfthub-data
 ```
 
+For Python 3.10 or 3.11, replace `cp312` and `python3.12` accordingly. If pip reports `Location './wheelhouse' is ignored` or `No matching distribution found for dfthub`, the current directory is not the unpacked bundle; `cd` into it first.
+
 Open **http://127.0.0.1:8188**. Workspace, Analyze, Guide, Energy and the API documentation are all served from there, and the pages make no CDN requests. The offline bundle does not contain a Python interpreter: prepare Python and venv on the target machine first. On Ubuntu use the system python3/venv; on macOS use the Python.org universal2 installer and run it as arm64. Conda users can run `conda create -n dfthub python=3.12 pip` and then the same pip commands inside that environment; for an isolated machine, download the bundle in advance on a connected one.
 
-This release is published on GitHub Releases, not PyPI. A plain `pip install dfthub` refers to this project only when it points at this release's wheelhouse; do not install a same-named package from an unknown index. A source install also needs the matching engine wheel:
+This release is published on GitHub Releases, not PyPI. A plain `pip install dfthub` refers to this project only when it points at this release's wheelhouse; do not install a same-named package from an unknown index.
+
+A source install (needed for features newer than the published bundle, such as the [command-line tools](#command-line-tools)) uses the bundle's wheelhouse for the pinned engine. Replace `/path/to/dfthub-0.1.1-linux-x86_64-cp312` with the bundle directory unpacked in step 2:
 
 ```bash
 git clone https://github.com/chen-yu-hao/DFThub.git
 cd DFThub
-python -m pip install --find-links /path/to/wheelhouse .
+python3.12 -m venv .venv
+source .venv/bin/activate
+python -m pip install --find-links /path/to/dfthub-0.1.1-linux-x86_64-cp312/wheelhouse .
+dfthub doctor --strict
 ```
+
+Install into a clean environment: if `python -m pip show pyscf` finds upstream `pyscf`, it conflicts with the DFThub engine and `dfthub doctor --strict` reports an error.
 
 ## PySCF DFT engine
 
@@ -49,7 +70,7 @@ Conda provides Python, BLAS and the numerical libraries; DFThub and the pinned P
 ```bash
 conda env create -f conda/environment.yml
 conda activate dfthub-0.1.1
-bash conda/install-release.sh /path/to/dfthub-0.1.1-linux-x86_64-cp312
+bash conda/install-release.sh /path/to/dfthub-0.1.1-linux-x86_64-cp312   # the unpacked bundle directory
 dfthub doctor --strict
 ```
 
@@ -90,6 +111,95 @@ dfthub serve --host 127.0.0.1 --port 8188 --data-dir /var/lib/dfthub/data
 ```
 
 An administrator should create the directory first and grant the service account write access. Uploads, the account database, the JWT secret, queue state and results are all written there, so the installation itself can be read-only. Only one service process may use a data directory. Before upgrading, stop the instance and back up the whole data directory; a new version does not overwrite existing jobs or checkpoints.
+
+### Public access
+
+By default `dfthub serve` listens on **127.0.0.1:8188**, so only the machine itself can open the site. For access from other machines or the internet, keep DFThub on 127.0.0.1 and put a reverse proxy with HTTPS in front of it. The web pages and the API are served from the same origin, so one proxy rule covers the whole site. `--host 0.0.0.0` would expose the service directly over plain HTTP, sending passwords and login tokens unencrypted; use it only on a trusted private network.
+
+**Before you go public:** registration is open. Anyone who can reach the site can create an account and submit compute jobs; there is no e-mail verification or rate limit. Restrict access at the proxy or firewall (for example an IP allowlist, HTTP basic auth or a VPN) if the server should not run calculations for strangers.
+
+1. Create the data directory and an environment file outside the installation:
+
+   ```bash
+   sudo useradd --system --home /var/lib/dfthub --shell /usr/sbin/nologin dfthub
+   sudo mkdir -p /var/lib/dfthub/data /etc/dfthub
+   sudo chown -R dfthub:dfthub /var/lib/dfthub
+   sudo cp deploy/dfthub.env.example /etc/dfthub/dfthub.env
+   sudo chown dfthub:dfthub /etc/dfthub/dfthub.env
+   sudo chmod 600 /etc/dfthub/dfthub.env
+   ```
+
+   In `/etc/dfthub/dfthub.env`, set at least:
+
+   ```text
+   DFTHUB_DATA_DIR=/var/lib/dfthub/data
+   DFTHUB_PUBLIC_URL=https://dfthub.example.org
+   ```
+
+   `DFTHUB_PUBLIC_URL` is the address used in e-mails. After HTTPS works (step 3), add `DFTHUB_ENABLE_HSTS=1` and restart the service (`sudo systemctl restart dfthub`); never enable HSTS while the site is HTTP only.
+
+2. Run DFThub on 127.0.0.1 under a process manager. With systemd (any process manager works; DFThub does not require systemd), create `/etc/systemd/system/dfthub.service`, adjusting the virtual-environment path:
+
+   ```ini
+   [Unit]
+   Description=DFThub
+   After=network.target
+
+   [Service]
+   User=dfthub
+   Environment=DFTHUB_ENV_FILE=/etc/dfthub/dfthub.env
+   ExecStart=/opt/dfthub/.venv/bin/dfthub serve --host 127.0.0.1 --port 8188
+   Restart=on-failure
+
+   [Install]
+   WantedBy=multi-user.target
+   ```
+
+   ```bash
+   sudo systemctl daemon-reload
+   sudo systemctl enable --now dfthub
+   ```
+
+   Run exactly one instance per data directory; do not start several WSGI workers that share the in-memory job queue.
+
+3. Configure nginx as the reverse proxy, e.g. `/etc/nginx/sites-available/dfthub`:
+
+   ```nginx
+   server {
+       listen 80;
+       server_name dfthub.example.org;
+
+       client_max_body_size 1g;   # nginx's 1 MB default rejects dataset uploads with 413
+
+       location / {
+           proxy_pass http://127.0.0.1:8188;
+           proxy_http_version 1.1;
+           proxy_set_header Host $host;
+           proxy_set_header X-Real-IP $remote_addr;
+           proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+           proxy_set_header X-Forwarded-Proto $scheme;
+           proxy_read_timeout 600s;
+           proxy_send_timeout 600s;
+       }
+   }
+   ```
+
+   ```bash
+   sudo ln -s /etc/nginx/sites-available/dfthub /etc/nginx/sites-enabled/dfthub
+   sudo nginx -t
+   sudo systemctl reload nginx
+   sudo certbot --nginx -d dfthub.example.org   # adds HTTPS on port 443 (Let's Encrypt)
+   ```
+
+4. Open only ports 80 and 443 in the firewall and keep 8188 closed, for example with ufw:
+
+   ```bash
+   sudo ufw allow 80/tcp
+   sudo ufw allow 443/tcp
+   sudo ufw deny 8188/tcp
+   ```
+
+Then open `https://dfthub.example.org`. Replace `dfthub.example.org` with your domain; its DNS record must point to the server. More configuration options are listed in the [deployment guide](deploy/README.md).
 
 Environment variables and command-line options, offline installation, migration, reverse proxies and source builds are described in the [deployment guide](deploy/README.md). Mail is off by default; enable it explicitly after configuring SMTP. Never add a real `.env`, the authentication database, user jobs or secrets to Git.
 
