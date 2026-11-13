@@ -2,15 +2,16 @@
 # jax.config.update('jax_enable_x64', True)
 import numpy as np
 from numpy.typing import NDArray
-from typing import Dict, List, Tuple
-# import jax.numpy as jnp
-import time
-import pandas as pd
-import numpy as np
-from numpy.typing import NDArray
 from typing import Dict, List, Tuple, Callable, Any
 import time
-from scipy.optimize import minimize
+try:
+    import pandas as pd
+except ImportError:
+    pd = None
+try:
+    from scipy.optimize import minimize
+except ImportError:
+    minimize = None
 
 from functools import partial
 from copy import deepcopy
@@ -211,36 +212,52 @@ class CFXXD_Train_Data_Set():
         return np.array(fit_data_Ene_raw)
     def __read_ref_file__(self, fp: str, Ignore_error: bool = True) -> List:
         result = []
-        support_n_col = [3, 5, 6, 7, 8, 9, 10, 11, 12, 15, 16, 25, 43, 85, 13, 17]
 
         with open(fp, 'r') as F:
             lines = F.readlines()
-            for line_num, line in enumerate(lines):
+            for line_num, raw_line in enumerate(lines, start=1):
                 out = {}
-                line = line.split()
+                line = raw_line.split()
                 n_col = len(line)
+                if n_col < 3:
+                    err_msg = (
+                        f"Invalid ref line in {fp} at line {line_num}: "
+                        f"expected n_col >= 3, got n_col = {n_col}, content is {line}"
+                    )
+                    print(err_msg)
+                    if Ignore_error:
+                        continue
+                    else:
+                        raise ValueError(err_msg)
+
                 out["job_type"] = n_col
                 out["name"] = []
                 out["ratio_s"] = []
                 out["ref_s"] = []
                 out["ratioo"] = 1.0
                 out["has_ratioo"] = 627.509               # 此处增加该标志，防止极端情况下文件中读取的ratioo为627.509
-                if n_col % 2 == 0 and n_col in support_n_col:    
-                    out["name"].extend([line[i] for i in range(1, n_col-1, 2)])
-                    out["ratio_s"].extend([np.float64(line[i]) for i in range(0, n_col-2, 2)])
-                    out["ref_s"].append(np.float64(line[n_col-2]))
-                    out["ratioo"] = np.float64(line[n_col-1])
-                    out["has_ratioo"] = 1.0
-                elif n_col % 2 != 0 and n_col in support_n_col:
-                    out["name"].extend([line[i] for i in range(1, n_col-1, 2)])
-                    out["ratio_s"].extend([np.float64(line[i]) for i in range(0, n_col-2, 2)])
-                    out["ref_s"].append(np.float64(line[n_col-1]))
-                else:
+                try:
+                    if n_col >= 4 and n_col % 2 == 0:
+                        out["name"].extend([line[i] for i in range(1, n_col - 2, 2)])
+                        out["ratio_s"].extend([np.float64(line[i]) for i in range(0, n_col - 2, 2)])
+                        out["ref_s"].append(np.float64(line[n_col - 2]))
+                        out["ratioo"] = np.float64(line[n_col - 1])
+                        out["has_ratioo"] = 1.0
+                    else:
+                        out["name"].extend([line[i] for i in range(1, n_col - 1, 2)])
+                        out["ratio_s"].extend([np.float64(line[i]) for i in range(0, n_col - 1, 2)])
+                        out["ref_s"].append(np.float64(line[n_col - 1]))
+                except (ValueError, TypeError) as exc:
+                    err_msg = (
+                        f"Failed to parse float in {fp} at line {line_num}: "
+                        f"content is {line}, error: {exc}"
+                    )
+                    print(err_msg)
                     if Ignore_error:
-                        print("Not support n_col = {}, line_num = {}, content is {}".format(n_col, line_num, line))
                         continue
                     else:
-                        raise Exception("Not support n_col = {}, line_num = {}, content is {}".format(n_col, line_num, line))
+                        raise ValueError(err_msg) from exc
+
                 out["ref_s"] = np.array(out["ref_s"])
                 out["ratio_s"] = np.array(out["ratio_s"])
                 result.append(out)
