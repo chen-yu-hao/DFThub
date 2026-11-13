@@ -42,6 +42,9 @@ async def main():
         await expect(dialog.locator("#fEmail")).to_have_count(0)
         await dialog.locator("#fTgz").set_input_files({"name": "Demo.tgz", "mimeType": "application/gzip", "buffer": b"test"})
         await dialog.locator("#fRef").set_input_files({"name": "Demo.ref", "mimeType": "text/plain", "buffer": b"0.0"})
+        await expect(dialog.locator("#dropTgz")).to_have_class("drop has")
+        await expect(dialog.locator("#dropRef")).to_have_class("drop has")
+        await expect(dialog.locator("#submitHint")).to_have_text("Ready to submit.")
         await dialog.get_by_role("button", name="Submit job", exact=True).click()
         await wait_for(lambda: len(api.submits) == 1)
         assert "email" not in api.submits[0], api.submits[0]
