@@ -6,6 +6,7 @@ import { combineAnalysisJobs, loadAnalysisJobs, loadAnalysisSummaries, summarize
 import type { AnalysisJob, AnalysisPayload, AnalysisSummary } from "./analysisData";
 import { mountAnalysis } from "./analyzeView.js";
 import shell from "./analyzeShell.html?raw";
+import { useNotifyEmail } from "./NotifyEmail";
 
 export default function Analyze({ username, onNew, onNotify }: {
   username: string; onNew: () => void; onNotify: (message: string, kind?: "good" | "bad" | "info") => void;
@@ -23,8 +24,9 @@ export default function Analyze({ username, onNew, onNotify }: {
   const [error, setError] = useState("");
   const [revision, setRevision] = useState(0);
   const selectionTouched = useRef(false);
-  const actions = useRef({ onNew, onNotify });
-  actions.current = { onNew, onNotify };
+  const { ask: askNotifyEmail } = useNotifyEmail();
+  const actions = useRef({ onNew, onNotify, askNotifyEmail });
+  actions.current = { onNew, onNotify, askNotifyEmail };
   const selectedRef = useRef(selectedJobIds);
   selectedRef.current = selectedJobIds;
 
@@ -146,12 +148,14 @@ export default function Analyze({ username, onNew, onNotify }: {
         const overlapOnly = requests.every((request) => request.overlapOnly);
         const message = overlapOnly ? `Calculate missing wavefunction overlap for ${requests.length} run${requests.length === 1 ? "" : "s"} across ${jobCount} job${jobCount === 1 ? "" : "s"}?` : `Calculate SCF Input for ${requests.length} run${requests.length === 1 ? "" : "s"} across ${jobCount} job${jobCount === 1 ? "" : "s"}? This may take 1–48 hours.`;
         if (queueing.current || !requests.length || !window.confirm(message)) return { accepted: [], overlapOnly: [], errors: [] };
+        const notify = await actions.current.askNotifyEmail();
+        if (!notify) return { accepted: [], overlapOnly: [], errors: [] };
         queueing.current = true;
         const accepted: string[] = [], overlapAccepted: string[] = [], errors: string[] = [];
         try {
           for (const request of requests) {
             try {
-              const response = await axios.post("/api_dft/submit", { mode: "spe", spe_scope: request.overlapOnly ? "overlap" : "input", work_dir: `Work/${username}/${request.jobId}`, ...runFields(request.runId) });
+              const response = await axios.post("/api_dft/submit", { mode: "spe", spe_scope: request.overlapOnly ? "overlap" : "input", work_dir: `Work/${username}/${request.jobId}`, ...runFields(request.runId), ...notify });
               if (response.data.result === "error" || response.data.success === false) throw new Error(response.data.msg || "Calculation submission failed.");
               const key = `${request.jobId}::${request.runId}`;
               accepted.push(key);

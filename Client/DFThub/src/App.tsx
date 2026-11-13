@@ -10,6 +10,7 @@ import { Icon, SymbolDefs } from "./replica/Icons";
 import NewJobSheet from "./replica/NewJobSheet";
 import AuthSheet from "./replica/AuthSheet";
 import JobDetail from "./replica/JobDetail";
+import { NotifyEmailProvider } from "./replica/NotifyEmail";
 import { cancelRun, deleteJob, deleteRun, displayDate, displayStatus, displayStatusLabel, emptyFiles, errorMessage, listJobs, listRuns, loadRunFiles } from "./replica/data";
 import type { Job, RunFiles } from "./replica/data";
 
@@ -18,7 +19,7 @@ type Notice = { id: number; text: string; kind: "good" | "bad" | "info" };
 type Notify = (text: string, kind?: Notice["kind"]) => void;
 
 export default function App({ page }: { page: Page }) {
-  return <AuthProvider><Application page={page} /></AuthProvider>;
+  return <AuthProvider><NotifyEmailProvider><Application page={page} /></NotifyEmailProvider></AuthProvider>;
 }
 
 function Application({ page }: { page: Page }) {

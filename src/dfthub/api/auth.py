@@ -92,6 +92,11 @@ def _init_db():
             conn.execute("BEGIN IMMEDIATE")
             try:
                 if _email_is_required(conn):
+                    # AUTOINCREMENT never hands out an ID twice. Dropping the
+                    # old table also drops its sqlite_sequence entry, so keep
+                    # the highest ID ever issued and restore it afterwards.
+                    row = conn.execute("SELECT seq FROM sqlite_sequence WHERE name = 'users'").fetchone()
+                    issued = row[0] if row else 0
                     conn.execute(_USERS_TABLE.format(name="users_new"))
                     conn.execute(
                         "INSERT INTO users_new (id, username, email, password_hash, created_at) "
@@ -99,6 +104,12 @@ def _init_db():
                     )
                     conn.execute("DROP TABLE users")
                     conn.execute("ALTER TABLE users_new RENAME TO users")
+                    if issued:
+                        updated = conn.execute(
+                            "UPDATE sqlite_sequence SET seq = MAX(seq, ?) WHERE name = 'users'", (issued,)
+                        ).rowcount
+                        if not updated:  # nothing copied, so the new table has no entry yet
+                            conn.execute("INSERT INTO sqlite_sequence (name, seq) VALUES ('users', ?)", (issued,))
                 conn.execute("COMMIT")
             except BaseException:
                 conn.execute("ROLLBACK")

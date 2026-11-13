@@ -3,6 +3,7 @@ import axios from "axios";
 import { displayDate, errorMessage, listFiles, listJobs, listRuns, readDirectory, runFields, statusLabel } from "./data";
 import type { Job } from "./data";
 import { Icon } from "./Icons";
+import { useNotifyEmail } from "./NotifyEmail";
 
 type EnergyProps = { username: string; onNotify: (message: string, kind?: "good" | "bad" | "info") => void };
 type Task = { name: string; status: string; result: any | null; log: string; updated?: number };
@@ -28,6 +29,7 @@ function energyStatusClass(status: string) {
 }
 
 export default function Energy({ username, onNotify }: EnergyProps) {
+  const { ask: askNotifyEmail } = useNotifyEmail();
   const [jobs, setJobs] = useState<Job[]>([]);
   const [jobId, setJobId] = useState("");
   const [runs, setRuns] = useState<Job[]>([]);
@@ -129,6 +131,8 @@ export default function Energy({ username, onNotify }: EnergyProps) {
       setNameError(`A task called ${cleanName} already exists for this Run.`);
       return;
     }
+    const notify = await askNotifyEmail();
+    if (!notify) return;
     setBusy(true); setError("");
     try {
       const folder = `Work/${username}/${jobId}/output/${runId}/energy_input/${cleanName}`;
@@ -137,7 +141,7 @@ export default function Energy({ username, onNotify }: EnergyProps) {
       form.append("files", archive, archive.name);
       const upload = await axios.put("/api_dft/upload", form);
       if (upload.data.result === "error" || upload.data.success === false) throw new Error(upload.data.msg || "Archive upload failed.");
-      const response = await axios.post("/api_dft/submit", { mode: "spe", spe_scope: "energy", energy_task: cleanName, work_dir: `Work/${username}/${jobId}`, ...runFields(runId) });
+      const response = await axios.post("/api_dft/submit", { mode: "spe", spe_scope: "energy", energy_task: cleanName, work_dir: `Work/${username}/${jobId}`, ...runFields(runId), ...notify });
       if (response.data.result === "error" || response.data.success === false) throw new Error(response.data.msg || "DFT energy calculation could not be started.");
       setArchive(null); setFileError(""); setNameError(""); setNewTaskName(""); setTaskName(cleanName); setResultQuery(""); onNotify(`${cleanName} submitted for ${jobId}/${runId}.`); await refreshTasks();
     } catch (failure) { setError(errorMessage(failure)); }
