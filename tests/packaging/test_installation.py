@@ -51,6 +51,8 @@ class InstalledServiceTests(unittest.TestCase):
                                 log.seek(0)
                                 self.fail(log.read().decode())
                             time.sleep(.1)
+                    log.seek(0)
+                    self.assertIn('Mail: off (no e-mail is sent)', log.read().decode())
                     second = subprocess.run(command, env=env, cwd=root, capture_output=True, text=True, timeout=30)
                     self.assertEqual(second.returncode, 1)
                     self.assertIn('already owns this data directory', second.stderr)

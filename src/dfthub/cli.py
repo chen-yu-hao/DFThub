@@ -197,11 +197,14 @@ def main(argv=None):
             except BlockingIOError:
                 raise RuntimeError("A DFThub service already owns this data directory")
             os.environ.setdefault("DFTHUB_SCHEDULER_DIR", str(root / "scheduler"))
-            os.environ.setdefault("DFTHUB_MAIL_SUPPRESS", "1")
             from .server import create_app
+            from .api.mail import describe_mail
             from waitress import serve as run
+            app = create_app()
             print(f"DFThub: http://{args.host}:{args.port} · data {root}", flush=True)
-            run(create_app(), host=args.host, port=args.port, threads=8)
+            for line in describe_mail(app.config):
+                print(line, flush=True)
+            run(app, host=args.host, port=args.port, threads=8)
         return 0
     except (OSError, ValueError, RuntimeError) as exc:
         print(f"dfthub: {exc}", file=sys.stderr)
