@@ -1,4 +1,5 @@
 import argparse
+import ipaddress
 import json
 import os
 import sys
@@ -24,6 +25,11 @@ def build_parser():
     serve.add_argument("--port", type=int, default=8188)
     serve.add_argument("--data-dir")
     serve.add_argument("--python", help="Compute Python with DFThub and its DFT engine installed")
+    serve.add_argument("--local", action="store_true",
+                       help="single-user mode without sign-in, for this computer only; "
+                            "needs a loopback --host such as 127.0.0.1")
+    serve.add_argument("--local-user", metavar="NAME",
+                       help="account used by --local (default: local); an existing account keeps its jobs")
 
     params = commands.add_parser("params", help="Read and validate a CF22D Parameters file")
     params_actions = params.add_subparsers(dest="action", required=True)
@@ -170,12 +176,28 @@ def _run_tool(args):
         return 1
 
 
+def _check_local_mode(args):
+    if args.local_user and not args.local:
+        raise ValueError("--local-user needs --local")
+    if not args.local:
+        return
+    try:
+        loopback = ipaddress.ip_address(args.host).is_loopback
+    except ValueError:
+        loopback = False
+    if not loopback:
+        raise ValueError(f"--local runs without sign-in, so it only listens on this computer; "
+                         f"use a loopback --host such as 127.0.0.1 (got {args.host})")
+
+
 def main(argv=None):
     args = build_parser().parse_args(argv)
     if args.command in TOOL_COMMANDS:
         # Parameter tools never need the service environment or the engine check.
         return _run_tool(args)
     try:
+        if args.command == "serve":
+            _check_local_mode(args)
         load_environment()
         if getattr(args, "data_dir", None):
             os.environ["DFTHUB_DATA_DIR"] = args.data_dir
@@ -201,10 +223,20 @@ def main(argv=None):
             from .api.mail import describe_mail
             from waitress import serve as run
             app = create_app()
+            local_user = None
+            if args.local:
+                from .api.auth import enable_local_mode
+                local_user = enable_local_mode(app, args.local_user or "local")["username"]
             print(f"DFThub: http://{args.host}:{args.port} · data {root}", flush=True)
+            if local_user:
+                print(f"Local mode: no sign-in; anyone using this computer works as '{local_user}'", flush=True)
             for line in describe_mail(app.config):
                 print(line, flush=True)
-            run(app, host=args.host, port=args.port, threads=8)
+            # Waitress drops X-Forwarded-*/Forwarded from untrusted clients by
+            # default. Local mode keeps them, so a request relayed by a reverse
+            # proxy is visible to, and refused by, /api_dft/local-session.
+            options = {"clear_untrusted_proxy_headers": False} if local_user else {}
+            run(app, host=args.host, port=args.port, threads=8, **options)
         return 0
     except (OSError, ValueError, RuntimeError) as exc:
         print(f"dfthub: {exc}", file=sys.stderr)

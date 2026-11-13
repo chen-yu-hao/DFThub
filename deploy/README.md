@@ -20,7 +20,7 @@ DFTHUB_INSTALL_PYTHON=python3.12 bash deploy/install-offline.sh /opt/dfthub/.ven
 
 ## 配置、路径和迁移
 
-本地使用无需环境文件：`dfthub serve` 只监听 127.0.0.1:8188，数据放在 XDG data home 下的 dfthub，且不发送邮件。服务器部署时，复制 `dfthub.env.example` 到安装目录和仓库之外，`chmod 600`，并设置 `DFTHUB_ENV_FILE` 指向它。DFThub 只读取这一个环境文件，不会自动加载源码目录中的 `.env`。
+本地使用无需环境文件：`dfthub serve` 只监听 127.0.0.1:8188，数据放在 XDG data home 下的 dfthub，且不发送邮件；加 `--local` 还可以免去注册和登录（见下文“本地单用户模式”）。服务器部署时，复制 `dfthub.env.example` 到安装目录和仓库之外，`chmod 600`，并设置 `DFTHUB_ENV_FILE` 指向它。DFThub 只读取这一个环境文件，不会自动加载源码目录中的 `.env`。
 
 文件格式为每行一个 `KEY=value`，`#` 开头的行是注释，值后面不能再写注释；空值（`KEY=`）视为未设置。现有进程环境优先，命令行 `--data-dir/--python` 优先于两者。开关类设置接受 `1`/`0`（也接受 true/false、yes/no、on/off），其他值会让服务报错退出而不是猜测。文件不存在、权限不是 0600/0400 或某行格式错误时，`dfthub serve` 会给出文件名和行号并退出。
 
@@ -49,6 +49,21 @@ DFTHUB_INSTALL_PYTHON=python3.12 bash deploy/install-offline.sh /opt/dfthub/.ven
 新 fork 和 SCF 快照的几何输入目录名为 `inputs/`，避免 macOS 默认磁盘将旧 `input/` 目录与 `INPUT` 描述符文件视为同名。Linux 上仍可读取旧布局。把旧 Linux 数据搬到 macOS 前，应在 Linux 的停机备份副本上先运行 `python tools/migrate_data_layout.py --data-dir /backup/dft_files` 查看清单，再加 `--apply` 重命名目录，之后传输整个副本。不要先把存在大小写冲突的数据复制到 macOS。
 
 服务默认监听 127.0.0.1:8188。对外服务可用 nginx/Caddy 转发整个站点；API 和前端同源。HTTPS 由反向代理管理，仅在 HTTPS 下设 `DFTHUB_ENABLE_HSTS=1`。用进程管理器启动 `dfthub serve`，不要用多个 WSGI 进程共享一个内存队列。CLI 锁定数据目录以避免双实例。
+
+## 本地单用户模式
+
+只有自己使用的电脑上，可以用 `dfthub serve --local` 关闭注册和登录。页面直接进入账号 `local` 的工作区；该账号在首次启动时创建，没有邮箱，也没有可用的密码。
+
+```bash
+dfthub serve --local
+dfthub serve --local --local-user alice   # 改用已有账号及其任务
+```
+
+- `--local` 只能配合回环地址的 `--host`（默认 `127.0.0.1`，或 `::1`）；其他地址会在服务启动前被拒绝。用 http://127.0.0.1:8188 或 http://localhost:8188 打开。
+- 能使用这台电脑的任何人（包括其他系统用户和程序）都可以不输密码、以该账号使用 DFThub。不要在多人共用的机器上使用 `--local`。
+- 不要在 `--local` 前面加反向代理。会话只发给直接来自本机的请求：带代理头（`Forwarded`、`X-Forwarded-For`、`X-Forwarded-Host`、`X-Real-IP`）、使用其他主机名或来自其他来源页面的请求都会被拒绝；但不添加这些头的代理仍会暴露该账号。
+- `--local` 运行期间，注册和密码登录关闭。由 `--local` 创建的账号没有可用的密码，请继续用 `--local` 启动。
+- 其他接口仍需令牌；页面通过只在本地模式下响应的 `POST /api_dft/local-session` 获取。
 
 ## 邮件与隐私
 

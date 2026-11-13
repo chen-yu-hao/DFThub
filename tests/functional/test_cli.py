@@ -126,5 +126,22 @@ class PySCFTests(unittest.TestCase):
         self.assertAlmostEqual(energy, -1.16348600462391, delta=1e-8)
 
 
+class ServeOptionTests(unittest.TestCase):
+    """--local is refused before anything starts unless it stays on this computer."""
+
+    def test_local_mode_needs_a_loopback_address(self):
+        for host in ("0.0.0.0", "192.0.2.1", "::", "localhost", "dfthub.example.org"):
+            with self.subTest(host=host):
+                result = dfthub("serve", "--local", "--host", host)
+                self.assertEqual(result.returncode, 1)
+                self.assertIn("use a loopback --host such as 127.0.0.1", result.stderr)
+                self.assertNotIn("Traceback", result.stderr)
+
+    def test_local_user_needs_local(self):
+        result = dfthub("serve", "--local-user", "me")
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("--local-user needs --local", result.stderr)
+
+
 if __name__ == "__main__":
     unittest.main()
