@@ -12,5 +12,5 @@ with tempfile.TemporaryDirectory(prefix='dfthub-regression-') as temporary:
                DFTHUB_CPU_THREADS='4', DFTHUB_TASK_THREADS='4', PYTHONDONTWRITEBYTECODE='1')
     for test in sorted((root / 'tests/api').glob('test_*.py')):
         subprocess.run([sys.executable, str(test), '-v'], env=env, check=True)
-    for group in ('pipeline', 'packaging'):
+    for group in ('functional', 'pipeline', 'packaging'):
         subprocess.run([sys.executable, '-m', 'unittest', 'discover', '-s', str(root / 'tests' / group), '-v'], env=env, check=True)
