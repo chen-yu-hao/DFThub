@@ -16,7 +16,7 @@ type Props = {
 };
 
 const newId = () => "dft_" + Math.random().toString(36).slice(2, 8);
-const datasetName = (name: string) => name.replace(/(?:\.tar\.gz|\.tgz|\.ref|_ref)$/i, "");
+const datasetName = (name: string) => name.replace(/(?:\.tar\.gz|\.tgz|\.zip|\.ref|_ref)$/i, "");
 const uploadDatasetName = (name: string) => datasetName(name).replace(/[^A-Za-z0-9_-]+/g, "_").replace(/^_+|_+$/g, "") || "dataset";
 
 function DatasetDrop({ kind, file, onChange, disabled }: {
@@ -25,19 +25,19 @@ function DatasetDrop({ kind, file, onChange, disabled }: {
   const input = useRef<HTMLInputElement>(null);
   const [over, setOver] = useState(false);
   const geometry = kind === "Tgz";
-  const valid = !file || (geometry ? /\.(tgz|tar\.gz)$/i.test(file.name) : /(\.ref|_ref)$/i.test(file.name));
-  const error = geometry ? "Choose a .tgz or .tar.gz archive of XYZ files." : "Choose a .ref or _ref reference energy file.";
+  const valid = !file || (geometry ? /\.(tgz|tar\.gz|zip)$/i.test(file.name) : /(\.ref|_ref)$/i.test(file.name));
+  const error = geometry ? "Choose a .tgz, .tar.gz or .zip archive of XYZ files." : "Choose a .ref or _ref reference energy file.";
   return (
     <label className={`drop${file ? valid ? " has" : " bad" : ""}${over ? " over" : ""}`} id={`drop${kind}`}
       onDragOver={(event) => { event.preventDefault(); if (!disabled) setOver(true); }}
       onDragLeave={() => setOver(false)}
       onDrop={(event) => { event.preventDefault(); setOver(false); if (!disabled && event.dataTransfer.files[0]) onChange(event.dataTransfer.files[0]); }}>
       <input ref={input} type="file" id={`f${kind}`} disabled={disabled} aria-label={geometry ? "Geometry archive" : "Reference energies"}
-        accept={geometry ? ".tgz,.gz,application/gzip,application/x-gzip" : undefined}
+        accept={geometry ? ".tgz,.tar.gz,.zip,.gz,application/gzip,application/x-gzip,application/zip" : undefined}
         onChange={(event) => { if (event.target.files?.[0]) onChange(event.target.files[0]); }} />
       <span className="ico"><Icon name={file && valid ? "check" : geometry ? "archive" : "doc"} /></span>
-      <span style={{ minWidth: 0, overflowWrap: "anywhere" }}><b data-t>{file?.name || (geometry ? "Geometries (.tgz)" : "Reference energies (.ref)")}</b>
-        <span data-s>{!valid ? error : file ? `${(file.size / 1024).toFixed(file.size < 10240 ? 1 : 0)} KB · ready · click to replace` : `Drop YourDatabaseName.${geometry ? "tgz" : "ref"} here, or click to choose`}</span>
+      <span style={{ minWidth: 0, overflowWrap: "anywhere" }}><b data-t>{file?.name || (geometry ? "Geometries (.tgz / .tar.gz / .zip)" : "Reference energies (.ref)")}</b>
+        <span data-s>{!valid ? error : file ? `${(file.size / 1024).toFixed(file.size < 10240 ? 1 : 0)} KB · ready · click to replace` : `Drop YourDatabaseName.${geometry ? "tgz / .tar.gz / .zip" : "ref"} here, or click to choose`}</span>
       </span>
       <button type="button" className="icon-btn x" aria-label={geometry ? "Remove geometry file" : "Remove reference file"} hidden={!file}
         onClick={(event) => { event.preventDefault(); event.stopPropagation(); if (input.current) input.current.value = ""; onChange(null); }}>
@@ -52,16 +52,16 @@ function OptionalTestDrop({ kind, file, onChange, disabled }: {
 }) {
   const input = useRef<HTMLInputElement>(null);
   const geometry = kind === "Tgz";
-  const valid = !file || (geometry ? /\.(tgz|tar\.gz)$/i.test(file.name) : /(\.ref|_ref)$/i.test(file.name));
+  const valid = !file || (geometry ? /\.(tgz|tar\.gz|zip)$/i.test(file.name) : /(\.ref|_ref)$/i.test(file.name));
   return (
     <label className={`drop${file ? valid ? " has" : " bad" : ""}`} id={`dropTest${kind}`}>
       <input ref={input} type="file" id={`fTest${kind}`} disabled={disabled}
         aria-label={geometry ? "Test geometry archive" : "Test reference energies"}
-        accept={geometry ? ".tgz,.gz,application/gzip,application/x-gzip" : undefined}
+        accept={geometry ? ".tgz,.tar.gz,.zip,.gz,application/gzip,application/x-gzip,application/zip" : undefined}
         onChange={(event) => { if (event.target.files?.[0]) onChange(event.target.files[0]); }} />
       <span className="ico"><Icon name={file && valid ? "check" : geometry ? "archive" : "doc"} /></span>
-      <span style={{ minWidth: 0, overflowWrap: "anywhere" }}><b data-t>{file?.name || (geometry ? "Test geometries (.tgz)" : "Test reference energies (.ref)")}</b>
-        <span data-s>{!valid ? (geometry ? "Choose a .tgz or .tar.gz archive." : "Choose a .ref or _ref file.") : file ? "Ready · excluded from optimization" : "Optional · upload with its matching reference file"}</span>
+      <span style={{ minWidth: 0, overflowWrap: "anywhere" }}><b data-t>{file?.name || (geometry ? "Test geometries (.tgz / .tar.gz / .zip)" : "Test reference energies (.ref)")}</b>
+        <span data-s>{!valid ? (geometry ? "Choose a .tgz, .tar.gz or .zip archive." : "Choose a .ref or _ref file.") : file ? "Ready · excluded from optimization" : "Optional · upload with its matching reference file"}</span>
       </span>
       <button type="button" className="icon-btn x" aria-label={geometry ? "Remove test geometry file" : "Remove test reference file"} hidden={!file}
         onClick={(event) => { event.preventDefault(); event.stopPropagation(); if (input.current) input.current.value = ""; onChange(null); }}><Icon name="x" /></button>
@@ -111,8 +111,8 @@ export default function NewJobSheet(props: Props) {
   const emailError = !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()) ? "Enter a valid notification email." : "";
   const weightNumber = Number(weight);
   const weightError = !weight.trim() || !Number.isFinite(weightNumber) || weightNumber < 0.001 || weightNumber > 10 ? "Enter a value from 0.001 to 10." : "";
-  const filesValid = Boolean(archive && /\.(tgz|tar\.gz)$/i.test(archive.name) && reference && /(\.ref|_ref)$/i.test(reference.name));
-  const testFilesValid = Boolean(testArchive && /\.(tgz|tar\.gz)$/i.test(testArchive.name) && testReference && /(\.ref|_ref)$/i.test(testReference.name));
+  const filesValid = Boolean(archive && /\.(tgz|tar\.gz|zip)$/i.test(archive.name) && reference && /(\.ref|_ref)$/i.test(reference.name));
+  const testFilesValid = Boolean(testArchive && /\.(tgz|tar\.gz|zip)$/i.test(testArchive.name) && testReference && /(\.ref|_ref)$/i.test(testReference.name));
   const testFilesPartial = Boolean(testArchive) !== Boolean(testReference);
   const valid = !idError && !emailError && !weightError && filesValid && !testFilesPartial && (!testArchive && !testReference || testFilesValid);
   const missing = [!archive && "a geometry archive", !reference && "a reference file"].filter(Boolean);
@@ -145,14 +145,16 @@ export default function NewJobSheet(props: Props) {
     const upload = new FormData();
     upload.append("folder_dir", workDir + "upload");
     const dataset = uploadDatasetName(archive.name);
+    const archiveExt = (name: string) => (/\.zip$/i.test(name) ? ".zip" : ".tgz");
     // The backend reads the first comma-delimited value as the archive stem.
-    upload.append("files", archive, `${dataset}.tgz`);
+    upload.append("files", archive, `${dataset}${archiveExt(archive.name)}`);
     upload.append("files", reference, `${dataset}.ref`);
     if (testFilesValid && testArchive && testReference) {
       const testName = uploadDatasetName(testArchive.name);
-      upload.append("files", testArchive, `test_${testName}.tgz`);
+      const testGeometry = `test_${testName}${archiveExt(testArchive.name)}`;
+      upload.append("files", testArchive, testGeometry);
       upload.append("files", testReference, `test_${testName}.ref`);
-      upload.append("files", new File([JSON.stringify({ geometry: `test_${testName}.tgz`, reference: `test_${testName}.ref`, dataset: testName })], "test_manifest.json", { type: "application/json" }));
+      upload.append("files", new File([JSON.stringify({ geometry: testGeometry, reference: `test_${testName}.ref`, dataset: testName })], "test_manifest.json", { type: "application/json" }));
     }
     upload.append("files", new File(["Database,Description,Type,Source,Number,Inverse Weight\n" + dataset + ",,,uploaded,," + weight + "\n"], "init_weight.csv", { type: "text/csv" }));
     try {
