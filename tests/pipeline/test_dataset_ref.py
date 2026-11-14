@@ -376,18 +376,27 @@ class FileApiTotalMueTests(unittest.TestCase):
             old_activity = self.file_api._task_activity
             self.file_api.DATA_DIR = data_root
             self.file_api._task_activity = lambda: {}
-            self.file_api.g.current_user = {"username": "testuser"}
             try:
-                resp = self.file_api.get_file_list(
-                    {
-                        "file_dir": "Work/testuser/job1/output",
-                        "file_filter": "*",
-                        "file_or_folder": "folder",
-                    }
-                )
-                self.assertEqual(len(resp["result"]), 1)
-                self.assertEqual(resp["result"][0]["name"], "weight_0")
-                self.assertEqual(resp["result"][0]["total_mue"], "new_total_mue:1.4200")
+                try:
+                    from flask import Flask
+                    ctx = Flask(__name__).test_request_context()
+                except ModuleNotFoundError:
+                    ctx = contextlib.nullcontext()
+                with ctx:
+                    self.file_api.g.current_user = {"username": "testuser"}
+                    target_fn = self.file_api.get_file_list
+                    while hasattr(target_fn, "__wrapped__"):
+                        target_fn = target_fn.__wrapped__
+                    resp = target_fn(
+                        {
+                            "file_dir": "Work/testuser/job1/output",
+                            "file_filter": "*",
+                            "file_or_folder": "folder",
+                        }
+                    )
+                    self.assertEqual(len(resp["result"]), 1)
+                    self.assertEqual(resp["result"][0]["name"], "weight_0")
+                    self.assertEqual(resp["result"][0]["total_mue"], "new_total_mue:1.4200")
             finally:
                 self.file_api.DATA_DIR = old_data_dir
                 self.file_api._task_activity = old_activity

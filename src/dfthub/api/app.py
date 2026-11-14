@@ -111,6 +111,7 @@ class DFT_IN(Schema):
     basis = String(required=False, validate=OneOf(SUPPORTED_BASIS), metadata={"description": "PySCF basis preset used for a new calculation."})
     spe_scope = String(required=False, validate=OneOf(["input", "ame418", "energy", "overlap"]), metadata={"description": "Self-consistent calculation scope."})
     energy_task = String(required=False, metadata={"description": "Named DFT energy task folder for the selected Run."})
+    energy_options = Dict(required=False, metadata={"description": "Optional DFT energy configuration (solvation model, thermochemistry, temperature/pressure, basis/grid/D3 overrides)."})
     fork = String(required=False, metadata={"description": "Fork directory such as fork-1 for SPE/refinement."})
     descriptor_snapshot_id = String(required=False, metadata={"description": "Grid-6 Input descriptor snapshot identifier for refinement."})
     email = Email(required=False, metadata={"description": "Notification email; defaults to the authenticated user's email."})
@@ -122,6 +123,7 @@ class CANCEL_IN(Schema):
     weightFile = String(required=True)
     fork = String(required=False)
     spe_scope = String(required=False, validate=OneOf(["input", "ame418", "energy", "overlap"]))
+    energy_task = String(required=False)
 
 
 class TEST_IN(Schema):
@@ -305,6 +307,12 @@ def _write_spe_status(job, status):
         temporary = target.with_suffix(".tmp")
         temporary.write_text(json.dumps(payload) + "\n")
         temporary.replace(target)
+        if job.get("spe_scope") == "energy" and target.parent.parent.name == "energy_input":
+            parent_status = target.parent.parent.parent / "spe_energy.status.json"
+            if parent_status.parent.is_dir():
+                parent_tmp = parent_status.with_suffix(".tmp")
+                parent_tmp.write_text(json.dumps(payload) + "\n")
+                parent_tmp.replace(parent_status)
     except OSError as exc:
         print(f"[queue] could not update SPE status: {exc}", flush=True)
 
@@ -659,6 +667,22 @@ def _submit_spe(data, full_work_dir, work_name, username, recipient, basis):
         run_basis = output / "basis.txt"
         if run_basis.is_file():
             basis = run_basis.read_text().strip() or basis
+        from dfthub.pipeline.energy_extensions import EnergyTaskOptions
+        raw_options = dict(data.get("energy_options") or {})
+        config_path = energy_dir / "energy_config.json"
+        if not raw_options and config_path.is_file():
+            try:
+                loaded_cfg = json.loads(config_path.read_text())
+                if isinstance(loaded_cfg, dict):
+                    raw_options = loaded_cfg
+            except (OSError, ValueError):
+                raw_options = {}
+        try:
+            energy_options_obj = EnergyTaskOptions.from_dict(raw_options, default_basis=basis)
+        except (ValueError, TypeError) as exc:
+            return _error(str(exc))
+        basis = energy_options_obj.basis
+        write_json(config_path, energy_options_obj.to_dict())
 
     if scope == "input":
         input_dir = _run_inputs(output, full_work_dir)
@@ -712,7 +736,9 @@ def _submit_spe(data, full_work_dir, work_name, username, recipient, basis):
                 PIPELINE_PYTHON, str(PROGRAM_DIR / "run_user_energy.py"),
                 "--cf22d-optimized", str(cf22d_opt), "--output", str(energy_dir),
                 "--user-xyz", str(user_archive), "--user-basis", basis,
-                "--grid", "6", "--cores", str(TASK_THREADS),
+                "--grid", str(energy_options_obj.grid_level),
+                "--config", str(energy_dir / "energy_config.json"),
+                "--cores", str(TASK_THREADS),
             ]
         else:
             command = [
@@ -1182,6 +1208,24 @@ def analysis_data():
     return {"version": 1, "cached": True, "jobs": jobs, "summaries": summaries}
 
 
+@app.get("/energy_presets")
+@app.doc(summary="List DFT energy solvation and thermochemistry presets", description="Return supported implicit solvation models, solvent database entries, and vibrational/thermochemistry options.", security=[{"bearerAuth": []}])
+@login_required
+def energy_presets():
+    from dfthub.pipeline.energy_extensions import (
+        COMMON_SOLVENTS,
+        SOLVENT_MODELS,
+        VIB_MODELS,
+        list_supported_solvents,
+    )
+    return {
+        "solvent_models": list(SOLVENT_MODELS),
+        "vib_models": list(VIB_MODELS),
+        "common_solvents": list(COMMON_SOLVENTS),
+        "solvents": list_supported_solvents(),
+    }
+
+
 @app.post("/cancel")
 @app.doc(summary="Cancel a calculation", description="Request cancellation of a queued or running calculation owned by the authenticated user.", security=[{"bearerAuth": []}])
 @login_required
@@ -1191,6 +1235,11 @@ def cancel_task(json_data):
     if error:
         return error
     scope = json_data.get("spe_scope")
+    energy_task = (json_data.get("energy_task") or "").strip()
+    if scope == "energy" and energy_task:
+        if not valid_path_component(energy_task):
+            return _error("energy_task must be a named single path component")
+        output = output / "energy_input" / energy_task
     if not _task_processes(output, scope) and not _queued_task(output, scope):
         return _error("No queued or running calculation was found", 409)
     _mark_cancelled(output, scope)

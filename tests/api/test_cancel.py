@@ -108,6 +108,65 @@ class CancelTests(unittest.TestCase):
         self.assertEqual(response.status_code, 409)
         self.assertTrue(self.root.exists())
 
+    def test_energy_presets_and_energy_options_submission(self):
+        presets = self.client.get("/api_dft/energy_presets", headers=self.headers)
+        self.assertEqual(presets.status_code, 200)
+        data = presets.get_json()
+        self.assertIn("smd", data["solvent_models"])
+        self.assertTrue(any(item["id"] == "water" for item in data["solvents"]))
+
+        task_dir = self.root / "energy_input" / "ThermoTask1"
+        task_dir.mkdir(parents=True, exist_ok=True)
+        (task_dir / "H2.tgz").write_bytes(b"fixture archive")
+        (self.root / "CF22D_optimized.py").write_text("# fixture functional\n")
+
+        response = self.client.post(
+            "/api_dft/submit",
+            headers=self.headers,
+            json={
+                "mode": "spe",
+                "spe_scope": "energy",
+                "energy_task": "ThermoTask1",
+                "energy_options": {
+                    "basis": "def2-tzvp",
+                    "grid_level": 5,
+                    "with_d3": True,
+                    "solvent_model": "smd",
+                    "solvent_name": "water",
+                    "optimize_geometry": True,
+                    "calc_thermo": True,
+                    "temperature_k": 298.15,
+                    "pressure_pa": 101325.0,
+                    "vib_model": "qrrho-grimme",
+                    "solution_standard_state": True,
+                },
+                "work_dir": "Work/alice/demo",
+                "weightFile": "weight_0",
+            },
+        )
+        self.assertEqual(response.status_code, 200, response.get_json())
+        cfg_file = task_dir / "energy_config.json"
+        self.assertTrue(cfg_file.is_file())
+        saved_cfg = json.loads(cfg_file.read_text())
+        self.assertEqual(saved_cfg["solvent_model"], "smd")
+        self.assertTrue(saved_cfg["calc_thermo"])
+        self.assertEqual(saved_cfg["basis"], "def2-tzvp")
+
+        # Cancel the specific queued energy task
+        cancel_res = self.client.post(
+            "/api_dft/cancel",
+            headers=self.headers,
+            json={
+                "work_dir": "Work/alice/demo",
+                "weightFile": "weight_0",
+                "spe_scope": "energy",
+                "energy_task": "ThermoTask1",
+            },
+        )
+        self.assertEqual(cancel_res.status_code, 200, cancel_res.get_json())
+        self.assertEqual(api_module._task_queue.qsize(), 0)
+
 
 if __name__ == "__main__":
     unittest.main()
+

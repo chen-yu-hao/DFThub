@@ -7,6 +7,13 @@ import { Icon } from "./Icons";
 import { originalMueForRun, parseDatasetMue } from "./mue";
 import MueViews from "./MueViews";
 import { datasetType } from "./datasetMetadata";
+import {
+  DEFAULT_COMMON_SOLVENTS,
+  HARTREE_TO_KCAL,
+  SOLVENT_MODEL_OPTIONS,
+  formatSolventBadge,
+} from "./energyOptions";
+import type { SolventModelId } from "./energyOptions";
 
 const tabs = [
   ["overview", "Overview"],
@@ -149,6 +156,11 @@ export default function JobDetail(props: DetailProps) {
   const [speScope, setSpeScope] = useState<SpeScope>("input");
   const [energyFile, setEnergyFile] = useState<File | null>(null);
   const [energyUploadError, setEnergyUploadError] = useState("");
+  const [energySolventModel, setEnergySolventModel] = useState<SolventModelId>("none");
+  const [energySolventName, setEnergySolventName] = useState("water");
+  const [energyCalcThermo, setEnergyCalcThermo] = useState(false);
+  const [energyOptGeom, setEnergyOptGeom] = useState(false);
+  const [energyTempK, setEnergyTempK] = useState("298.15");
   const [jumpToError, setJumpToError] = useState(false);
   const review = useRef<HTMLDialogElement>(null);
   const logBox = useRef<HTMLDivElement>(null);
@@ -489,7 +501,24 @@ export default function JobDetail(props: DetailProps) {
       data.append("files", energyFile, energyFile.name);
       const upload = await axios.put("/api_dft/upload", data);
       if (upload.data.result === "error" || upload.data.success === false) throw new Error(upload.data.msg || "Energy archive upload failed.");
-      const response = await axios.post("/api_dft/submit", { mode: "spe", spe_scope: "energy", energy_task: cleanName, work_dir: `Work/${user.username}/${job.id}`, ...runFields(run.id) });
+      const tempNum = Number(energyTempK);
+      const response = await axios.post("/api_dft/submit", {
+        mode: "spe",
+        spe_scope: "energy",
+        energy_task: cleanName,
+        energy_options: {
+          solvent_model: energySolventModel,
+          solvent_name: energySolventName,
+          optimize_geometry: energyOptGeom,
+          calc_thermo: energyCalcThermo,
+          temperature_k: Number.isFinite(tempNum) && tempNum > 0 ? tempNum : 298.15,
+          pressure_pa: 101325.0,
+          vib_model: "qrrho-grimme",
+          solution_standard_state: energyCalcThermo && energySolventModel !== "none",
+        },
+        work_dir: `Work/${user.username}/${job.id}`,
+        ...runFields(run.id),
+      });
       if (response.data.result === "error" || response.data.success === false) throw new Error(response.data.msg || "DFT energy calculation could not be started.");
       setEnergyFile(null);
       setSpePending((previous) => ({ ...previous, [key + "/energy"]: true }));
@@ -1151,13 +1180,66 @@ export default function JobDetail(props: DetailProps) {
                 </div>
                 <p className="muted">{speScope === "input" ? "Calculate your training data and optional test set with the fitted functional. Only training descriptors are used for the next iteration." : speScope === "ame418" ? "Calculate only the AME418 benchmark datasets. Your uploaded Input is not included." : "Upload a .tgz archive of XYZ structures. No .ref file is required; the selected Run's optimized functional and basis are used."}</p>
                 <p className="muted">{spePayload?.grid_level != null ? `Result grid level: ${spePayload.grid_level}. ` : hasSpe ? "Result grid level: not recorded. " : ""}Next calculation grid level: {speScope === "ame418" ? 5 : 6}.</p>
-                {speScope === "energy" && <div className="energy-upload box">
-                  <label className="file-picker">
-                    <span className="btn btn-secondary">Choose .tgz archive</span>
-                    <input type="file" accept=".tgz,.tar.gz,.zip,application/gzip,application/x-gzip,application/zip" onChange={(event) => chooseEnergyFile(event.target.files?.[0] || null)} />
-                    <span className="file-name">{energyFile?.name || "No archive selected"}</span>
-                  </label>
-                  <p className="muted">The archive is evaluated molecule by molecule with the optimized parameters from {run.id}. Reference energies are not needed.</p>
+                {speScope === "energy" && <div className="energy-upload box" style={{ padding: 16 }}>
+                  <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: 10, marginBottom: 12 }}>
+                    <label className="file-picker" style={{ margin: 0 }}>
+                      <span className="btn btn-secondary">Choose .tgz / .zip archive</span>
+                      <input type="file" accept=".tgz,.tar.gz,.zip,application/gzip,application/x-gzip,application/zip" onChange={(event) => chooseEnergyFile(event.target.files?.[0] || null)} />
+                      <span className="file-name">{energyFile?.name || "No archive selected"}</span>
+                    </label>
+                    <a className="btn btn-secondary btn-sm" href={`/energy/?job=${encodeURIComponent(job.id)}&run=${encodeURIComponent(run.id)}`}>
+                      <Icon name="ext" />Open full DFT energy studio
+                    </a>
+                  </div>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 12, marginTop: 8 }}>
+                    <label style={{ display: "grid", gap: 4, fontSize: 13 }}>
+                      <span style={{ fontWeight: 600 }}>Implicit Solvation Model</span>
+                      <select
+                        value={energySolventModel}
+                        onChange={(event) => setEnergySolventModel(event.target.value as SolventModelId)}
+                        style={{ height: 34, borderRadius: 8, padding: "0 10px", border: "1px solid var(--sep-2)", background: "var(--surface)", color: "var(--ink)" }}
+                      >
+                        {SOLVENT_MODEL_OPTIONS.map((m) => (
+                          <option key={m.id} value={m.id}>{m.label}</option>
+                        ))}
+                      </select>
+                    </label>
+                    {energySolventModel !== "none" && (
+                      <label style={{ display: "grid", gap: 4, fontSize: 13 }}>
+                        <span style={{ fontWeight: 600 }}>Solvent</span>
+                        <select
+                          value={energySolventName}
+                          onChange={(event) => setEnergySolventName(event.target.value)}
+                          style={{ height: 34, borderRadius: 8, padding: "0 10px", border: "1px solid var(--sep-2)", background: "var(--surface)", color: "var(--ink)" }}
+                        >
+                          {DEFAULT_COMMON_SOLVENTS.map((s) => (
+                            <option key={s.id} value={s.id}>{s.name} (ε={s.eps.toFixed(1)})</option>
+                          ))}
+                        </select>
+                      </label>
+                    )}
+                    <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, marginTop: 18 }}>
+                      <input type="checkbox" checked={energyCalcThermo} onChange={(e) => setEnergyCalcThermo(e.target.checked)} />
+                      <span><b>Free energy &amp; thermo</b> (G, H, S, ZPE)</span>
+                    </label>
+                    <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, marginTop: 18 }}>
+                      <input type="checkbox" checked={energyOptGeom} onChange={(e) => setEnergyOptGeom(e.target.checked)} />
+                      <span><b>Pre-optimize geometry</b> (BFGS)</span>
+                    </label>
+                    {energyCalcThermo && (
+                      <label style={{ display: "grid", gap: 4, fontSize: 13 }}>
+                        <span style={{ fontWeight: 600 }}>Temperature (K)</span>
+                        <input
+                          type="number"
+                          step="0.05"
+                          value={energyTempK}
+                          onChange={(e) => setEnergyTempK(e.target.value)}
+                          style={{ height: 34, borderRadius: 8, padding: "0 10px", border: "1px solid var(--sep-2)", background: "var(--surface)", color: "var(--ink)" }}
+                        />
+                      </label>
+                    )}
+                  </div>
+                  <p className="muted" style={{ marginTop: 10 }}>The archive is evaluated molecule by molecule with the optimized parameters from {run.id}. Reference energies are not needed.</p>
                   {energyUploadError && <p className="err-pos" role="alert">{energyUploadError}</p>}
                 </div>}
                 <div className="d-actions" style={{ justifyContent: "flex-start" }}>
@@ -1197,8 +1279,58 @@ export default function JobDetail(props: DetailProps) {
                 {hasSpe ? (
                   <>
                     {hasEnergy && <div className="box">
-                      <div className="box-head">DFT energy results <span className="muted">Hartree · {run.id}</span></div>
-                      <div className="tbl-wrap"><table aria-label="DFT energy results"><thead><tr><th>Molecule</th><th className="r">Energy (Hartree)</th><th>Status</th></tr></thead><tbody>{energyResults.map((row: any) => <tr key={row.name}><td className="mono">{row.name}</td><td className="r num">{typeof row.energy_hartree === "number" ? row.energy_hartree.toFixed(10) : "—"}</td><td>{row.status === "ok" ? <span className="pill completed">Completed</span> : <span className="pill failed">Failed</span>}</td></tr>)}</tbody></table></div>
+                      <div className="box-head">
+                        DFT energy results{" "}
+                        <span className="muted">
+                          Hartree · {run.id}
+                          {formatSolventBadge(spePayload?.options, spePayload?.solvation) ? ` · ${formatSolventBadge(spePayload?.options, spePayload?.solvation)}` : " · Gas phase"}
+                          {spePayload?.calc_thermo ? ` · Free Energy (${spePayload?.options?.temperature_k ?? 298.15} K)` : ""}
+                        </span>
+                      </div>
+                      <div className="tbl-wrap">
+                        <table aria-label="DFT energy results">
+                          <thead>
+                            <tr>
+                              <th>Molecule</th>
+                              <th className="r">E_tot (Hartree)</th>
+                              {Boolean(spePayload?.solvation || energyResults.some((r: any) => r.e_solvent_hartree != null)) && (
+                                <th className="r">ΔE_solv (kcal/mol)</th>
+                              )}
+                              {Boolean(spePayload?.calc_thermo || energyResults.some((r: any) => r.g_tot_hartree != null)) && (
+                                <>
+                                  <th className="r">ZPE (kcal/mol)</th>
+                                  <th className="r">Enthalpy H (Eh)</th>
+                                  <th className="r">Gibbs G (Eh)</th>
+                                </>
+                              )}
+                              <th>Status</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {energyResults.map((row: any) => (
+                              <tr key={row.name}>
+                                <td className="mono">{row.name}</td>
+                                <td className="r num">{typeof row.energy_hartree === "number" ? row.energy_hartree.toFixed(10) : "—"}</td>
+                                {Boolean(spePayload?.solvation || energyResults.some((r: any) => r.e_solvent_hartree != null)) && (
+                                  <td className="r num">
+                                    {typeof row.e_solvent_hartree === "number" ? (row.e_solvent_hartree * HARTREE_TO_KCAL).toFixed(2) : "—"}
+                                  </td>
+                                )}
+                                {Boolean(spePayload?.calc_thermo || energyResults.some((r: any) => r.g_tot_hartree != null)) && (
+                                  <>
+                                    <td className="r num">
+                                      {typeof row.zpe_hartree === "number" ? (row.zpe_hartree * HARTREE_TO_KCAL).toFixed(2) : "—"}
+                                    </td>
+                                    <td className="r num">{typeof row.h_tot_hartree === "number" ? row.h_tot_hartree.toFixed(8) : "—"}</td>
+                                    <td className="r num"><b>{typeof row.g_tot_hartree === "number" ? row.g_tot_hartree.toFixed(8) : "—"}</b></td>
+                                  </>
+                                )}
+                                <td>{row.status === "ok" ? <span className="pill completed">Completed</span> : <span className="pill failed">Failed</span>}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
                     </div>}
                     {speRows.length > 0 && (
                       <div className="stats">
