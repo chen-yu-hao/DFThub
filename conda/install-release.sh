@@ -3,7 +3,7 @@ set -euo pipefail
 
 BUNDLE_DIR="${1:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
 ENV_FILE="$BUNDLE_DIR/conda/environment.yml"
-ENV_NAME="${DFTHUB_CONDA_ENV:-dfthub-0.1.1}"
+ENV_NAME="${DFTHUB_CONDA_ENV:-dfthub-0.1.2}"
 
 if ! command -v conda >/dev/null 2>&1; then
   echo "conda is required; install Miniconda or Mambaforge first" >&2

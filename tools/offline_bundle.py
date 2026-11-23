@@ -16,7 +16,7 @@ parser.add_argument('--engine', type=Path, required=True)
 parser.add_argument('--package', type=Path, required=True)
 parser.add_argument('--output', type=Path, default=Path('dist'))
 args = parser.parse_args()
-label = f'dfthub-0.1.1-{platform.system().lower()}-{platform.machine()}-cp{sys.version_info.major}{sys.version_info.minor}'
+label = f'dfthub-0.1.2-{platform.system().lower()}-{platform.machine()}-cp{sys.version_info.major}{sys.version_info.minor}'
 root = args.output.resolve() / label
 wheels = root / 'wheelhouse'
 wheels.mkdir(parents=True, exist_ok=False)

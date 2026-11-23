@@ -1,5 +1,23 @@
 # Release validation
 
+## v0.1.2
+
+Release `v0.1.2` keeps the v0.1.1 engine unchanged:
+`dfthub-pyscf-dft==2.14.0+dfthub.e7cb7357`, built from `chen-yu-hao/pyscf`
+`DFT` commit `e7cb735789293acf461f8ebbb4ac6a08b68ba5d6`, with the same NumPy,
+SciPy and pandas pins. The changes since v0.1.1 are listed in `CHANGELOG.md`.
+
+The release is gated by the same GitHub Actions workflow
+(`.github/workflows/release.yml`) as v0.1.1: for Linux x86_64 and Python 3.10,
+3.11 and 3.12 it builds the frontend and runs its regression suites, installs
+the offline bundle into a fresh environment, runs `pip check`, the Python
+regression tests (`tools/run_tests.py`), the RKS/UKS scientific checks
+(`tools/scientific_smoke.py`), the train/test workflow
+(`tools/workflow_smoke.py`) and the release audit, and publishes assets only
+when every target passes.
+
+## v0.1.1
+
 The Linux CPython 3.12 installation was validated in a fresh virtual environment
 using only the release wheelhouse (`--no-index --require-hashes`). `pip check`
 reported no broken requirements. Package directories were made read-only before

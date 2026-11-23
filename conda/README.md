@@ -6,19 +6,19 @@ DFThub 的网页/API 和固定 PySCF DFT 引擎以 wheel 形式发布；Conda �
 
 ```bash
 conda env create -f conda/environment.yml
-conda activate dfthub-0.1.1
+conda activate dfthub-0.1.2
 ```
 
 然后从对应 GitHub Release 的离线包安装：
 
 ```bash
-bash conda/install-release.sh /path/to/dfthub-0.1.1-linux-x86_64-cp312
-conda activate dfthub-0.1.1
+bash conda/install-release.sh /path/to/dfthub-0.1.2-linux-x86_64-cp312
+conda activate dfthub-0.1.2
 dfthub doctor --strict
 dfthub serve --data-dir ./dfthub-data
 ```
 
-`conda/install-release.sh` 使用 release wheelhouse 和 `requirements.lock`，不访问 PyPI。`DFTHUB_CONDA_ENV` 可改环境名。v0.1.1 预编译离线包是 Linux x86_64；Apple Silicon 请使用 Conda 环境后按部署文档从最新 DFT 源码构建引擎。
+`conda/install-release.sh` 使用 release wheelhouse 和 `requirements.lock`，不访问 PyPI。`DFTHUB_CONDA_ENV` 可改环境名。v0.1.2 预编译离线包是 Linux x86_64；Apple Silicon 请使用 Conda 环境后按部署文档从最新 DFT 源码构建引擎。
 
 如果只使用联网 Conda 环境，也可以先执行 `conda env create -f conda/environment.yml`，再从 Release 下载并解压 wheelhouse，执行：
 

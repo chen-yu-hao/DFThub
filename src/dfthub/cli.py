@@ -10,7 +10,7 @@ if sys.platform.startswith("linux") and platform.machine().lower() in ("x86_64",
 
 from .paths import data_dir, initialize_data, load_environment
 
-VERSION = "DFThub 0.1.1"
+VERSION = "DFThub 0.1.2"
 TOOL_COMMANDS = ("params", "export", "g16", "pyscf", "ps", "kill")
 
 

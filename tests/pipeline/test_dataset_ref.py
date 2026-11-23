@@ -1,5 +1,6 @@
 import contextlib
 import importlib.util
+import inspect
 import io
 from pathlib import Path
 import sys
@@ -156,6 +157,17 @@ def _load_file_api_module():
                     sys.modules.pop(name, None)
                 else:
                     sys.modules[name] = original
+
+
+def _app_context(file_api):
+    """Flask's ``g`` needs an application context; the stub used without Flask does not."""
+    try:
+        from flask import Flask, g
+    except ModuleNotFoundError:
+        return contextlib.nullcontext()
+    if file_api.g is not g:
+        return contextlib.nullcontext()
+    return Flask("dfthub-test").app_context()
 
 
 class DatasetRefParserTests(unittest.TestCase):
@@ -376,15 +388,19 @@ class FileApiTotalMueTests(unittest.TestCase):
             old_activity = self.file_api._task_activity
             self.file_api.DATA_DIR = data_root
             self.file_api._task_activity = lambda: {}
-            self.file_api.g.current_user = {"username": "testuser"}
+            # Call the view body directly: login and request parsing are
+            # covered by the API tests, this test checks the folder entry.
+            get_file_list = inspect.unwrap(self.file_api.get_file_list)
             try:
-                resp = self.file_api.get_file_list(
-                    {
-                        "file_dir": "Work/testuser/job1/output",
-                        "file_filter": "*",
-                        "file_or_folder": "folder",
-                    }
-                )
+                with _app_context(self.file_api):
+                    self.file_api.g.current_user = {"username": "testuser"}
+                    resp = get_file_list(
+                        {
+                            "file_dir": "Work/testuser/job1/output",
+                            "file_filter": "*",
+                            "file_or_folder": "folder",
+                        }
+                    )
                 self.assertEqual(len(resp["result"]), 1)
                 self.assertEqual(resp["result"][0]["name"], "weight_0")
                 self.assertEqual(resp["result"][0]["total_mue"], "new_total_mue:1.4200")

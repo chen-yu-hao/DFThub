@@ -6,20 +6,20 @@ DFThub also includes command-line tools that read a DFThub `Parameters` file and
 
 ## Installation
 
-Use **CPython 3.10–3.12**; 3.12 is recommended. v0.1.1 provides prebuilt packages for **Linux x86_64 (glibc 2.35+, e.g. Ubuntu 22.04+)**. On macOS Apple Silicon, use the Conda environment and build the latest DFT engine from source; on Windows, use WSL2 with a distribution that meets the Linux requirements.
+Use **CPython 3.10–3.12**; 3.12 is recommended. v0.1.2 provides prebuilt packages for **Linux x86_64 (glibc 2.35+, e.g. Ubuntu 22.04+)**. On macOS Apple Silicon, use the Conda environment and build the latest DFT engine from source; on Windows, use WSL2 with a distribution that meets the Linux requirements.
 
-Download the offline bundle that matches your operating system, CPU and Python minor version from [GitHub Releases](https://github.com/chen-yu-hao/DFThub/releases/tag/v0.1.1) (`cp310`, `cp311` or `cp312` for Python 3.10, 3.11 or 3.12). The `wheelhouse/` directory is inside the unpacked bundle, not in this Git repository, so run the install commands from the bundle directory. The complete sequence for Python 3.12:
+Download the offline bundle that matches your operating system, CPU and Python minor version from [GitHub Releases](https://github.com/chen-yu-hao/DFThub/releases/tag/v0.1.2) (`cp310`, `cp311` or `cp312` for Python 3.10, 3.11 or 3.12). The `wheelhouse/` directory is inside the unpacked bundle, not in this Git repository, so run the install commands from the bundle directory. The complete sequence for Python 3.12:
 
 ```bash
 # 1. Check the Python version (must be 3.10–3.12 and match the bundle)
 python3.12 --version
 
 # 2. Download and unpack the bundle in a directory of your choice (not inside the Git checkout)
-curl -LO https://github.com/chen-yu-hao/DFThub/releases/download/v0.1.1/dfthub-0.1.1-linux-x86_64-cp312.tar.gz
-tar xzf dfthub-0.1.1-linux-x86_64-cp312.tar.gz
+curl -LO https://github.com/chen-yu-hao/DFThub/releases/download/v0.1.2/dfthub-0.1.2-linux-x86_64-cp312.tar.gz
+tar xzf dfthub-0.1.2-linux-x86_64-cp312.tar.gz
 
 # 3. Enter the bundle directory (it contains wheelhouse/, deploy/, conda/, requirements.lock)
-cd dfthub-0.1.1-linux-x86_64-cp312
+cd dfthub-0.1.2-linux-x86_64-cp312
 
 # 4. Create a clean virtual environment and install
 python3.12 -m venv .venv
@@ -41,16 +41,16 @@ Open **http://127.0.0.1:8188**. Workspace, Analyze, Guide, Energy and the API do
 
 This release is published on GitHub Releases, not PyPI. A plain `pip install dfthub` refers to this project only when it points at this release's wheelhouse; do not install a same-named package from an unknown index.
 
-A source install (needed for features newer than the published bundle, such as the [command-line tools](#command-line-tools)) uses the bundle's wheelhouse for the pinned engine and build tools (`setuptools>=70`, `wheel`). Replace `/path/to/dfthub-0.1.1-linux-x86_64-cp312` with the bundle directory unpacked in step 2:
+A source install (for example, to use changes on `main` that are newer than the published bundle) uses the bundle's wheelhouse for the pinned engine and build tools (`setuptools>=70`, `wheel`). Replace `/path/to/dfthub-0.1.2-linux-x86_64-cp312` with the bundle directory unpacked in step 2:
 
 ```bash
 git clone https://github.com/chen-yu-hao/DFThub.git
 cd DFThub
 python3.12 -m venv .venv
 source .venv/bin/activate
-python -m pip install --no-index --find-links /path/to/dfthub-0.1.1-linux-x86_64-cp312/wheelhouse .
+python -m pip install --no-index --find-links /path/to/dfthub-0.1.2-linux-x86_64-cp312/wheelhouse .
 # or if setuptools>=70 is already installed in the active environment, add --no-build-isolation:
-#   python -m pip install --no-index --no-build-isolation --find-links /path/to/dfthub-0.1.1-linux-x86_64-cp312/wheelhouse .
+#   python -m pip install --no-index --no-build-isolation --find-links /path/to/dfthub-0.1.2-linux-x86_64-cp312/wheelhouse .
 dfthub doctor --strict
 ```
 
@@ -73,12 +73,12 @@ Conda provides Python, BLAS and the numerical libraries; DFThub and the pinned P
 
 ```bash
 conda env create -f conda/environment.yml
-conda activate dfthub-0.1.1
-bash conda/install-release.sh /path/to/dfthub-0.1.1-linux-x86_64-cp312   # the unpacked bundle directory
+conda activate dfthub-0.1.2
+bash conda/install-release.sh /path/to/dfthub-0.1.2-linux-x86_64-cp312   # the unpacked bundle directory
 dfthub doctor --strict
 ```
 
-No prebuilt macOS arm64 engine wheel is published with v0.1.1; after creating the environment from `conda/environment.yml`, build the engine from the DFT sources as described in the deployment guide. See the [Conda installation guide](conda/README.md).
+No prebuilt macOS arm64 engine wheel is published with v0.1.2; after creating the environment from `conda/environment.yml`, build the engine from the DFT sources as described in the deployment guide. See the [Conda installation guide](conda/README.md).
 
 ## Command-line tools
 
