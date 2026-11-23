@@ -107,7 +107,7 @@ def main():
     run('git', 'archive', '--format=tar.gz', '--prefix=pyscf-dft/',
         f'--output={output / "pyscf-dft-e7cb7357-source.tar.gz"}', COMMIT, cwd=source)
     if args.input_wheel:
-        raise RuntimeError('The v0.1.1 engine must be rebuilt from the latest DFT source; input wheels are disabled')
+        raise RuntimeError('The pinned engine must be rebuilt from the DFT source at the pinned commit; input wheels are disabled')
     else:
         raw = source / 'dist-dfthub-raw'
         env = dict(os.environ)

@@ -1,4 +1,4 @@
-name: dfthub-0.1.1
+name: dfthub-0.1.2
 channels:
   - conda-forge
 dependencies:

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "dfthub"
-version = "0.1.1"
+version = "0.1.2"
 description = "Portable CF22D fitting, evaluation and analysis service"
 readme = "README.md"
 requires-python = ">=3.10,<3.13"
